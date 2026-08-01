@@ -9,18 +9,40 @@
 
 **Objetivo:** motor y pipeline validados antes de invertir un minuto en assets.
 
-- [ ] `git init` + Git LFS para binarios (`*.glb`, `*.png`, `*.ogg`, `*.wav`)
+- [x] `git init` + Git LFS para binarios (`*.glb`, `*.png`, `*.ogg`, `*.wav`)
 - [x] Renderizador decidido: **Mobile** (dispositivo objetivo Android 2019+)
-- [ ] Aplicar `renderer/rendering_method="mobile"` en `project.godot`
-- [ ] Crear la estructura de carpetas de `01-ARQUITECTURA.md`
-- [ ] Autoloads funcionales: `EventBus`, `GameManager`, `SaveManager`, `AudioManager`, `SceneLoader`, `Settings`, `CombatFeel`
-- [ ] `InputMap` con acciones abstractas (`move_*`, `jump`, `attack`, `special`, `transform`, `pause`) en teclado + gamepad
-- [ ] Escena de prueba: suelo plano, cápsula, cámara orbital con `SpringArm3D`
-- [ ] Controlador con máquina de estados (idle/walk/run/jump/fall)
-- [ ] **Prueba de humo en Android:** exportar APK con la cápsula e instalarlo en el dispositivo real. **Ahora, no al final.** Los problemas de export de Android siempre aparecen y siempre tardan más de lo previsto
+- [x] Aplicar `renderer/rendering_method="mobile"` en `project.godot` — confirmado en ejecución: `Metal 4.0 - Forward Mobile`
+- [x] Crear la estructura de carpetas de `01-ARQUITECTURA.md`
+- [x] Autoloads funcionales: `EventBus`, `GameManager`, `SaveManager`, `AudioManager`, `SceneLoader`, `Settings`, `CombatFeel`
+- [x] `InputMap` con 14 acciones abstractas en teclado + gamepad
+- [x] Escena de prueba: suelo, plataformas, muro, cámara orbital con `SpringArm3D`
+- [x] Controlador con máquina de estados (Idle/Move/Jump/Fall) + coyote time y jump buffer
+- [x] Cadena de exportación Android montada y APK de depuración generado y firmado
+- [ ] **Instalar el APK en el dispositivo real de tu prima y comprobar que corre**
 - [ ] Validar el addon VRM: importar un modelo de VRoid y confirmar que MToon funciona en 4.7.1
 
 **Criterio de salida:** una cápsula que corre y salta en un móvil Android real.
+
+### Entorno de compilación Android (montado el 2026-08-01)
+
+| Componente | Ruta / versión |
+|---|---|
+| JDK | Temurin 17 — `/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home` |
+| Android SDK | `/opt/homebrew/share/android-commandlinetools` |
+| Build-Tools | 35.0.0 · Platform 35 · Platform-Tools 37 |
+| Keystore de depuración | `~/.android/debug.keystore` (alias `androiddebugkey`, pass `android`) |
+| Plantillas de exportación | 4.7.1.stable |
+| APK | `export/sailor_moon.apk` — `com.familia.sailormoon`, minSdk 24, arm64-v8a |
+
+Comando de exportación:
+```bash
+godot --headless --path . --export-debug "Android" export/sailor_moon.apk
+```
+
+Instalación en el dispositivo (con depuración USB activada):
+```bash
+/opt/homebrew/share/android-commandlinetools/platform-tools/adb install -r export/sailor_moon.apk
+```
 
 ## Fase 1 — El combate (la fase que decide el proyecto)
 

@@ -5,6 +5,11 @@ extends Node
 ## suscriben aquí en vez de llamarse entre ellos. El HUD no conoce al jugador:
 ## escucha `health_changed`. Sin esto, en dos semanas el proyecto es un nudo.
 
+# Un bus de eventos declara señales que emiten OTRAS clases, así que Godot las
+# ve como "no usadas aquí". Sin esto, la consola se llena de ~24 avisos y los
+# errores de verdad se pierden entre ellos.
+@warning_ignore_start("unused_signal")
+
 # --- Progresión ---
 signal star_collected(total: int)
 signal sparkle_collected(total: int)
@@ -42,3 +47,5 @@ signal scene_ready(scene_path: String)
 # --- UI ---
 signal game_paused(is_paused: bool)
 signal show_message(text: String, duration: float)
+
+@warning_ignore_restore("unused_signal")

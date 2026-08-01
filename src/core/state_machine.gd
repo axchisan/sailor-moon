@@ -76,9 +76,12 @@ func transition_to(state_name: String, msg: Dictionary = {}) -> void:
 	current.enter(msg)
 
 	if debug_log:
-		print("[FSM %s] %s -> %s" % [actor.name if actor else "?", from, state_name])
+		var actor_name: String = String(actor.name) if actor != null else "?"
+		print("[FSM %s] %s -> %s" % [actor_name, from, state_name])
 	state_changed.emit(from, state_name)
 
 
 func get_state_name() -> String:
-	return current.name if current != null else ""
+	if current == null:
+		return ""
+	return String(current.name)
