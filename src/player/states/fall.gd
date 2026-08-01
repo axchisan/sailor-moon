@@ -13,6 +13,8 @@ func physics_update(delta: float) -> String:
 	p.apply_horizontal_movement(p.get_move_direction(), p.get_move_strength(), delta, p.air_control)
 	p.face_direction(p.get_move_direction(), delta)
 
+	if p.wants_attack():
+		return "Attack"
 	if p.wants_jump():
 		return "Jump"
 

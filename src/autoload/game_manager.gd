@@ -26,8 +26,11 @@ var last_checkpoint: Vector3 = Vector3.ZERO
 var level_progress: Dictionary = {}
 
 
-func _ready() -> void:
-	EventBus.enemy_purified.connect(_on_enemy_purified)
+## Registra un enemigo purificado. Lo llama el propio enemigo al limpiarse,
+## para que el contador y la señal salgan siempre sincronizados.
+func register_friend(enemy_name: String) -> void:
+	friends_this_level += 1
+	EventBus.enemy_purified.emit(enemy_name, friends_this_level)
 
 
 # --- Salud -------------------------------------------------------------------
@@ -82,10 +85,6 @@ func collect_star() -> void:
 func collect_sparkle(amount: int = 1) -> void:
 	sparkles_this_level += amount
 	EventBus.sparkle_collected.emit(sparkles_this_level)
-
-
-func _on_enemy_purified(_enemy_name: String, _total: int) -> void:
-	friends_this_level += 1
 
 
 # --- Ciclo de nivel ----------------------------------------------------------

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AttackData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/data/attack_data.gd" id="1_ad"]
+
+[resource]
+script = ExtResource("1_ad")
+display_name = "Golpe 1"
+windup = 0.07
+active = 0.09
+recovery = 0.13
+damage = 1
+knockback = 3.0
+knockback_up = 0.0
+lunge = 2.2
+hit_stop = 0.045
+shake = 0.15

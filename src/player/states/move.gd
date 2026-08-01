@@ -12,6 +12,10 @@ func physics_update(delta: float) -> String:
 	p.apply_horizontal_movement(direction, strength, delta)
 	p.face_direction(direction, delta)
 
+	if p.wants_special():
+		return "Special"
+	if p.wants_attack():
+		return "Attack"
 	if p.wants_jump():
 		return "Jump"
 	if not p.is_on_floor():

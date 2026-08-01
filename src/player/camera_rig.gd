@@ -82,20 +82,24 @@ func _on_shake_requested(strength: float, duration: float) -> void:
 	_shake_elapsed = 0.0
 
 
+## La sacudida se aplica con `h_offset` / `v_offset`, NUNCA con `position`.
+##
+## SpringArm3D coloca a sus hijos moviéndoles la `position` en cada frame de
+## física. Si aquí se tocara `position`, este `_process` la pisaría y la cámara
+## se quedaría clavada en el origen del brazo, es decir, dentro del personaje.
+## Los offsets desplazan la vista sin tocar la transformación del nodo.
 func _update_shake(delta: float) -> void:
 	if _shake_elapsed >= _shake_duration:
-		if camera.position != Vector3.ZERO:
-			camera.position = Vector3.ZERO
+		if not is_zero_approx(camera.h_offset) or not is_zero_approx(camera.v_offset):
+			camera.h_offset = 0.0
+			camera.v_offset = 0.0
 		return
 
 	_shake_elapsed += delta
 	var falloff := 1.0 - (_shake_elapsed / _shake_duration)
 	var amount := _shake_strength * falloff * falloff
-	camera.position = Vector3(
-		randf_range(-amount, amount),
-		randf_range(-amount, amount),
-		0.0
-	)
+	camera.h_offset = randf_range(-amount, amount)
+	camera.v_offset = randf_range(-amount, amount)
 
 
 # --- API ---------------------------------------------------------------------
@@ -104,3 +108,14 @@ func _update_shake(delta: float) -> void:
 ## en relación a lo que ve, que es lo que espera cualquier jugador.
 func get_camera_basis() -> Basis:
 	return camera.global_transform.basis
+
+
+## Acercón rápido de cámara. Se usa en el ataque especial: acercarse y volver
+## convierte un ataque normal en un momento.
+func zoom_punch(amount: float = 1.8, duration: float = 0.18) -> void:
+	var tween := create_tween()
+	tween.tween_property(spring_arm, "spring_length", maxf(1.5, distance - amount), duration)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(0.5)
+	tween.tween_property(spring_arm, "spring_length", distance, 0.45)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)

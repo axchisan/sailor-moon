@@ -25,6 +25,7 @@ SaveManager="*res://src/autoload/save_manager.gd"
 SceneLoader="*res://src/autoload/scene_loader.gd"
 Settings="*res://src/autoload/settings.gd"
 CombatFeel="*res://src/autoload/combat_feel.gd"
+CombatDirector="*res://src/autoload/combat_director.gd"
 McpInteractionServer="*res://scripts/mcp_interaction_server.gd"
 
 [display]
