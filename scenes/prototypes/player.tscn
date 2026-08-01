@@ -1,0 +1,78 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://src/player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://src/player/camera_rig.gd" id="2_camera"]
+[ext_resource type="Script" path="res://src/core/state_machine.gd" id="3_fsm"]
+[ext_resource type="Script" path="res://src/player/states/idle.gd" id="4_idle"]
+[ext_resource type="Script" path="res://src/player/states/move.gd" id="5_move"]
+[ext_resource type="Script" path="res://src/player/states/jump.gd" id="6_jump"]
+[ext_resource type="Script" path="res://src/player/states/fall.gd" id="7_fall"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.35
+height = 1.6
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.35
+height = 1.6
+
+[sub_resource type="StandardMaterial3D" id="Mat_body"]
+albedo_color = Color(1, 0.62, 0.82, 1)
+roughness = 0.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_nose"]
+size = Vector3(0.16, 0.16, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="Mat_nose"]
+albedo_color = Color(1, 0.9, 0.25, 1)
+roughness = 0.4
+
+[node name="Player" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+mesh = SubResource("CapsuleMesh_body")
+surface_material_override/0 = SubResource("Mat_body")
+
+[node name="Nose" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, -0.34)
+mesh = SubResource("BoxMesh_nose")
+surface_material_override/0 = SubResource("Mat_nose")
+
+[node name="CameraRig" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, 0)
+script = ExtResource("2_camera")
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraRig"]
+transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, 0, 0)
+collision_mask = 1
+spring_length = 5.0
+margin = 0.3
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D"]
+fov = 70.0
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("3_fsm")
+initial_state = NodePath("Idle")
+
+[node name="Idle" type="Node" parent="StateMachine"]
+script = ExtResource("4_idle")
+
+[node name="Move" type="Node" parent="StateMachine"]
+script = ExtResource("5_move")
+
+[node name="Jump" type="Node" parent="StateMachine"]
+script = ExtResource("6_jump")
+
+[node name="Fall" type="Node" parent="StateMachine"]
+script = ExtResource("7_fall")
