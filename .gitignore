@@ -7,3 +7,7 @@
 
 # macOS
 .DS_Store
+
+# Modelo de prueba del pipeline VRM (AliciaSolid, propiedad de Dwango).
+# Solo se uso para validar el importador, no forma parte del juego.
+/assets/models/characters/_vrm_test/

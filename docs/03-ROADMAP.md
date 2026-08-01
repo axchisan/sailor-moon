@@ -18,10 +18,12 @@
 - [x] Escena de prueba: suelo, plataformas, muro, cámara orbital con `SpringArm3D`
 - [x] Controlador con máquina de estados (Idle/Move/Jump/Fall) + coyote time y jump buffer
 - [x] Cadena de exportación Android montada y APK de depuración generado y firmado
-- [ ] **Instalar el APK en el dispositivo real de tu prima y comprobar que corre**
-- [ ] Validar el addon VRM: importar un modelo de VRoid y confirmar que MToon funciona en 4.7.1
+- [x] **APK instalado y ejecutándose en un dispositivo Android real** ✅
+- [x] Addon VRM validado en 4.7.1 — ver [`04-VALIDACION-VRM.md`](04-VALIDACION-VRM.md). Plan A confirmado: VRoid → VRM → MToon funciona
 
-**Criterio de salida:** una cápsula que corre y salta en un móvil Android real.
+**Criterio de salida:** una cápsula que corre y salta en un móvil Android real. **CUMPLIDO ✅**
+
+## Fase 0 — CERRADA (2026-08-01)
 
 ### Entorno de compilación Android (montado el 2026-08-01)
 
