@@ -12,12 +12,10 @@ config_version=5
 
 config/name="Sailor Moon: El Cristal de los Suenos"
 config/description="Aventura de accion 3D. Proyecto personal, no comercial."
+run/main_scene="res://scenes/prototypes/test_movement.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
-run/main_scene="res://scenes/prototypes/test_movement.tscn"
 
-; El orden IMPORTA: cada autoload puede usar los anteriores en su _ready().
-; EventBus primero (todos dependen de el), Settings despues de AudioManager.
 [autoload]
 
 EventBus="*res://src/autoload/event_bus.gd"
@@ -36,32 +34,6 @@ window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
-
-[input_devices]
-
-pointing/emulate_touch_from_mouse=true
-
-[layer_names]
-
-3d_physics/layer_1="world"
-3d_physics/layer_2="player"
-3d_physics/layer_3="enemy"
-3d_physics/layer_4="player_hitbox"
-3d_physics/layer_5="enemy_hitbox"
-3d_physics/layer_6="player_hurtbox"
-3d_physics/layer_7="enemy_hurtbox"
-3d_physics/layer_8="interactable"
-
-[physics]
-
-3d/physics_engine="Jolt Physics"
-
-[rendering]
-
-renderer/rendering_method="mobile"
-rendering_device/driver.windows="d3d12"
-textures/vram_compression/import_etc2_astc=true
-anti_aliasing/quality/msaa_3d=1
 
 [input]
 
@@ -149,3 +121,33 @@ pause={
 , Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"button_index":6,"pressure":0.0,"pressed":false,"script":null)
 ]
 }
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[layer_names]
+
+3d_physics/layer_1="world"
+3d_physics/layer_2="player"
+3d_physics/layer_3="enemy"
+3d_physics/layer_4="player_hitbox"
+3d_physics/layer_5="enemy_hitbox"
+3d_physics/layer_6="player_hurtbox"
+3d_physics/layer_7="enemy_hurtbox"
+3d_physics/layer_8="interactable"
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
+
+[rendering]
+
+rendering_device/driver.windows="d3d12"
+renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true
+anti_aliasing/quality/msaa_3d=1
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/Godot-MToon-Shader/plugin.cfg", "res://addons/vrm/plugin.cfg")
