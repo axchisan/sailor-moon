@@ -3,12 +3,29 @@
 > Premisa: no eres artista. El objetivo es que ningún asset requiera dibujar o modelar desde cero.
 > Todo en este documento es gratis o tiene un plan gratuito utilizable, y funciona en macOS.
 
+> ### ⚠️ Actualizado el 2026-08-01 — el pipeline de personajes cambió
+>
+> **VRoid Studio queda descartado:** no trae los complementos necesarios para
+> construir los trajes de Sailor Moon. **Meshy también:** su plan gratuito ya no
+> permite ni descargar modelos de la comunidad.
+>
+> **El pipeline ahora es Tripo AI** (imagen → 3D para personajes, texto → 3D para
+> props). Guía completa y ajustes exactos en
+> [`06-GUIA-ASSETS-3D.md`](06-GUIA-ASSETS-3D.md).
+>
+> Consecuencia importante: los modelos de Tripo llegan con materiales PBR, no con
+> MToon. El cel shading se recupera con `src/core/toon_material.gd`, que aplica el
+> shader MToon del addon VRM a cualquier malla. Ya verificado a 60 fps.
+>
+> Las secciones de abajo sobre animación, Blender, texturas y audio **siguen
+> vigentes**. Solo cambia de dónde salen los personajes.
+
 ## Resumen ejecutivo
 
 | Necesidad | Herramienta principal | Alternativa |
 |---|---|---|
-| Personajes anime 3D | **VRoid Studio** (gratis, nativo Mac) | 3D AI Studio, Meshy |
-| Props y objetos | **Meshy AI** o **Tripo AI** (texto/imagen → 3D) | Quaternius, Kenney (CC0) |
+| Personajes anime 3D | ~~VRoid Studio~~ → **Tripo AI** (imagen → 3D) | 3D AI Studio |
+| Props y objetos | **Tripo AI** (texto → 3D) | Quaternius, Kenney (CC0) |
 | Escenarios | Kits modulares CC0 + Godot CSG | Meshy para piezas sueltas |
 | Rigging | VRoid ya viene rigueado; **Mixamo** para el resto | AccuRIG, auto-rig de Tripo/Meshy |
 | Animaciones | **Mixamo** (gratis, enorme) | Quaternius CC0, Cinevva |
