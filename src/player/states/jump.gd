@@ -21,6 +21,9 @@ func physics_update(delta: float) -> String:
 	p.apply_horizontal_movement(p.get_move_direction(), p.get_move_strength(), delta, p.air_control)
 	p.face_direction(p.get_move_direction(), delta)
 
+	# Atacar en el aire vale: machacar mientras saltas es lo natural a los 8 años.
+	if p.wants_attack():
+		return "Attack"
 	if p.velocity.y <= 0.0:
 		return "Fall"
 

@@ -8,6 +8,10 @@ func physics_update(delta: float) -> String:
 	p.apply_gravity(delta)
 	p.apply_horizontal_movement(Vector3.ZERO, 0.0, delta)
 
+	if p.wants_special():
+		return "Special"
+	if p.wants_attack():
+		return "Attack"
 	if p.wants_jump():
 		return "Jump"
 	if not p.is_on_floor():

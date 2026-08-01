@@ -1,0 +1,228 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://src/ui/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://src/ui/touch_controls.gd" id="2_touch"]
+
+[sub_resource type="StyleBoxFlat" id="SB_joy_base"]
+bg_color = Color(1, 1, 1, 0.13)
+corner_radius_top_left = 130
+corner_radius_top_right = 130
+corner_radius_bottom_right = 130
+corner_radius_bottom_left = 130
+
+[sub_resource type="StyleBoxFlat" id="SB_joy_knob"]
+bg_color = Color(1, 0.72, 0.87, 0.6)
+corner_radius_top_left = 55
+corner_radius_top_right = 55
+corner_radius_bottom_right = 55
+corner_radius_bottom_left = 55
+
+[sub_resource type="StyleBoxFlat" id="SB_btn_attack"]
+bg_color = Color(1, 0.45, 0.65, 0.55)
+corner_radius_top_left = 70
+corner_radius_top_right = 70
+corner_radius_bottom_right = 70
+corner_radius_bottom_left = 70
+
+[sub_resource type="StyleBoxFlat" id="SB_btn_attack_pressed"]
+bg_color = Color(1, 0.75, 0.85, 0.85)
+corner_radius_top_left = 70
+corner_radius_top_right = 70
+corner_radius_bottom_right = 70
+corner_radius_bottom_left = 70
+
+[sub_resource type="StyleBoxFlat" id="SB_btn_small"]
+bg_color = Color(0.55, 0.75, 1, 0.5)
+corner_radius_top_left = 55
+corner_radius_top_right = 55
+corner_radius_bottom_right = 55
+corner_radius_bottom_left = 55
+
+[sub_resource type="StyleBoxFlat" id="SB_btn_small_pressed"]
+bg_color = Color(0.8, 0.9, 1, 0.85)
+corner_radius_top_left = 55
+corner_radius_top_right = 55
+corner_radius_bottom_right = 55
+corner_radius_bottom_left = 55
+
+[sub_resource type="StyleBoxFlat" id="SB_bar_fill"]
+bg_color = Color(1, 0.85, 0.35, 0.95)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="GameUI" type="CanvasLayer"]
+
+[node name="HUD" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("1_hud")
+
+[node name="Hearts" type="Label" parent="HUD"]
+unique_name_in_owner = true
+offset_left = 24.0
+offset_top = 18.0
+offset_right = 320.0
+offset_bottom = 62.0
+mouse_filter = 2
+text = "♥ ♥ ♥ ♥ ♥"
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(1, 0.45, 0.6, 1)
+theme_override_colors/font_outline_color = Color(0.15, 0.05, 0.1, 1)
+theme_override_constants/outline_size = 7
+
+[node name="SpecialBar" type="ProgressBar" parent="HUD"]
+unique_name_in_owner = true
+offset_left = 24.0
+offset_top = 68.0
+offset_right = 264.0
+offset_bottom = 92.0
+mouse_filter = 2
+value = 0.0
+show_percentage = false
+theme_override_styles/fill = SubResource("SB_bar_fill")
+
+[node name="SpecialLabel" type="Label" parent="HUD"]
+unique_name_in_owner = true
+offset_left = 274.0
+offset_top = 64.0
+offset_right = 560.0
+offset_bottom = 96.0
+mouse_filter = 2
+text = "¡ESPECIAL LISTO!"
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(1, 0.95, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0.2, 0.1, 0, 1)
+theme_override_constants/outline_size = 7
+
+[node name="Counters" type="Label" parent="HUD"]
+unique_name_in_owner = true
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -360.0
+offset_top = 18.0
+offset_right = -24.0
+offset_bottom = 56.0
+grow_horizontal = 0
+mouse_filter = 2
+text = "★ 0    ✦ 0    ☺ 0"
+horizontal_alignment = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.1, 0.2, 1)
+theme_override_constants/outline_size = 7
+
+[node name="WaveLabel" type="Label" parent="HUD"]
+unique_name_in_owner = true
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -160.0
+offset_top = 18.0
+offset_right = 160.0
+offset_bottom = 52.0
+mouse_filter = 2
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.1, 0.2, 1)
+theme_override_constants/outline_size = 7
+
+[node name="Banner" type="Label" parent="HUD"]
+unique_name_in_owner = true
+anchor_left = 0.5
+anchor_top = 0.35
+anchor_right = 0.5
+anchor_bottom = 0.35
+offset_left = -520.0
+offset_top = -44.0
+offset_right = 520.0
+offset_bottom = 44.0
+mouse_filter = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 52
+theme_override_colors/font_color = Color(1, 0.95, 0.98, 1)
+theme_override_colors/font_outline_color = Color(0.75, 0.2, 0.45, 1)
+theme_override_constants/outline_size = 14
+
+[node name="TouchControls" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("2_touch")
+
+[node name="JoyBase" type="Panel" parent="TouchControls"]
+unique_name_in_owner = true
+visible = false
+offset_right = 260.0
+offset_bottom = 260.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("SB_joy_base")
+
+[node name="JoyKnob" type="Panel" parent="TouchControls/JoyBase"]
+unique_name_in_owner = true
+offset_left = 65.0
+offset_top = 65.0
+offset_right = 195.0
+offset_bottom = 195.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("SB_joy_knob")
+
+[node name="AttackButton" type="Button" parent="TouchControls"]
+unique_name_in_owner = true
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -180.0
+offset_top = -180.0
+offset_right = -40.0
+offset_bottom = -40.0
+grow_horizontal = 0
+grow_vertical = 0
+pivot_offset = Vector2(70, 70)
+text = "GOLPE"
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("SB_btn_attack")
+theme_override_styles/hover = SubResource("SB_btn_attack")
+theme_override_styles/pressed = SubResource("SB_btn_attack_pressed")
+
+[node name="JumpButton" type="Button" parent="TouchControls"]
+unique_name_in_owner = true
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -150.0
+offset_right = -200.0
+offset_bottom = -30.0
+grow_horizontal = 0
+grow_vertical = 0
+pivot_offset = Vector2(60, 60)
+text = "SALTO"
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("SB_btn_small")
+theme_override_styles/hover = SubResource("SB_btn_small")
+theme_override_styles/pressed = SubResource("SB_btn_small_pressed")
+
+[node name="SpecialButton" type="Button" parent="TouchControls"]
+unique_name_in_owner = true
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -170.0
+offset_top = -320.0
+offset_right = -50.0
+offset_bottom = -200.0
+grow_horizontal = 0
+grow_vertical = 0
+pivot_offset = Vector2(60, 60)
+text = "★"
+theme_override_font_sizes/font_size = 44
+theme_override_styles/normal = SubResource("SB_btn_small")
+theme_override_styles/hover = SubResource("SB_btn_small")
+theme_override_styles/pressed = SubResource("SB_btn_small_pressed")

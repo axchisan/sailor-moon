@@ -1,8 +1,8 @@
 extends Label
-## Overlay de depuración para la escena de pruebas.
+## Overlay de depuración para las escenas de prueba.
 ##
-## Sirve para verificar de un vistazo que la máquina de estados transiciona
-## bien y que los FPS aguantan en el móvil. Se quita en las builds finales.
+## En la Fase 1 lo importante que muestra es `Atacando`: si alguna vez pasa de
+## 3, el sistema de fichas está roto y el combate se vuelve injusto.
 
 @export var target_path: NodePath
 
@@ -18,15 +18,24 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if _player == null:
-		text = "Sin jugador en la escena"
-		return
+		_player = get_tree().get_first_node_in_group("player") as Player
+		if _player == null:
+			text = "Sin jugador en la escena"
+			return
 
-	var fsm := _player.state_machine
-	text = "FPS: %d\nEstado: %s\nVel H: %.2f m/s\nVel Y: %.2f\nEn suelo: %s\nRenderizador: %s" % [
+	var enemies := get_tree().get_nodes_in_group("enemies").size()
+	var friends := get_tree().get_nodes_in_group("friends").size()
+
+	text = "FPS: %d   (%s)\nEstado: %s\nVel H: %.1f m/s\nCombo: %d (%.2fs)\nEspecial: %d%%\nEnemigos: %d   Amigos: %d\nAtacando: %d / %d" % [
 		Engine.get_frames_per_second(),
-		fsm.get_state_name(),
-		_player.get_horizontal_speed(),
-		_player.velocity.y,
-		"si" if _player.is_on_floor() else "no",
 		RenderingServer.get_current_rendering_method(),
+		_player.state_machine.get_state_name(),
+		_player.get_horizontal_speed(),
+		_player.combo_index,
+		_player.combo_timer,
+		int(GameManager.get_special_ratio() * 100.0),
+		enemies,
+		friends,
+		CombatDirector.active_attackers(),
+		CombatDirector.max_attackers,
 	]

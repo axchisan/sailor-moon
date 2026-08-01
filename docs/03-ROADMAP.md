@@ -50,20 +50,22 @@ Instalación en el dispositivo (con depuración USB activada):
 
 **Objetivo:** que machacar el botón contra cápsulas grises se sienta genuinamente bien. Sin escenario, sin arte, sin narrativa. Solo una sala vacía y enemigos.
 
-- [ ] Hitbox / Hurtbox con capas de colisión, activadas por *call method tracks* de la animación
-- [ ] Combo de 3 golpes con ventana de encadenado de 0,8 s
-- [ ] **Auto-orientación** hacia el enemigo más cercano en cono frontal
-- [ ] `CombatFeel`: hit stop, screen shake, partículas, flash blanco, sonido con pitch aleatorio
-- [ ] Retroceso y reacción de impacto en el enemigo
-- [ ] IA de enemigo básica (Peluchín): approach → telegraph → attack → recover → stagger
-- [ ] **Sistema de fichas de ataque** (máximo 3 atacando a la vez)
-- [ ] Barra de energía y ataque especial con zoom, pausa y texto en pantalla
-- [ ] Salud, invulnerabilidad tras golpe, estado *dizzy* y reaparición sin castigo
-- [ ] Purificación: el enemigo se convierte en criatura amistosa
-- [ ] Gestor de arena: barrera mágica, oleadas, apertura al limpiar
+- [x] Hitbox / Hurtbox con capas de colisión (las activa el estado de ataque; pasarán a *call method tracks* cuando haya animaciones en la Fase 2)
+- [x] Combo de 3 golpes con ventana de encadenado de 0,8 s — verificado: daño 1 / 1 / 2
+- [x] **Auto-orientación** hacia el enemigo más cercano (puntuación por distancia + ángulo, sin cono estricto)
+- [x] `CombatFeel`: hit stop, screen shake, partículas, flash blanco, sonido con pitch aleatorio
+- [x] Retroceso y reacción de impacto en el enemigo
+- [x] IA de enemigo básica (Peluchín): approach → wait → telegraph → attack → stagger
+- [x] **Sistema de fichas de ataque** — verificado: con 8 enemigos rodeando, máximo 3 atacando
+- [x] Barra de energía y ataque especial con zoom, invulnerabilidad y texto en pantalla
+- [x] Salud, invulnerabilidad tras golpe, estado *dizzy* y reaparición sin castigo
+- [x] Purificación: el enemigo se convierte en criatura amistosa que se queda saltando
+- [x] Gestor de arena: barrera mágica generada por código, oleadas configurables
+- [x] Controles táctiles: joystick virtual flotante + botones grandes
+- [x] Sonidos placeholder sintetizados (sin audio no se puede juzgar el *feel*)
 - [ ] Los otros dos arquetipos: Globito (a distancia) y Cofrecito (escudo)
-- [ ] Controles táctiles: joystick virtual (nodo nativo de Godot 4.7) + botones grandes
 - [ ] **Prueba en dispositivo real, con dedos, no con ratón**
+- [ ] **Ajuste del *feel*: machacar el botón cinco minutos y que apetezca seguir**
 
 **Criterio de salida:** tú machacas el botón durante cinco minutos contra cápsulas grises y te apetece seguir. Si no, aquí se itera — no se avanza.
 
