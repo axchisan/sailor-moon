@@ -1,0 +1,18 @@
+extends State
+## Quieta en el suelo, frenando hasta detenerse.
+
+
+func physics_update(delta: float) -> String:
+	var p := actor as Player
+
+	p.apply_gravity(delta)
+	p.apply_horizontal_movement(Vector3.ZERO, 0.0, delta)
+
+	if p.wants_jump():
+		return "Jump"
+	if not p.is_on_floor():
+		return "Fall"
+	if p.get_move_direction().length_squared() > 0.0001:
+		return "Move"
+
+	return ""
