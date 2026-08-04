@@ -28,13 +28,16 @@ const OUTLINE_MODE_WORLD := 1
 
 ## Aplica cel shading a todas las MeshInstance3D bajo `root`.
 ## Devuelve cuántas superficies convirtió.
+## `outline_width` va en METROS. 0.006 es un contorno fino y limpio en un
+## personaje de 1,55 m. Valores como 0.15 (15 cm) inflan la malla entera.
 static func apply(
 		root: Node,
 		shade_color: Color = Color(0.62, 0.58, 0.75),
 		toony: float = 0.9,
-		outline_width: float = 0.15,
+		outline_width: float = 0.006,
 		outline_color: Color = Color(0.18, 0.09, 0.15),
-		rim_color: Color = Color(1.0, 0.95, 1.0)
+		rim_color: Color = Color(1.0, 0.95, 1.0),
+		rim_mix: float = 0.12
 	) -> int:
 
 	var converted := 0
@@ -48,14 +51,15 @@ static func apply(
 			if source is ShaderMaterial:
 				continue
 			var toon := _build(source as BaseMaterial3D, shade_color, toony,
-				outline_width, outline_color, rim_color)
+				outline_width, outline_color, rim_color, rim_mix)
 			mesh_instance.set_surface_override_material(surface, toon)
 			converted += 1
 	return converted
 
 
 static func _build(source: BaseMaterial3D, shade_color: Color, toony: float,
-		outline_width: float, outline_color: Color, rim_color: Color) -> ShaderMaterial:
+		outline_width: float, outline_color: Color, rim_color: Color,
+		rim_mix: float) -> ShaderMaterial:
 
 	var albedo := Color.WHITE
 	var texture: Texture2D = null
@@ -92,7 +96,7 @@ static func _build(source: BaseMaterial3D, shade_color: Color, toony: float,
 	material.set_shader_parameter("_RimColor", rim_color)
 	material.set_shader_parameter("_RimFresnelPower", 3.0)
 	material.set_shader_parameter("_RimLift", 0.0)
-	material.set_shader_parameter("_RimLightingMix", 0.3)
+	material.set_shader_parameter("_RimLightingMix", rim_mix)
 
 	material.set_shader_parameter("_EmissionColor", Color.BLACK)
 	material.set_shader_parameter("_MainTex_ST", Vector4(1, 1, 0, 0))
