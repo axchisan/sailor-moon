@@ -167,14 +167,38 @@ Son humanoides y necesitan animación esquelética real.
 4. Descarga la primera animación **With Skin** y las demás **Without Skin**
 5. En Godot, el retargeting por mapeo de huesos las aplica sobre el modelo
 
-**⚠️ Riesgo detectado:** la Serena que generaste tiene los **brazos pegados al
-cuerpo** (ratio ancho/alto medido: 0,558; una A-pose ronda 0,7 y una T-pose
-supera 1,0). El auto-rigger de Mixamo trabaja mucho mejor con los brazos
-separados y puede dar pesos malos en las axilas.
+### A-pose: hecho, y una lección sobre cómo medir
 
-Si falla o deforma feo, hay dos salidas:
-- **Regenerar** en hi3d.ai con una imagen de referencia en A-pose o T-pose
-- **Abrir los brazos en Blender** antes de subirlo (yo puedo hacerlo por MCP)
+Primero avisé de que Serena tenía "los brazos pegados al cuerpo", basándome en un
+ratio ancho/alto de 0,558. **Esa medición estaba mal:** lo que ensancha la silueta
+son las coletas, que llegan a ±0,43 m. Al aislar la geometría de los brazos, el
+ángulo real era de **32° respecto a la vertical**, que ya es una A-pose válida.
+
+Aun así se abrieron hasta **44°**, el óptimo para el auto-rigger de Mixamo.
+
+**Cómo se hizo, y el error que hay que evitar:** el primer intento rotó los
+vértices seleccionados **por islas de malla**, y rasgó los codos. El motivo es que
+el brazo atraviesa varias islas, y la frontera entre una que gira y otra que no
+es exactamente por donde se abre el corte.
+
+La forma correcta es un **peso continuo por posición**, sin mirar islas:
+
+```
+w = radial(distancia_al_eje_del_brazo) × axial(avance_a_lo_largo_del_brazo)
+```
+
+- `radial`: 1 dentro de 10,5 cm del eje (el brazo mide 10 cm de radio máximo),
+  desvaneciéndose a 0 a los 16,5 cm — así el pelo cercano no se arrastra
+- `axial`: 0 en el hombro, subiendo a 1 en el primer 30% del brazo — así la unión
+  con el torso no se estira
+
+Al ser una función continua de la posición, dos vértices vecinos reciben pesos
+casi idénticos **aunque pertenezcan a islas distintas**. Es imposible que rasgue.
+
+Archivos resultantes:
+- `assets/models/characters/serena_sailor.glb` — el del juego, ya en A-pose
+- `Models/mixamo/serena_sailor_apose.fbx` — **este es el que sube a Mixamo**
+- `Models/serena_apose.blend` — por si hay que retocar
 
 Las 15 animaciones que necesitamos, y dónde buscarlas:
 
