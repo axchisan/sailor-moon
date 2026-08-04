@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dwb01nu7hh2k0"
-path="res://.godot/imported/serena_sailor_Image_0.png-ef5d888030204688fe6f2090b7dcf104.ctex"
+path.s3tc="res://.godot/imported/serena_sailor_Image_0.png-ef5d888030204688fe6f2090b7dcf104.s3tc.ctex"
+path.etc2="res://.godot/imported/serena_sailor_Image_0.png-ef5d888030204688fe6f2090b7dcf104.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "574b1fcb6058afbfef7f8b700d775333"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/characters/serena_sailor_Image_0.png"
-dest_files=["res://.godot/imported/serena_sailor_Image_0.png-ef5d888030204688fe6f2090b7dcf104.ctex"]
+dest_files=["res://.godot/imported/serena_sailor_Image_0.png-ef5d888030204688fe6f2090b7dcf104.s3tc.ctex", "res://.godot/imported/serena_sailor_Image_0.png-ef5d888030204688fe6f2090b7dcf104.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
