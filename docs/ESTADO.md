@@ -154,6 +154,9 @@ export PATH="/opt/homebrew/bin:$PATH"
 # Importar recursos / refrescar la caché de clases globales
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path . --import
 
+# Reaplicar las rutas de Android (el editor las borra al cerrarse)
+./tools/configurar_android.sh
+
 # Exportar APK
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path . \
   --export-debug "Android" export/sailor_moon.apk
