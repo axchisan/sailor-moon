@@ -2,21 +2,18 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cybq5kr1ggb7f"
-path.s3tc="res://.godot/imported/Idle_0.png-5f56e3e51469a77354bf56811539f458.s3tc.ctex"
-path.etc2="res://.godot/imported/Idle_0.png-5f56e3e51469a77354bf56811539f458.etc2.ctex"
+uid="uid://dai03j04q668w"
+path.s3tc="res://.godot/imported/idle_0.png-0b75d4dd1dcc420fd9a48670dfec5f1e.s3tc.ctex"
+path.etc2="res://.godot/imported/idle_0.png-0b75d4dd1dcc420fd9a48670dfec5f1e.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
-generator_parameters={
-"md5": "cdf9af848a2227e1c5186954339c2f6c"
-}
 
 [deps]
 
-source_file="res://assets/animations/serena/Idle_0.png"
-dest_files=["res://.godot/imported/Idle_0.png-5f56e3e51469a77354bf56811539f458.s3tc.ctex", "res://.godot/imported/Idle_0.png-5f56e3e51469a77354bf56811539f458.etc2.ctex"]
+source_file="res://assets/animations/serena/idle_0.png"
+dest_files=["res://.godot/imported/idle_0.png-0b75d4dd1dcc420fd9a48670dfec5f1e.s3tc.ctex", "res://.godot/imported/idle_0.png-0b75d4dd1dcc420fd9a48670dfec5f1e.etc2.ctex"]
 
 [params]
 

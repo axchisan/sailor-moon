@@ -31,7 +31,7 @@ DTO, signals ≈ event bus).
 |---|---|
 | **Fase 0 — Cimientos** | ✅ **Cerrada.** APK corriendo en el móvil real |
 | **Fase 1 — Combate** | 🟡 **Núcleo funcionando y verificado.** Falta pulir el *feel*, y los enemigos Globito y Cofrecito |
-| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Modelos listos; rigueo hecho en Mixamo; descargando animaciones |
+| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Modelos, rigueo, pelo y AnimationTree listos. Falta meter a Serena en el prototipo |
 | Fases 3–5 | ⬜ Sin empezar |
 
 ### Lo que funciona hoy
@@ -53,16 +53,15 @@ principal del proyecto):
 
 ### Lo siguiente, en orden
 
-1. **Descargar las 15 animaciones de Mixamo** ← el usuario está aquí ahora
-   Especificación completa en [`08-ANIMACIONES-MIXAMO.md`](08-ANIMACIONES-MIXAMO.md).
-   Ya tiene 6: Idle, Walking, Running, Jumping Up, Jumping Down, Falling Idle.
-   **Las animaciones NO se ven afectadas por la física de pelo** (ver doc 09)
-2. Retargetear, montar el `AnimationTree` y sustituir la cápsula por Serena.
-   El modelo a usar es **`serena_rigged.glb`** (con huesos de pelo), no
-   `serena_sailor.glb`
-3. Mover la activación de la hitbox a *call method tracks* de la animación
-4. Enemigos Globito y Cofrecito (el Cofrecito ya tiene modelo)
-5. Escenario del Nivel 1 — ver [`07-ESCENARIOS.md`](07-ESCENARIOS.md)
+1. ~~Descargar las animaciones~~ ✅ Las 15 descargadas y consolidadas
+2. ~~Montar el `AnimationTree`~~ ✅ Verificado a 60 fps con pelo y cel shading
+3. **Sustituir la cápsula por Serena en `player.tscn`** ← siguiente paso.
+   Pasos detallados en [`10-ANIMATION-TREE.md`](10-ANIMATION-TREE.md) §6.
+   El modelo bueno es **`serena_rigged.fbx`** (el `.glb` se borró: dejaba una
+   rotación de 90° en el Hips y tumbaba al personaje)
+4. Mover la activación de la hitbox a *call method tracks* de la animación
+5. Enemigos Globito y Cofrecito (el Cofrecito ya tiene modelo)
+6. Escenario del Nivel 1 — ver [`07-ESCENARIOS.md`](07-ESCENARIOS.md)
 
 ---
 
@@ -80,6 +79,7 @@ principal del proyecto):
 | [`07-ESCENARIOS.md`](07-ESCENARIOS.md) | Cómo se construyen los escenarios (3 capas) |
 | [`08-ANIMACIONES-MIXAMO.md`](08-ANIMACIONES-MIXAMO.md) | Qué animaciones bajar y con qué ajustes |
 | [`09-FISICA-PELO.md`](09-FISICA-PELO.md) | Coletas con inercia: cadenas de huesos + spring bones |
+| [`10-ANIMATION-TREE.md`](10-ANIMATION-TREE.md) | AnimationTree montado, TimeScale y el lio de reposos de Mixamo |
 | [`CREDITOS.md`](CREDITOS.md) | Atribuciones de assets |
 
 ---

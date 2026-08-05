@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://djo8vycwwbuc8"
-path.s3tc="res://.godot/imported/serena_rigged_Image_1-Image_1.png-ec17836a8e2a13fa113eb53a45d8f298.s3tc.ctex"
-path.etc2="res://.godot/imported/serena_rigged_Image_1-Image_1.png-ec17836a8e2a13fa113eb53a45d8f298.etc2.ctex"
+uid="uid://ccueqg1u1euxr"
+path.s3tc="res://.godot/imported/serena_rigged_0.png-d5cdbffb78a18546e535f733084faa31.s3tc.ctex"
+path.etc2="res://.godot/imported/serena_rigged_0.png-d5cdbffb78a18546e535f733084faa31.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -15,8 +15,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://assets/models/characters/serena_rigged_Image_1-Image_1.png"
-dest_files=["res://.godot/imported/serena_rigged_Image_1-Image_1.png-ec17836a8e2a13fa113eb53a45d8f298.s3tc.ctex", "res://.godot/imported/serena_rigged_Image_1-Image_1.png-ec17836a8e2a13fa113eb53a45d8f298.etc2.ctex"]
+source_file="res://assets/models/characters/serena_rigged_0.png"
+dest_files=["res://.godot/imported/serena_rigged_0.png-d5cdbffb78a18546e535f733084faa31.s3tc.ctex", "res://.godot/imported/serena_rigged_0.png-d5cdbffb78a18546e535f733084faa31.etc2.ctex"]
 
 [params]
 

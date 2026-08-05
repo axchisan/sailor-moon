@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://be0qkmlh7pjag"
-path="res://.godot/imported/Jumping Down.fbx-b7b9491c56bf1643d3eee5b2efac17d9.scn"
+uid="uid://com2y35ycxm8v"
+path="res://.godot/imported/hurt.fbx-d7f707f1689793fdc42f049efc1ad01e.scn"
 
 [deps]
 
-source_file="res://assets/animations/serena/Jumping Down.fbx"
-dest_files=["res://.godot/imported/Jumping Down.fbx-b7b9491c56bf1643d3eee5b2efac17d9.scn"]
+source_file="res://assets/animations/serena/hurt.fbx"
+dest_files=["res://.godot/imported/hurt.fbx-d7f707f1689793fdc42f049efc1ad01e.scn"]
 
 [params]
 
