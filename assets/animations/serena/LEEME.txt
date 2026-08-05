@@ -1,0 +1,22 @@
+Deja aqui los FBX descargados de Mixamo, renombrados asi:
+
+  idle.fbx          <- la unica que se descarga "With Skin"
+  walk.fbx
+  run.fbx
+  jump_start.fbx
+  jump_loop.fbx
+  land.fbx
+  attack_1.fbx
+  attack_2.fbx
+  attack_3.fbx
+  special.fbx
+  hurt.fbx
+  dizzy.fbx
+  victory.fbx
+  transform_pose.fbx
+  talk_idle.fbx
+
+Ajustes de descarga: FBX Binary - 30 FPS - Keyframe Reduction: none
+In Place activado en todas menos idle.
+
+Detalle completo en docs/08-ANIMACIONES-MIXAMO.md

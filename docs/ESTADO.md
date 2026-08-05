@@ -1,0 +1,272 @@
+# ESTADO DEL PROYECTO — empieza por aquí
+
+> **Este es el documento de entrada.** Si eres un agente nuevo o el usuario
+> retoma tras un tiempo, lee esto primero y luego el documento específico que
+> necesites.
+>
+> **Última actualización:** 2026-08-04 · Commit `5b6e272`
+
+---
+
+## 1. Qué es esto
+
+Juego **Sailor Moon** en 3D para Android, regalo personal para la prima de 8 años
+del usuario. **No comercial, no se publica en ninguna tienda.**
+
+- **Género:** beat 'em up ligero en 3D con arenas de combate
+- **Motor:** Godot 4.7.1, GDScript, renderizador **Mobile** (Vulkan/Metal)
+- **Estética:** cel shading anime con MToon
+- **Idioma:** todo en español, incluido el código y los comentarios
+
+**Perfil del usuario:** desarrollador backend empresarial. Experiencia previa en
+gamedev limitada y casi toda en 2D. Ninguna en 3D ni en arte. Explicar términos
+de 3D la primera vez; usar analogías de backend (autoload ≈ singleton, Resource ≈
+DTO, signals ≈ event bus).
+
+---
+
+## 2. En qué punto estamos
+
+| Fase | Estado |
+|---|---|
+| **Fase 0 — Cimientos** | ✅ **Cerrada.** APK corriendo en el móvil real |
+| **Fase 1 — Combate** | 🟡 **Núcleo funcionando y verificado.** Falta pulir el *feel*, y los enemigos Globito y Cofrecito |
+| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Modelos listos; rigueo hecho en Mixamo; descargando animaciones |
+| Fases 3–5 | ⬜ Sin empezar |
+
+### Lo que funciona hoy
+
+Prototipo jugable en `scenes/prototypes/test_combat.tscn` (es la escena
+principal del proyecto):
+
+- Movimiento 3D con cámara orbital, *coyote time* y *jump buffer*
+- Combo de 3 golpes (daño 1/1/2) con ventana de 0,8 s, encadenable machacando
+- Auto-orientación al enemigo más cercano
+- Ataque especial con barra de carga, zoom, invulnerabilidad y área amplia
+- `CombatFeel`: hit stop, screen shake, partículas, flash y SFX
+- Enemigo Peluchín con FSM de 7 estados
+- **Sistema de fichas: nunca más de 3 enemigos atacando a la vez** (verificado)
+- Purificación en vez de muerte
+- Arena con barrera mágica y oleadas configurables
+- HUD por EventBus y controles táctiles (joystick flotante + botones)
+- 60 fps con 9 enemigos y partículas
+
+### Lo siguiente, en orden
+
+1. **Descargar las 15 animaciones de Mixamo** ← el usuario está aquí ahora
+   Especificación completa en [`08-ANIMACIONES-MIXAMO.md`](08-ANIMACIONES-MIXAMO.md)
+2. Retargetear, montar el `AnimationTree` y sustituir la cápsula por Serena
+3. Mover la activación de la hitbox a *call method tracks* de la animación
+4. Enemigos Globito y Cofrecito (el Cofrecito ya tiene modelo)
+5. Escenario del Nivel 1 — ver [`07-ESCENARIOS.md`](07-ESCENARIOS.md)
+
+---
+
+## 3. Índice de documentación
+
+| Documento | Contenido |
+|---|---|
+| [`00-GDD.md`](00-GDD.md) | Diseño: temática, guion por niveles, combate, accesibilidad |
+| [`01-ARQUITECTURA.md`](01-ARQUITECTURA.md) | Estructura, autoloads, FSM, presupuestos de rendimiento |
+| [`02-PIPELINE-ASSETS.md`](02-PIPELINE-ASSETS.md) | Herramientas (parcialmente obsoleto, ver 06) |
+| [`03-ROADMAP.md`](03-ROADMAP.md) | Fases, checklists, riesgos, entorno de compilación Android |
+| [`04-VALIDACION-VRM.md`](04-VALIDACION-VRM.md) | Validación del addon VRM y del shader MToon |
+| [`05-COMBATE.md`](05-COMBATE.md) | **Guía de ajuste del combate.** "Quiero cambiar X → toca este archivo" |
+| [`06-GUIA-ASSETS-3D.md`](06-GUIA-ASSETS-3D.md) | Pipeline 3D actual: hi3d.ai → Blender → Godot |
+| [`07-ESCENARIOS.md`](07-ESCENARIOS.md) | Cómo se construyen los escenarios (3 capas) |
+| [`08-ANIMACIONES-MIXAMO.md`](08-ANIMACIONES-MIXAMO.md) | Qué animaciones bajar y con qué ajustes |
+| [`CREDITOS.md`](CREDITOS.md) | Atribuciones de assets |
+
+---
+
+## 4. Mapa del código
+
+38 scripts, 8 escenas. Lo que hay que conocer:
+
+```
+src/autoload/          Los "servicios". Orden en project.godot IMPORTA
+  event_bus.gd           Solo señales. Todo se comunica por aquí
+  game_manager.gd        Estado de partida: salud, especial, contadores
+  save_manager.gd        JSON en user:// con save_version
+  audio_manager.gd       Buses, música con crossfade, pool de 16 SFX
+  scene_loader.gd        Carga asíncrona
+  settings.gd            Volúmenes, idioma, assisted_mode
+  combat_feel.gd         ⭐ TODO el jugo del combate en un solo sitio
+  combat_director.gd     ⭐ Fichas de ataque (máx. 3 atacando)
+
+src/core/
+  state.gd, state_machine.gd   FSM genérica (jugador y enemigos)
+  hitbox.gd, hurtbox.gd        Colisión de golpes por capas
+  toon_material.gd             ⭐ Aplica MToon a cualquier malla PBR
+  toon_root.gd                 Versión nodo del anterior
+  impact_particles.gd
+
+src/player/            player.gd + camera_rig.gd + states/ (8 estados)
+src/enemies/           enemy.gd + states/ (7 estados)
+src/level/arena.gd     Oleadas y barrera mágica
+src/ui/                hud.gd, touch_controls.gd, debug_overlay.gd
+src/data/attack_data.gd
+
+tools/blender_preparar_modelo.py   ⭐ Reduce modelos de IA a presupuesto
+```
+
+### Capas de colisión 3D
+
+| # | Nombre | Valor |
+|---|---|---|
+| 1 | world | 1 |
+| 2 | player | 2 |
+| 3 | enemy | 4 |
+| 4 | player_hitbox | 8 |
+| 5 | enemy_hitbox | 16 |
+| 6 | player_hurtbox | 32 |
+| 7 | enemy_hurtbox | 64 |
+| 8 | interactable | 128 |
+
+---
+
+## 5. Entorno (rutas reales, verificadas)
+
+| Cosa | Ruta / valor |
+|---|---|
+| Proyecto | `/Users/mac/Documents/Dev/Games/sailor-moon` |
+| Godot | `/Applications/Godot.app/Contents/MacOS/Godot` (4.7.1) |
+| JDK | `/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home` |
+| Android SDK | `/opt/homebrew/share/android-commandlinetools` |
+| Build-Tools | 35.0.0 · Platform 35 · Platform-Tools 37 |
+| Keystore debug | `~/.android/debug.keystore` (alias `androiddebugkey`, pass `android`) |
+| git-lfs | `/opt/homebrew/bin/git-lfs` |
+| APK | `export/sailor_moon.apk` — `com.familia.sailormoon`, minSdk 24, arm64-v8a |
+
+### Comandos
+
+```bash
+# git-lfs NO está en el PATH de shells no interactivas
+export PATH="/opt/homebrew/bin:$PATH"
+
+# Importar recursos / refrescar la caché de clases globales
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path . --import
+
+# Exportar APK
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path . \
+  --export-debug "Android" export/sailor_moon.apk
+
+# Instalar en el móvil (depuración USB activada)
+/opt/homebrew/share/android-commandlinetools/platform-tools/adb install -r export/sailor_moon.apk
+```
+
+### MCP disponibles
+
+- **Godot** (`mcp__godot__*`) — editar el proyecto y **controlar el juego en
+  ejecución** (`game_eval`, `game_screenshot`). Es lo que permite verificar de
+  verdad en vez de suponer.
+- **Blender** (`mcp__blender__*`) — Blender 5.2 LTS. **Blender debe estar
+  abierto.**
+
+---
+
+## 6. ⚠️ Trampas ya pisadas — no volver a caer
+
+Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
+
+### Godot
+
+1. **`SpringArm3D` coloca a sus hijos escribiéndoles la `position`.** Nunca
+   escribas `position` en un hijo suyo. La sacudida de cámara usa
+   `h_offset`/`v_offset`. *(La cámara en 3ª persona estuvo rota toda la Fase 0
+   por esto, y al consultar `camera.position` desde fuera daba el valor correcto:
+   solo fallaba lo renderizado.)*
+2. **`monitoring` / `monitorable` dentro de una señal de física** → error
+   `Function blocked during in/out signal`. Usa `set_deferred`.
+3. **El timer del hit stop necesita `ignore_time_scale = true`** (4º parámetro de
+   `create_timer`) o se congela él mismo y el juego no recupera la velocidad.
+4. **Una clase nueva con `class_name` no existe hasta ejecutar `--import`.** Si
+   no, `game_eval` cae al depurador y bloquea el MCP.
+5. **El MCP inserta los autoloads en orden inverso.** Hay que reordenarlos a mano
+   en `project.godot`: `Settings` necesita que `AudioManager` ya exista.
+6. **El MCP activa plugins como `vrm/enabled=true`, formato que Godot 4 ignora en
+   silencio.** El correcto es
+   `enabled=PackedStringArray("res://addons/.../plugin.cfg")`.
+7. **`Models/` necesita un archivo `.gdignore`.** Sin él Godot importa los
+   originales de 80 MB y la caché pasa de 18 MB a 273 MB.
+8. **El preset de exportación del MCP sale sin la sección `[preset.0.options]`** y
+   la exportación falla. Hay que escribirlo a mano.
+
+### Blender (MCP)
+
+9. **`bpy.ops.wm.read_homefile()` invalida el contexto** para los operadores
+   posteriores del *mismo* script. Divide en dos llamadas MCP: una importa, otra
+   procesa.
+10. **`read_factory_settings` está bloqueado** por el sandbox del MCP. Usa
+    `read_homefile(use_empty=True)`.
+11. **Blender 5.2:** el motor es `BLENDER_EEVEE` (no `BLENDER_EEVEE_NEXT`), y los
+    nodos hay que buscarlos **por tipo** (`n.type == 'BSDF_PRINCIPLED'`), no por
+    nombre: los nombres están traducidos al idioma del usuario.
+12. **Al desemparentar con `CLEAR_KEEP_TRANSFORM`, el objeto absorbe la escala del
+    padre.** Si luego asignas `scale = factor` la sobrescribes y el tamaño sale
+    mal. Aplica transformaciones primero.
+13. **Quitar los Empty limpia la selección** y el siguiente operador falla con
+    "Falta objeto activo". Reafirma selección y objeto activo.
+14. **Para deformar una malla, NO selecciones por islas.** Usa pesos continuos por
+    posición. *(Rotar los brazos por islas rasgó los codos: el brazo atraviesa
+    varias islas y la frontera es justo por donde se abre el corte.)*
+
+### Entorno
+
+15. **Godot fuera de `/Applications` sufre App Translocation:** macOS le da una
+    ruta temporal distinta en cada arranque. **Ya resuelto**, está en
+    `/Applications`.
+16. **`git-lfs` no está en el PATH de shells no interactivas.** `export
+    PATH="/opt/homebrew/bin:$PATH"` antes de cualquier `git add`.
+17. **Al cerrar el editor de Godot puede sobrescribir `editor_settings-4.7.tres`**
+    con las rutas viejas de Android y romper la exportación. Hay copia en
+    `editor_settings-4.7.tres.bak-preandroid`.
+
+### Herramientas de IA para 3D
+
+18. **Tripo y Meshy cobran por EXPORTAR, no por generar.** Al evaluar una
+    herramienta nueva, lo primero que hay que probar es **descargar un archivo**.
+19. **hi3d.ai no deja configurar polígonos ni texturas.** Todo llega a ~2.000.000
+    de triángulos con texturas 4K, así que el paso por Blender es obligatorio.
+
+---
+
+## 7. Decisiones tomadas y por qué
+
+| Decisión | Motivo |
+|---|---|
+| Beat 'em up en vez de aventura | Elección del usuario. Se mitigó el coste compartiendo esqueleto y animaciones entre las 5 Sailors |
+| Renderizador Mobile | Dispositivo objetivo Android 2019+. `Forward+` está descartado en móvil |
+| Fichas de ataque (máx. 3) | Sin esto, 8 enemigos atacan a la vez y el juego se vuelve injusto |
+| Auto-orientación por puntuación, no por cono | Apuntar en 3D con joystick virtual es la barrera nº 1 para una niña de 8 años |
+| Ventana de combo de 0,8 s | Deliberadamente enorme: machacar debe funcionar SIEMPRE |
+| El especial no se recarga a sí mismo | Devolvía el 41% por uso y era encadenable siendo invulnerable |
+| Purificar en vez de matar | Pilar de diseño: cero violencia explícita |
+| Joystick flotante | Aparece donde pone el dedo; a los 8 años es mejor que uno fijo |
+| Enemigos con animación procedural | Son bolas y cofres: Mixamo no puede riguearlos y no hace falta |
+| `Models/` fuera de git | 231 MB de originales regenerables desde hi3d.ai |
+
+---
+
+## 8. Presupuestos de rendimiento
+
+Objetivo 60 fps, aceptable 30.
+
+| Recurso | Presupuesto |
+|---|---|
+| Triángulos en pantalla | < 150.000 |
+| Personaje principal | 15–25k tris · textura 2048 |
+| Enemigo | 3–5k tris · textura 1024 |
+| Enemigos simultáneos | 8 activos |
+| Draw calls | < 150 |
+| Luces dinámicas | 1 direccional + 2–3 puntuales |
+
+Modelos actuales: Serena 25.000 tris · Peluchín 5.000 · Cofrecito 5.000. ✅
+
+---
+
+## 9. Nota legal
+
+Sailor Moon es propiedad de Naoko Takeuchi / Kodansha / Toei Animation. Regalo
+personal, no distribuido ni monetizado. **No publicar en Google Play, itch.io ni
+ninguna tienda.** Instalación por sideload en el dispositivo de la prima.
