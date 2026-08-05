@@ -2,6 +2,10 @@ extends State
 ## Quieta en el suelo, frenando hasta detenerse.
 
 
+func enter(_msg: Dictionary = {}) -> void:
+	(actor as Player).play("locomocion")
+
+
 func physics_update(delta: float) -> String:
 	var p := actor as Player
 

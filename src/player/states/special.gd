@@ -23,6 +23,7 @@ func enter(_msg: Dictionary = {}) -> void:
 	_timer = 0.0
 
 	p.reset_combo()
+	p.play("special", _attack.total_time() if _attack != null else 0.0)
 	GameManager.consume_special()
 
 	# Invulnerable de principio a fin, con margen de sobra.

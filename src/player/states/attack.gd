@@ -25,6 +25,10 @@ func enter(_msg: Dictionary = {}) -> void:
 	_timer = 0.0
 	_buffered = false
 
+	# La animación se encaja en la duración del golpe: manda el combate, que ya
+	# está ajustado, y la animación se adapta.
+	p.play("attack_%d" % _index, _attack.total_time() if _attack != null else 0.0)
+
 	# Auto-orientación: se gira sola hacia el enemigo más cercano.
 	var target := p.get_attack_target()
 	if target != null:

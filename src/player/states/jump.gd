@@ -8,6 +8,7 @@ const RELEASE_DAMPING := 0.45
 
 func enter(_msg: Dictionary = {}) -> void:
 	var p := actor as Player
+	p.play("jump")
 	p.do_jump()
 
 

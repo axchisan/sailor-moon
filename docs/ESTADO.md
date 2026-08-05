@@ -31,7 +31,7 @@ DTO, signals ≈ event bus).
 |---|---|
 | **Fase 0 — Cimientos** | ✅ **Cerrada.** APK corriendo en el móvil real |
 | **Fase 1 — Combate** | 🟡 **Núcleo funcionando y verificado.** Falta pulir el *feel*, y los enemigos Globito y Cofrecito |
-| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Modelos, rigueo, pelo y AnimationTree listos. Falta meter a Serena en el prototipo |
+| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Serena jugable con animaciones, pelo y cel shading. Falta el escenario del Nivel 1 |
 | Fases 3–5 | ⬜ Sin empezar |
 
 ### Lo que funciona hoy
@@ -50,16 +50,18 @@ principal del proyecto):
 - Arena con barrera mágica y oleadas configurables
 - HUD por EventBus y controles táctiles (joystick flotante + botones)
 - 60 fps con 9 enemigos y partículas
+- **Serena como personaje jugable**, con las 15 animaciones de Mixamo, coletas
+  con física de inercia y cel shading MToon
 
 ### Lo siguiente, en orden
 
 1. ~~Descargar las animaciones~~ ✅ Las 15 descargadas y consolidadas
 2. ~~Montar el `AnimationTree`~~ ✅ Verificado a 60 fps con pelo y cel shading
-3. **Sustituir la cápsula por Serena en `player.tscn`** ← siguiente paso.
-   Pasos detallados en [`10-ANIMATION-TREE.md`](10-ANIMATION-TREE.md) §6.
-   El modelo bueno es **`serena_rigged.fbx`** (el `.glb` se borró: dejaba una
-   rotación de 90° en el Hips y tumbaba al personaje)
-4. Mover la activación de la hitbox a *call method tracks* de la animación
+3. ~~Sustituir la cápsula por Serena~~ ✅ **Serena ya es el jugador.**
+   Combo verificado con sus animaciones, física de pelo y cel shading, 60 fps
+4. **Mover la activación de la hitbox a *call method tracks* de la animación**
+   ← siguiente paso. Hoy la enciende un temporizador del estado; con la
+   animación real conectaría en el frame exacto del impacto
 5. Enemigos Globito y Cofrecito (el Cofrecito ya tiene modelo)
 6. Escenario del Nivel 1 — ver [`07-ESCENARIOS.md`](07-ESCENARIOS.md)
 
@@ -201,7 +203,14 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
    ANTERIOR al modificador. Parece que la física no hace nada cuando sí funciona.
 10. **`bound_box` de un objeto con Armature está cacheado y puede mentir.** Para
    medir de verdad hay que recorrer los vértices.
-11. **GDScript no es Python:** no hay listas por comprensión y `round()` solo
+11. **El AABB de una malla con esqueleto se calcula sobre la POSE DE REPOSO.**
+   Si la animación saca la geometría de esa caja, Godot la descarta por frustum
+   culling y el personaje DESAPARECE según el ángulo de cámara, aunque esté
+   delante. Se arregla con `MeshInstance3D.custom_aabb` (lo hace
+   `CharacterAnimator._ampliar_aabb()`).
+12. **Los modelos de Mixamo miran hacia +Z**, y Godot usa −Z como frente. Hay
+   que girar el nodo visual 180° en Y.
+13. **GDScript no es Python:** no hay listas por comprensión y `round()` solo
    acepta un argumento (para decimales, `snappedf(x, 0.1)`). Un error de sintaxis
    dentro de `game_eval` deja el juego atrapado en el depurador y bloquea el MCP.
 

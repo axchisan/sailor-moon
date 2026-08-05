@@ -3,6 +3,10 @@ extends State
 ## con teclado siempre corre.
 
 
+func enter(_msg: Dictionary = {}) -> void:
+	(actor as Player).play("locomocion")
+
+
 func physics_update(delta: float) -> String:
 	var p := actor as Player
 	var direction := p.get_move_direction()

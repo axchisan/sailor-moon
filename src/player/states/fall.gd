@@ -6,6 +6,10 @@ extends State
 ## sin que se note.
 
 
+func enter(_msg: Dictionary = {}) -> void:
+	(actor as Player).play("fall")
+
+
 func physics_update(delta: float) -> String:
 	var p := actor as Player
 
