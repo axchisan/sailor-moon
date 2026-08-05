@@ -45,6 +45,8 @@ const ANIMACION_DE := {
 @export var velocidad_correr: float = 6.5
 ## Tope de aceleración de una animación. Por encima se ve como un borrón.
 @export var escala_maxima: float = 5.0
+## Caja de visibilidad del personaje. Ver `_ampliar_aabb()`.
+@export var aabb_personaje: AABB = AABB(Vector3(-1.2, -0.4, -1.2), Vector3(2.4, 2.6, 2.4))
 
 var tree: AnimationTree = null
 var player: AnimationPlayer = null
@@ -83,6 +85,21 @@ func _ready() -> void:
 
 	_playback = tree.get("parameters/maquina/playback")
 	player.animation_finished.connect(func(a: StringName) -> void: animation_finished.emit(String(a)))
+
+	_ampliar_aabb(skeleton)
+
+
+## El AABB de una malla con esqueleto se calcula sobre la POSE DE REPOSO. Si la
+## animación saca la geometría de esa caja, Godot la descarta por frustum
+## culling y el personaje desaparece según el ángulo de cámara — aunque esté
+## perfectamente delante.
+##
+## Se le pone una caja generosa a mano, que cubra cualquier pose y las coletas.
+func _ampliar_aabb(skeleton: Skeleton3D) -> void:
+	for hijo in skeleton.get_children():
+		var malla := hijo as MeshInstance3D
+		if malla != null:
+			malla.custom_aabb = aabb_personaje
 
 
 # --- API para la máquina de estados -------------------------------------------

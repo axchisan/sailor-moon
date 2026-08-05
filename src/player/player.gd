@@ -39,7 +39,11 @@ class_name Player
 @export var knockback_friction: float = 9.0
 
 @onready var model: Node3D = $Model
-@onready var mesh: MeshInstance3D = $Model/Body
+## Puede ser null: el prototipo de cápsula no tiene malla de personaje.
+@onready var mesh: MeshInstance3D = get_node_or_null("Model/Body")
+## Animador y pelo son opcionales para que la escena de cápsulas siga viva.
+@onready var animator: CharacterAnimator = get_node_or_null("Model/Animador")
+@onready var hair: HairPhysics = get_node_or_null("Model/Animador/Fisica")
 @onready var camera_rig: CameraRig = $CameraRig
 @onready var state_machine: StateMachine = $StateMachine
 @onready var hitbox: Hitbox = $Model/Hitbox
@@ -116,6 +120,16 @@ func _physics_process(delta: float) -> void:
 	state_machine.physics_update(delta)
 	move_and_slide()
 	_was_on_floor = is_on_floor()
+
+	if animator != null:
+		animator.set_locomotion_speed(get_horizontal_speed())
+
+
+## Pide una animación. `duracion` la encaja en el tiempo que dicta el combate;
+## 0 la deja a velocidad natural. Segura si no hay animador (prototipo gris).
+func play(estado: String, duracion: float = 0.0) -> void:
+	if animator != null:
+		animator.travel(estado, duracion)
 
 
 func _tick_timers(delta: float) -> void:
@@ -349,14 +363,20 @@ func respawn() -> void:
 	velocity = Vector3.ZERO
 	invuln_timer = invulnerability_time
 	GameManager.reset_health()
+	# Sin esto el pelo sale disparado por la inercia acumulada antes del salto.
+	if hair != null:
+		hair.reset()
 	EventBus.player_respawned.emit(global_position)
 
 
+## Parpadeo de invulnerabilidad. Con el modelo real no hay una sola malla que
+## esconder, así que se parpadea el nodo entero.
 func _update_blink() -> void:
-	if mesh == null:
+	var objetivo: Node3D = mesh if mesh != null else model
+	if objetivo == null:
 		return
 	if invuln_timer <= 0.0:
-		mesh.visible = true
+		objetivo.visible = true
 		return
 	# Parpadeo a ~12 Hz mientras dura la invulnerabilidad.
-	mesh.visible = fmod(invuln_timer, 0.16) > 0.08
+	objetivo.visible = fmod(invuln_timer, 0.16) > 0.08

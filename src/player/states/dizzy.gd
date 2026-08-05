@@ -13,6 +13,7 @@ var _timer: float = 0.0
 
 func enter(msg: Dictionary = {}) -> void:
 	var p := actor as Player
+	p.play("dizzy", DIZZY_TIME)
 	_timer = 0.0
 
 	var knockback: Vector3 = msg.get("knockback", Vector3.ZERO)

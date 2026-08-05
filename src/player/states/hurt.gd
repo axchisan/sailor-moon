@@ -10,6 +10,7 @@ const STUN_TIME := 0.35
 
 func enter(msg: Dictionary = {}) -> void:
 	var p := actor as Player
+	p.play("hurt", STUN_TIME)
 	var knockback: Vector3 = msg.get("knockback", Vector3.ZERO)
 	var up: float = msg.get("up", 1.0)
 
