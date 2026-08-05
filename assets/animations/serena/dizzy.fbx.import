@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://5sn0oid1q28o"
-path="res://.godot/imported/idle.fbx-03e46d4fc1918dc64e3a725c460d0cef.scn"
+uid="uid://cguwhr3xqd4f1"
+path="res://.godot/imported/dizzy.fbx-524a426da155574cdc1951e754c33201.scn"
 
 [deps]
 
-source_file="res://assets/animations/serena/idle.fbx"
-dest_files=["res://.godot/imported/idle.fbx-03e46d4fc1918dc64e3a725c460d0cef.scn"]
+source_file="res://assets/animations/serena/dizzy.fbx"
+dest_files=["res://.godot/imported/dizzy.fbx-524a426da155574cdc1951e754c33201.scn"]
 
 [params]
 

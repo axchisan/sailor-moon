@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://5sn0oid1q28o"
-path="res://.godot/imported/idle.fbx-03e46d4fc1918dc64e3a725c460d0cef.scn"
+uid="uid://bv3pl8g70vmmv"
+path="res://.godot/imported/attack_1.fbx-efd6891b94b0109d1ec99e069567ce89.scn"
 
 [deps]
 
-source_file="res://assets/animations/serena/idle.fbx"
-dest_files=["res://.godot/imported/idle.fbx-03e46d4fc1918dc64e3a725c460d0cef.scn"]
+source_file="res://assets/animations/serena/attack_1.fbx"
+dest_files=["res://.godot/imported/attack_1.fbx-efd6891b94b0109d1ec99e069567ce89.scn"]
 
 [params]
 

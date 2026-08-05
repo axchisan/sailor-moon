@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://src/core/hair_physics.gd" id="1_hair"]
-[ext_resource type="PackedScene" path="res://assets/models/characters/serena_rigged.fbx" id="2_serena"]
+[ext_resource type="Script" path="res://src/player/character_animator.gd" id="1_anim"]
+[ext_resource type="Script" path="res://src/core/hair_physics.gd" id="2_hair"]
 [ext_resource type="Script" path="res://src/core/toon_root.gd" id="3_toon"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/serena_rigged.fbx" id="4_serena"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat_1"]
 sky_top_color = Color(0.5, 0.64, 0.94, 1)
@@ -21,7 +22,7 @@ ambient_light_energy = 0.7
 reflected_light_source = 2
 tonemap_mode = 2
 
-[node name="TestPelo" type="Node3D"]
+[node name="TestAnimaciones" type="Node3D"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Env_1")
@@ -31,20 +32,17 @@ transform = Transform3D(0.866, 0, 0.5, 0.383, 0.6428, -0.6634, -0.3214, 0.766, 0
 light_energy = 1.0
 shadow_enabled = true
 
-[node name="Pivote" type="Node3D" parent="."]
+[node name="Animador" type="Node3D" parent="."]
+script = ExtResource("1_anim")
 
-[node name="Fisica" type="Node3D" parent="Pivote"]
-script = ExtResource("1_hair")
-stiffness = 1.4
-drag = 0.45
-gravity_power = 0.9
+[node name="Fisica" type="Node3D" parent="Animador"]
+script = ExtResource("2_hair")
 
-[node name="Modelo" type="Node3D" parent="Pivote/Fisica"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.854, 0)
+[node name="Modelo" type="Node3D" parent="Animador/Fisica"]
 script = ExtResource("3_toon")
 
-[node name="Serena" parent="Pivote/Fisica/Modelo" instance=ExtResource("2_serena")]
+[node name="Serena" parent="Animador/Fisica/Modelo" instance=ExtResource("4_serena")]
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(0.7071, 0, 0.7071, 0.0737, 0.9945, -0.0737, -0.7032, 0.1045, 0.7032, 2.1, 1.15, 2.1)
+transform = Transform3D(0.9063, 0, 0.4226, 0.0442, 0.9945, -0.0947, -0.4203, 0.1045, 0.9014, 1.5, 1.05, 3.0)
 fov = 45.0

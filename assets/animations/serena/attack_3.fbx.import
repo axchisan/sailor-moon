@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bra47isl6v543"
-path="res://.godot/imported/Falling Idle.fbx-8f4b3a91d50d1d00a594db1956fd85bc.scn"
+uid="uid://dic5o8cn5qum"
+path="res://.godot/imported/attack_3.fbx-d95bd4fd08a4a3dcedea48f8cdb3c3c2.scn"
 
 [deps]
 
-source_file="res://assets/animations/serena/Falling Idle.fbx"
-dest_files=["res://.godot/imported/Falling Idle.fbx-8f4b3a91d50d1d00a594db1956fd85bc.scn"]
+source_file="res://assets/animations/serena/attack_3.fbx"
+dest_files=["res://.godot/imported/attack_3.fbx-d95bd4fd08a4a3dcedea48f8cdb3c3c2.scn"]
 
 [params]
 

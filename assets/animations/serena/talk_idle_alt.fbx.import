@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://c8h2nocx8hxq4"
-path="res://.godot/imported/Walking.fbx-a1f1f42c639ebfe5adbaa182a2e7a5e5.scn"
+uid="uid://dxeqqaf1v5c8j"
+path="res://.godot/imported/talk_idle_alt.fbx-8f5f2ee8d95cb90a096e82f1c831f440.scn"
 
 [deps]
 
-source_file="res://assets/animations/serena/Walking.fbx"
-dest_files=["res://.godot/imported/Walking.fbx-a1f1f42c639ebfe5adbaa182a2e7a5e5.scn"]
+source_file="res://assets/animations/serena/talk_idle_alt.fbx"
+dest_files=["res://.godot/imported/talk_idle_alt.fbx-8f5f2ee8d95cb90a096e82f1c831f440.scn"]
 
 [params]
 

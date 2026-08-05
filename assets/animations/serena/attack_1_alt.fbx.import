@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://d3b7aj6n2ie1r"
-path="res://.godot/imported/Running.fbx-94feca3d0b757bb18c0a118cd2f68d75.scn"
+uid="uid://bepn04aftu2dl"
+path="res://.godot/imported/attack_1_alt.fbx-8723b10528ecc16aab13c7b78e9d40d4.scn"
 
 [deps]
 
-source_file="res://assets/animations/serena/Running.fbx"
-dest_files=["res://.godot/imported/Running.fbx-94feca3d0b757bb18c0a118cd2f68d75.scn"]
+source_file="res://assets/animations/serena/attack_1_alt.fbx"
+dest_files=["res://.godot/imported/attack_1_alt.fbx-8723b10528ecc16aab13c7b78e9d40d4.scn"]
 
 [params]
 

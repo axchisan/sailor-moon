@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://csxqtllowcdy"
-path="res://.godot/imported/Jumping Up.fbx-8e86d21db5789d32b9a1e8cef93aa595.scn"
+uid="uid://cnljmr4cuq3ld"
+path="res://.godot/imported/walk.fbx-4c24f614f1a2f2572926ff7881c09035.scn"
 
 [deps]
 
-source_file="res://assets/animations/serena/Jumping Up.fbx"
-dest_files=["res://.godot/imported/Jumping Up.fbx-8e86d21db5789d32b9a1e8cef93aa595.scn"]
+source_file="res://assets/animations/serena/walk.fbx"
+dest_files=["res://.godot/imported/walk.fbx-4c24f614f1a2f2572926ff7881c09035.scn"]
 
 [params]
 
