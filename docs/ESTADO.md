@@ -4,7 +4,7 @@
 > retoma tras un tiempo, lee esto primero y luego el documento específico que
 > necesites.
 >
-> **Última actualización:** 2026-08-04 · Commit `5b6e272`
+> **Última actualización:** 2026-08-04 · Física de pelo resuelta
 
 ---
 
@@ -54,8 +54,12 @@ principal del proyecto):
 ### Lo siguiente, en orden
 
 1. **Descargar las 15 animaciones de Mixamo** ← el usuario está aquí ahora
-   Especificación completa en [`08-ANIMACIONES-MIXAMO.md`](08-ANIMACIONES-MIXAMO.md)
-2. Retargetear, montar el `AnimationTree` y sustituir la cápsula por Serena
+   Especificación completa en [`08-ANIMACIONES-MIXAMO.md`](08-ANIMACIONES-MIXAMO.md).
+   Ya tiene 6: Idle, Walking, Running, Jumping Up, Jumping Down, Falling Idle.
+   **Las animaciones NO se ven afectadas por la física de pelo** (ver doc 09)
+2. Retargetear, montar el `AnimationTree` y sustituir la cápsula por Serena.
+   El modelo a usar es **`serena_rigged.glb`** (con huesos de pelo), no
+   `serena_sailor.glb`
 3. Mover la activación de la hitbox a *call method tracks* de la animación
 4. Enemigos Globito y Cofrecito (el Cofrecito ya tiene modelo)
 5. Escenario del Nivel 1 — ver [`07-ESCENARIOS.md`](07-ESCENARIOS.md)
@@ -75,6 +79,7 @@ principal del proyecto):
 | [`06-GUIA-ASSETS-3D.md`](06-GUIA-ASSETS-3D.md) | Pipeline 3D actual: hi3d.ai → Blender → Godot |
 | [`07-ESCENARIOS.md`](07-ESCENARIOS.md) | Cómo se construyen los escenarios (3 capas) |
 | [`08-ANIMACIONES-MIXAMO.md`](08-ANIMACIONES-MIXAMO.md) | Qué animaciones bajar y con qué ajustes |
+| [`09-FISICA-PELO.md`](09-FISICA-PELO.md) | Coletas con inercia: cadenas de huesos + spring bones |
 | [`CREDITOS.md`](CREDITOS.md) | Atribuciones de assets |
 
 ---
@@ -191,42 +196,50 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
    originales de 80 MB y la caché pasa de 18 MB a 273 MB.
 8. **El preset de exportación del MCP sale sin la sección `[preset.0.options]`** y
    la exportación falla. Hay que escribirlo a mano.
+9. **Un `SkeletonModifier3D` escribe en un búfer temporal, no en la pose
+   permanente.** Leer `get_bone_pose_rotation()` desde fuera devuelve la pose
+   ANTERIOR al modificador. Parece que la física no hace nada cuando sí funciona.
+10. **`bound_box` de un objeto con Armature está cacheado y puede mentir.** Para
+   medir de verdad hay que recorrer los vértices.
+11. **GDScript no es Python:** no hay listas por comprensión y `round()` solo
+   acepta un argumento (para decimales, `snappedf(x, 0.1)`). Un error de sintaxis
+   dentro de `game_eval` deja el juego atrapado en el depurador y bloquea el MCP.
 
 ### Blender (MCP)
 
-9. **`bpy.ops.wm.read_homefile()` invalida el contexto** para los operadores
+12. **`bpy.ops.wm.read_homefile()` invalida el contexto** para los operadores
    posteriores del *mismo* script. Divide en dos llamadas MCP: una importa, otra
    procesa.
-10. **`read_factory_settings` está bloqueado** por el sandbox del MCP. Usa
+13. **`read_factory_settings` está bloqueado** por el sandbox del MCP. Usa
     `read_homefile(use_empty=True)`.
-11. **Blender 5.2:** el motor es `BLENDER_EEVEE` (no `BLENDER_EEVEE_NEXT`), y los
+14. **Blender 5.2:** el motor es `BLENDER_EEVEE` (no `BLENDER_EEVEE_NEXT`), y los
     nodos hay que buscarlos **por tipo** (`n.type == 'BSDF_PRINCIPLED'`), no por
     nombre: los nombres están traducidos al idioma del usuario.
-12. **Al desemparentar con `CLEAR_KEEP_TRANSFORM`, el objeto absorbe la escala del
+15. **Al desemparentar con `CLEAR_KEEP_TRANSFORM`, el objeto absorbe la escala del
     padre.** Si luego asignas `scale = factor` la sobrescribes y el tamaño sale
     mal. Aplica transformaciones primero.
-13. **Quitar los Empty limpia la selección** y el siguiente operador falla con
+16. **Quitar los Empty limpia la selección** y el siguiente operador falla con
     "Falta objeto activo". Reafirma selección y objeto activo.
-14. **Para deformar una malla, NO selecciones por islas.** Usa pesos continuos por
+17. **Para deformar una malla, NO selecciones por islas.** Usa pesos continuos por
     posición. *(Rotar los brazos por islas rasgó los codos: el brazo atraviesa
     varias islas y la frontera es justo por donde se abre el corte.)*
 
 ### Entorno
 
-15. **Godot fuera de `/Applications` sufre App Translocation:** macOS le da una
+18. **Godot fuera de `/Applications` sufre App Translocation:** macOS le da una
     ruta temporal distinta en cada arranque. **Ya resuelto**, está en
     `/Applications`.
-16. **`git-lfs` no está en el PATH de shells no interactivas.** `export
+19. **`git-lfs` no está en el PATH de shells no interactivas.** `export
     PATH="/opt/homebrew/bin:$PATH"` antes de cualquier `git add`.
-17. **Al cerrar el editor de Godot puede sobrescribir `editor_settings-4.7.tres`**
+20. **Al cerrar el editor de Godot puede sobrescribir `editor_settings-4.7.tres`**
     con las rutas viejas de Android y romper la exportación. Hay copia en
     `editor_settings-4.7.tres.bak-preandroid`.
 
 ### Herramientas de IA para 3D
 
-18. **Tripo y Meshy cobran por EXPORTAR, no por generar.** Al evaluar una
+21. **Tripo y Meshy cobran por EXPORTAR, no por generar.** Al evaluar una
     herramienta nueva, lo primero que hay que probar es **descargar un archivo**.
-19. **hi3d.ai no deja configurar polígonos ni texturas.** Todo llega a ~2.000.000
+22. **hi3d.ai no deja configurar polígonos ni texturas.** Todo llega a ~2.000.000
     de triángulos con texturas 4K, así que el paso por Blender es obligatorio.
 
 ---
