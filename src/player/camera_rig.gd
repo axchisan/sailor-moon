@@ -18,8 +18,13 @@ class_name CameraRig
 @export var max_pitch: float = 25.0
 
 @export_group("Encuadre")
-@export var distance: float = 5.0
-@export var fov: float = 70.0
+## Estos valores están MEDIDOS, no puestos a ojo: con 3,5 m y 56° de campo,
+## Serena ocupa el 33,5% del alto de pantalla y queda al 59% de altura.
+## Con los valores originales (5 m / 70°) ocupaba el 17% y se veía diminuta.
+## Si los cambias, comprueba el encuadre con `unproject_position` de la cabeza
+## y de los pies; a ojo es muy fácil equivocarse.
+@export var distance: float = 3.5
+@export var fov: float = 56.0
 
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
