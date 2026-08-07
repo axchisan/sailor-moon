@@ -85,7 +85,7 @@ tamaño. El daño no debe depender de la animación.
 |---|---|---|---|---|
 | **Peluchín** (básico) | ✅ 5.000 tris | ✅ | ✅ acercarse y golpear | **Terminado** |
 | **Cofrecito** (escudo) | ✅ 5.000 tris | ✅ | ✅ escudo frontal 130° | **Terminado** |
-| **Globito** (a distancia) | ⬜ | ⬜ | ⬜ proyectil lento | Falta todo |
+| **Hadita** (a distancia) | ⬜ | ⬜ | ⬜ proyectil lento | Falta todo |
 
 ### 4.1 Cofrecito — TERMINADO
 
@@ -116,7 +116,11 @@ espalda → 4 → 2 (pasa). Especial de frente → destruido.
 Al bloquear no hay hit stop: congelar el juego premiaría un golpe que no ha
 servido. Solo un *clonk* metálico, chispas doradas y un destello del escudo.
 
-### 4.2 Globito — enemigo a distancia
+### 4.2 Hadita — enemigo a distancia
+
+Sustituye al "Globito" del diseño original. Es un **hada de espejo roto**:
+encaja mejor porque son secuaces directos de la Dama del Espejo Roto, así que se
+entiende de dónde salen sin explicar nada.
 
 #### Prompt de IMAGEN (paso 1: generar la referencia)
 
@@ -124,42 +128,53 @@ hi3d.ai solo acepta imagen, así que primero se genera la referencia. Este promp
 está escrito para un generador de imágenes, no de 3D:
 
 ```
-A cute chibi balloon monster character, full body, front view, standing centered.
-Round inflated body like a party balloon, SOLID OPAQUE pastel sky-blue surface
-with a soft glossy highlight, small white cloud-shaped wings on its back,
-two big round glossy eyes with white sparkle highlights, tiny happy open mouth,
-small stubby arms, small round feet, a little knot at the bottom like a balloon tie.
-Soft vinyl toy / collectible figure aesthetic, magical girl anime minion,
-mischievous but friendly, not scary.
+A cute chibi fairy character, full body, front view, standing centered,
+collectible figure style.
+Small girl fairy with pale lavender skin and short silver-white hair,
+large mischievous eyes with white sparkle highlights, small pointed ears,
+a simple lilac dress with silver trim, a cracked mirror shard set into the chest
+of the dress like a brooch.
+OPAQUE faceted crystal wings in pale lilac and silver, thick and solid like
+carved gemstone, with a pearlescent sheen, wings clearly separated from the body.
+Small mirror shards attached along the wing edges and shoulders, NOT floating
+in the air.
+Soft vinyl toy aesthetic, magical girl anime minion, mischievous but cute,
+not scary.
 Cel shaded flat colors with clean color separation, soft even studio lighting
 from the front, no cast shadows.
 Pure white background, product photo of a collectible figure, high resolution,
-sharp focus, centered, full body visible including the feet.
+sharp focus, centered, full body visible.
 ```
 
 **Negativo:**
 
 ```
-transparent, translucent, see-through, glass, bubble, dark background,
-dramatic lighting, cast shadows, motion blur, cropped, close-up,
-multiple characters, text, watermark, photorealistic, scary, sharp teeth
+transparent, translucent, see-through, glass, thin membrane wings,
+floating detached pieces, particles, dark background, dramatic lighting,
+cast shadows, motion blur, cropped, close-up, multiple characters, text,
+watermark, photorealistic, scary, sharp teeth, weapons
 ```
 
-> ⚠️ **La trampa: nada de transparencias.** El diseño original decía "cuerpo
-> translúcido, textura de pompa de jabón". Para **imagen → 3D eso es veneno**: el
-> reconstructor no puede deducir la forma de algo a través de lo cual se ve el
-> fondo, y devuelve una malla llena de agujeros o una bola deforme.
+> ⚠️ **Dos trampas, y las dos vienen del propio concepto de hada de cristal.**
 >
-> El cuerpo va **opaco**, con un brillo especular que ya sugiere lo hinchado. Si
-> luego quieres que parezca una burbuja, eso se resuelve en Godot con el
-> material, no en la geometría.
+> **1. Nada transparente.** Unas alas de cristal transparentes son lo natural de
+> pedir y lo peor posible para imagen → 3D: el reconstructor no puede deducir la
+> forma de algo a través de lo cual se ve el fondo, y devuelve alas con agujeros
+> o directamente sin alas. Van **opacas y facetadas**, como gema tallada. El
+> efecto de cristal se hace luego en Godot con el material, no con la geometría.
+>
+> **2. Nada de esquirlas flotando sueltas.** Lo bonito sería un halo de trozos de
+> espejo alrededor. Pero la geometría desconectada del cuerpo la reconstruye
+> fatal: o la funde en pegotes o la descarta. Las esquirlas van **pegadas a las
+> alas y los hombros**. Si quieres el halo flotante, se hace en Godot con
+> partículas o mallas hijas orbitando, y encima queda mejor porque se mueve.
 
 #### Comprobar antes de subirlo a hi3d.ai
 
-- [ ] Cuerpo entero, con los pies dentro del encuadre
+- [ ] Cuerpo entero dentro del encuadre
 - [ ] Fondo blanco liso, sin sombra proyectada en el suelo
-- [ ] Silueta cerrada: alas y brazos separados del cuerpo, sin fundirse
-- [ ] Nada transparente
+- [ ] **Alas separadas del cuerpo**, con hueco visible entre ellas y la espalda
+- [ ] Nada transparente y nada flotando suelto
 - [ ] Mínimo 1040×1040
 
 Genera 3 o 4 variaciones y quédate con la de **silueta más legible**, no con la
@@ -167,25 +182,19 @@ más bonita: la IA de 3D reconstruye la forma, no el arte.
 
 #### Comportamiento a implementar
 
-Se mantiene a distancia (`wait_distance` alto, `attack_range` alto) y lanza
-burbujas lentas y esquivables en vez de embestir. Necesita:
+El arquetipo que falta: rompe la monotonía de machacar obligando a perseguir.
 
-1. Una escena de proyectil con su propia `Hitbox` y vida limitada
-2. Un estado `e_shoot.gd` que la instancie al terminar el telegrafiado
-3. IA que **huya** si el jugador se acerca demasiado, para que obligue a
-   perseguirlo y rompa la monotonía de machacar
+1. **Mantiene la distancia.** `wait_distance` y `attack_range` altos
+2. **Huye si te acercas.** Si el jugador entra en su radio mínimo, retrocede
+3. **Lanza esquirlas** en vez de embestir: un proyectil lento y esquivable, con
+   su propia `Hitbox` y vida limitada
+4. **Telegrafía igual que los demás**: brillo rojo antes de disparar
 
-Presupuesto: 5.000 tris, textura 1024, altura 0,70 m.
+Necesita una escena de proyectil y un estado `e_shoot.gd` que la instancie al
+terminar la anticipación.
 
-Comportamiento: se mantiene a distancia (`wait_distance` alto, `attack_range`
-alto) y lanza burbujas lentas y esquivables en vez de embestir. Necesita:
-
-1. Una escena de proyectil con su propia `Hitbox` y vida limitada
-2. Un estado `e_shoot.gd` que la instancie al terminar el telegrafiado
-3. IA que **huya** si el jugador se acerca demasiado, para que obligue a
-   perseguirlo y rompa la monotonía de machacar
-
-Presupuesto: 5.000 tris, textura 1024, altura 0,70 m.
+Presupuesto: 5.000 tris, textura 1024, altura 0,70 m — grande para ser un hada,
+pero tiene que poder golpearse con el dedo en un móvil.
 
 ### 4.3 Variantes por nivel — el truco que ahorra el 80%
 
@@ -228,7 +237,7 @@ la más agresiva a la baja es bajar `max_attackers` a 3.
 
 1. ~~Cofrecito~~ ✅ **Terminado y mezclado en las oleadas**
 2. **Probar en el móvil** la hostilidad y el escudo antes de añadir más
-3. **Globito** — necesita modelo, proyectil y un estado nuevo. Es el más caro
+3. **Hadita** — necesita modelo, proyectil y un estado nuevo. Es el más caro
 4. **Variantes de color** cuando existan los niveles 2 y 3
 
 ### Oleadas mixtas
