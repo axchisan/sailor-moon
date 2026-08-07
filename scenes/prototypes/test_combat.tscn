@@ -1,7 +1,8 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/prototypes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/peluchin.tscn" id="2_enemy"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/cofrecito.tscn" id="6_cofrecito"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://src/level/arena.gd" id="4_arena"]
 [ext_resource type="Script" path="res://src/ui/debug_overlay.gd" id="5_debug"]
@@ -68,6 +69,9 @@ script = ExtResource("4_arena")
 arena_id = "arena_prueba"
 waves = Array[int]([2, 3, 4])
 enemy_scene = ExtResource("2_enemy")
+enemy_scenes_extra = Array[PackedScene]([ExtResource("6_cofrecito")])
+extra_ratio = 0.34
+extra_from_wave = 1
 spawn_radius = 7.5
 barrier_radius = 11.0
 

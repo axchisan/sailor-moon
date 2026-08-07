@@ -22,9 +22,21 @@ class_name Enemy
 @export var sparkles_on_defeat: int = 3
 @export var knockback_friction: float = 8.0
 
+@export_group("Escudo")
+## Arco frontal que bloquea, en grados. 0 = sin escudo (Peluchín).
+##
+## OJO CON EL DISEÑO: el enemigo gira para mirar al jugador, así que un escudo
+## frontal bloquearía SIEMPRE si girase rápido. Lo que hace jugable al Cofrecito
+## es su `turn_speed` bajo: rodearlo funciona porque tarda en encararte.
+## Si alguien sube su `turn_speed`, el enemigo se vuelve invencible salvo con el
+## especial. Los dos valores van juntos.
+@export_range(0.0, 220.0) var shield_arc: float = 0.0
+
 @export_group("Colores")
 @export var base_color: Color = Color(0.62, 0.45, 0.85)
 @export var telegraph_color: Color = Color(1.0, 0.35, 0.4)
+## Destello al aguantar un golpe con el escudo.
+@export var shield_color: Color = Color(1.0, 0.95, 0.6)
 
 @onready var model: Node3D = $Model
 ## Se busca sola: sirve tanto la cápsula gris como el modelo importado.
@@ -182,10 +194,48 @@ func reset_color() -> void:
 	set_color(base_color)
 
 
+# --- Escudo -------------------------------------------------------------------
+
+## ¿El golpe entra por el arco protegido? Los ataques con `breaks_shield`
+## (solo el especial) pasan siempre.
+func _bloquea(golpe: Hitbox) -> bool:
+	if shield_arc <= 0.0 or defeated:
+		return false
+	if golpe.attack != null and golpe.attack.breaks_shield:
+		return false
+
+	var origen := golpe.source.global_position if golpe.source != null else golpe.global_position
+	var hacia := origen - global_position
+	hacia.y = 0.0
+	if hacia.length_squared() < 0.0001:
+		return false
+
+	var angulo := rad_to_deg(get_forward().angle_to(hacia.normalized()))
+	return angulo <= shield_arc * 0.5
+
+
+## Aguanta el golpe: ni daño ni retroceso ni interrupción. Lo único que cambia
+## es el aviso, para que se entienda a la primera que por delante no se puede.
+func _al_bloquear() -> void:
+	CombatFeel.block(global_position + Vector3.UP * 0.7)
+	_destello_escudo()
+
+
+func _destello_escudo() -> void:
+	set_color(shield_color)
+	await get_tree().create_timer(0.14, true, false, true).timeout
+	if is_instance_valid(self) and not defeated:
+		reset_color()
+
+
 # --- Daño ---------------------------------------------------------------------
 
 func _on_hurtbox_hit(player_hitbox: Hitbox) -> void:
 	if defeated:
+		return
+
+	if _bloquea(player_hitbox):
+		_al_bloquear()
 		return
 
 	var incoming := player_hitbox.attack

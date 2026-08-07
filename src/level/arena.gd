@@ -12,7 +12,15 @@ class_name Arena
 @export var arena_id: String = "arena_1"
 ## Enemigos por oleada. [2, 3, 4] = tres oleadas de dificultad creciente.
 @export var waves: Array[int] = [2, 3, 4]
+## Enemigo básico: es el que rellena las oleadas.
 @export var enemy_scene: PackedScene
+## Enemigos que se mezclan con el básico (Cofrecito, Globito…).
+@export var enemy_scenes_extra: Array[PackedScene] = []
+## Proporción de enemigos extra dentro de una oleada.
+@export_range(0.0, 1.0) var extra_ratio: float = 0.34
+## Oleada a partir de la cual aparecen los extra. Con 1, la primera oleada es
+## solo del enemigo básico: se aprende a pegar antes de aprender a rodear.
+@export var extra_from_wave: int = 1
 @export var spawn_radius: float = 7.5
 ## Pausa entre oleadas para que respire.
 @export var wave_delay: float = 1.2
@@ -142,11 +150,12 @@ func _next_wave() -> void:
 
 
 func _spawn_enemy(index: int, total: int) -> void:
-	if enemy_scene == null:
+	var escena := _elegir_enemigo()
+	if escena == null:
 		push_error("Arena '%s' sin enemy_scene asignada." % arena_id)
 		return
 
-	var enemy := enemy_scene.instantiate() as Node3D
+	var enemy := escena.instantiate() as Node3D
 	if enemy == null:
 		return
 
@@ -158,6 +167,15 @@ func _spawn_enemy(index: int, total: int) -> void:
 	enemy.global_position = global_position + offset + Vector3.UP * 0.5
 
 	_spawned.append(enemy)
+
+
+## Mezcla la oleada. Los enemigos extra solo entran a partir de
+## `extra_from_wave`, para que cada mecánica nueva llegue de una en una.
+func _elegir_enemigo() -> PackedScene:
+	if not enemy_scenes_extra.is_empty() and _wave_index >= extra_from_wave:
+		if randf() < extra_ratio:
+			return enemy_scenes_extra[randi() % enemy_scenes_extra.size()]
+	return enemy_scene
 
 
 func _alive_count() -> int:

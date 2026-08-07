@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AttackData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/data/attack_data.gd" id="1_ad"]
+
+[resource]
+script = ExtResource("1_ad")
+display_name = "Tapazo"
+windup = 0.9
+active = 0.22
+recovery = 0.6
+damage = 1
+knockback = 6.5
+knockback_up = 1.4
+lunge = 2.2
+hit_stop = 0.1
+shake = 0.55

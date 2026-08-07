@@ -30,7 +30,7 @@ DTO, signals ≈ event bus).
 | Fase | Estado |
 |---|---|
 | **Fase 0 — Cimientos** | ✅ **Cerrada.** APK corriendo en el móvil real |
-| **Fase 1 — Combate** | 🟡 **Núcleo verificado con modelos reales.** Faltan Cofrecito y Globito |
+| **Fase 1 — Combate** | 🟡 **Peluchín y Cofrecito terminados.** Falta el Globito |
 | **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Serena jugable con animaciones, pelo y cel shading. Falta el escenario del Nivel 1 |
 | Fases 3–5 | ⬜ Sin empezar |
 
@@ -47,6 +47,8 @@ principal del proyecto):
 - Enemigo Peluchín con FSM de 7 estados
 - **Sistema de fichas: nunca más de 4 enemigos atacando a la vez** (verificado)
 - Enemigos con modelo real, animación procedural y eliminación al derrotarlos
+- **Cofrecito con escudo frontal**: hay que rodearlo o romperle la guardia con
+  el especial. Oleadas mixtas de los dos arquetipos
 - Arena con barrera mágica y oleadas configurables
 - HUD por EventBus y controles táctiles (joystick flotante + botones)
 - 60 fps con 9 enemigos y partículas
@@ -59,8 +61,8 @@ principal del proyecto):
 2. ~~Montar el `AnimationTree`~~ ✅ Verificado a 60 fps con pelo y cel shading
 3. ~~Sustituir la cápsula por Serena~~ ✅ **Serena ya es el jugador.**
    Combo verificado con sus animaciones, física de pelo y cel shading, 60 fps
-4. **Cofrecito**: el modelo está listo, faltan escena y lógica de escudo.
-   Ver [`11-PLAN-ENEMIGOS.md`](11-PLAN-ENEMIGOS.md) §4.1
+4. ~~Cofrecito~~ ✅ **Terminado.** Escudo frontal de 130°, se rodea o se le
+   revienta la guardia con el especial
 5. **Mover la activación de la hitbox a *call method tracks* de la animación.**
    Hoy la enciende un temporizador del estado; con la animación real conectaría
    en el frame exacto del impacto
