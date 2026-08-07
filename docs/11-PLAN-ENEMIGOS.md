@@ -118,8 +118,64 @@ servido. Solo un *clonk* metálico, chispas doradas y un destello del escudo.
 
 ### 4.2 Globito — enemigo a distancia
 
-Falta generar el modelo. Prompt listo en
-[`06-GUIA-ASSETS-3D.md`](06-GUIA-ASSETS-3D.md) §4.1.
+#### Prompt de IMAGEN (paso 1: generar la referencia)
+
+hi3d.ai solo acepta imagen, así que primero se genera la referencia. Este prompt
+está escrito para un generador de imágenes, no de 3D:
+
+```
+A cute chibi balloon monster character, full body, front view, standing centered.
+Round inflated body like a party balloon, SOLID OPAQUE pastel sky-blue surface
+with a soft glossy highlight, small white cloud-shaped wings on its back,
+two big round glossy eyes with white sparkle highlights, tiny happy open mouth,
+small stubby arms, small round feet, a little knot at the bottom like a balloon tie.
+Soft vinyl toy / collectible figure aesthetic, magical girl anime minion,
+mischievous but friendly, not scary.
+Cel shaded flat colors with clean color separation, soft even studio lighting
+from the front, no cast shadows.
+Pure white background, product photo of a collectible figure, high resolution,
+sharp focus, centered, full body visible including the feet.
+```
+
+**Negativo:**
+
+```
+transparent, translucent, see-through, glass, bubble, dark background,
+dramatic lighting, cast shadows, motion blur, cropped, close-up,
+multiple characters, text, watermark, photorealistic, scary, sharp teeth
+```
+
+> ⚠️ **La trampa: nada de transparencias.** El diseño original decía "cuerpo
+> translúcido, textura de pompa de jabón". Para **imagen → 3D eso es veneno**: el
+> reconstructor no puede deducir la forma de algo a través de lo cual se ve el
+> fondo, y devuelve una malla llena de agujeros o una bola deforme.
+>
+> El cuerpo va **opaco**, con un brillo especular que ya sugiere lo hinchado. Si
+> luego quieres que parezca una burbuja, eso se resuelve en Godot con el
+> material, no en la geometría.
+
+#### Comprobar antes de subirlo a hi3d.ai
+
+- [ ] Cuerpo entero, con los pies dentro del encuadre
+- [ ] Fondo blanco liso, sin sombra proyectada en el suelo
+- [ ] Silueta cerrada: alas y brazos separados del cuerpo, sin fundirse
+- [ ] Nada transparente
+- [ ] Mínimo 1040×1040
+
+Genera 3 o 4 variaciones y quédate con la de **silueta más legible**, no con la
+más bonita: la IA de 3D reconstruye la forma, no el arte.
+
+#### Comportamiento a implementar
+
+Se mantiene a distancia (`wait_distance` alto, `attack_range` alto) y lanza
+burbujas lentas y esquivables en vez de embestir. Necesita:
+
+1. Una escena de proyectil con su propia `Hitbox` y vida limitada
+2. Un estado `e_shoot.gd` que la instancie al terminar el telegrafiado
+3. IA que **huya** si el jugador se acerca demasiado, para que obligue a
+   perseguirlo y rompa la monotonía de machacar
+
+Presupuesto: 5.000 tris, textura 1024, altura 0,70 m.
 
 Comportamiento: se mantiene a distancia (`wait_distance` alto, `attack_range`
 alto) y lanza burbujas lentas y esquivables en vez de embestir. Necesita:
