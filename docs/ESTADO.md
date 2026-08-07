@@ -4,7 +4,8 @@
 > retoma tras un tiempo, lee esto primero y luego el documento específico que
 > necesites.
 >
-> **Última actualización:** 2026-08-07 · Reparto de 7 personajes procesado
+> **Última actualización:** 2026-08-07 · Reparto de 11 personajes procesado y
+> limpio de objetos añadidos
 
 ---
 
@@ -30,8 +31,8 @@ DTO, signals ≈ event bus).
 | Fase | Estado |
 |---|---|
 | **Fase 0 — Cimientos** | ✅ **Cerrada.** APK corriendo en el móvil real |
-| **Fase 1 — Combate** | 🟡 **Peluchín y Cofrecito terminados.** Falta el Globito |
-| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Serena jugable con animaciones, pelo y cel shading. Falta el escenario del Nivel 1 |
+| **Fase 1 — Combate** | ✅ **Cerrada.** Los tres enemigos terminados: Peluchín, Cofrecito y Hadita |
+| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Serena jugable con animaciones, pelo y cel shading. Reparto de 11 modelos listo. **Falta el escenario del Nivel 1** |
 | Fases 3–5 | ⬜ Sin empezar |
 
 ### Lo que funciona hoy
@@ -249,6 +250,14 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
 17. **Para deformar una malla, NO selecciones por islas.** Usa pesos continuos por
     posición. *(Rotar los brazos por islas rasgó los codos: el brazo atraviesa
     varias islas y la frontera es justo por donde se abre el corte.)*
+18. **Para SEPARAR objetos pegados, agrupa islas sobre el GLB ya procesado, no
+    sobre el original.** Exportar a glTF duplica vértices en las costuras de UV y
+    eso parte la malla en islas separables (199 en el procesado frente a 5 en el
+    original). Luego se anota la caja del añadido en metros y **se reprocesa el
+    personaje desde el original borrando esa caja antes de decimar**, para que los
+    25.000 triángulos se repartan solo entre el personaje. *(Ver
+    [`12-REPARTO.md`](12-REPARTO.md) §2: el arbusto de Jupiter se llevaba el 39 %
+    de su presupuesto.)*
 
 ### Entorno
 
@@ -300,7 +309,8 @@ Objetivo 60 fps, aceptable 30.
 | Draw calls | < 150 |
 | Luces dinámicas | 1 direccional + 2–3 puntuales |
 
-Modelos actuales: Serena 25.000 tris · Peluchín 5.000 · Cofrecito 5.000. ✅
+Modelos actuales: los 11 personajes a 25.000 tris · Peluchín, Cofrecito y Hadita
+a 5.000 · props de escenario (coral 4.700, bonsái 9.750). ✅
 
 ---
 
