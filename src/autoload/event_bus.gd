@@ -26,7 +26,7 @@ signal combo_hit(index: int)                           # 1, 2 o 3
 signal special_charge_changed(ratio: float)            # 0.0 - 1.0
 signal special_ready()                                 # el botón brilla y suena
 signal special_used(sailor_id: String, attack_name: String)
-signal enemy_purified(enemy_name: String, total_friends: int)
+signal enemy_defeated(enemy_name: String, total_defeated: int)
 
 # --- Arenas ---
 signal arena_started(arena_id: String, wave_count: int)

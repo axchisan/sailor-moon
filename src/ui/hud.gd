@@ -22,7 +22,7 @@ func _ready() -> void:
 	EventBus.special_used.connect(_on_special_used)
 	EventBus.sparkle_collected.connect(_on_counters_changed)
 	EventBus.star_collected.connect(_on_counters_changed)
-	EventBus.enemy_purified.connect(_on_enemy_purified)
+	EventBus.enemy_defeated.connect(_on_enemy_defeated)
 	EventBus.arena_started.connect(_on_arena_started)
 	EventBus.wave_cleared.connect(_on_wave_cleared)
 	EventBus.arena_cleared.connect(_on_arena_cleared)
@@ -81,9 +81,9 @@ func _on_counters_changed(_total: int) -> void:
 	_update_counters()
 
 
-func _on_enemy_purified(_enemy_name: String, total: int) -> void:
+func _on_enemy_defeated(_enemy_name: String, total: int) -> void:
 	_update_counters()
-	show_banner("¡%d amigos!" % total, 1.0)
+	show_banner("¡%d derrotados!" % total, 1.0)
 
 
 func _on_arena_started(_arena_id: String, wave_count: int) -> void:
@@ -105,10 +105,10 @@ func _on_player_died() -> void:
 
 
 func _update_counters() -> void:
-	counters.text = "★ %d    ✦ %d    ☺ %d" % [
+	counters.text = "★ %d    ✦ %d    ⚔ %d" % [
 		GameManager.stars_this_level,
 		GameManager.sparkles_this_level,
-		GameManager.friends_this_level,
+		GameManager.defeated_this_level,
 	]
 
 

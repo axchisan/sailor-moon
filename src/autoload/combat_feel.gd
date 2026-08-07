@@ -16,7 +16,7 @@ const IMPACT_PARTICLES := preload("res://scenes/fx/impact_particles.tscn")
 const SFX_HIT := preload("res://assets/audio/sfx/hit.wav")
 const SFX_HIT_HEAVY := preload("res://assets/audio/sfx/hit_heavy.wav")
 const SFX_HURT := preload("res://assets/audio/sfx/hurt.wav")
-const SFX_PURIFY := preload("res://assets/audio/sfx/purify.wav")
+const SFX_DEFEAT := preload("res://assets/audio/sfx/purify.wav")
 const SFX_SPECIAL := preload("res://assets/audio/sfx/special.wav")
 
 ## Presets de impacto por tipo de golpe.
@@ -65,9 +65,14 @@ func player_hurt(world_position: Vector3) -> void:
 	AudioManager.play_sfx(SFX_HURT, -1.0, 0.06)
 
 
-func purify(world_position: Vector3) -> void:
-	spawn_impact_particles(world_position, Color(1.0, 0.95, 0.6), 34, 1.6)
-	AudioManager.play_sfx(SFX_PURIFY, -3.0, 0.05)
+## Golpe final. Pega más fuerte que un impacto normal para que se note que el
+## enemigo ha caído, no que le has dado uno más.
+func defeat(world_position: Vector3) -> void:
+	if juice_enabled:
+		hit_stop(0.09)
+		shake(0.40, 0.28)
+	spawn_impact_particles(world_position, Color(1.0, 0.95, 0.6), 40, 1.8)
+	AudioManager.play_sfx(SFX_DEFEAT, -2.0, 0.08)
 
 
 func special(world_position: Vector3) -> void:
@@ -116,19 +121,39 @@ func spawn_impact_particles(world_position: Vector3, color: Color = Color(1.0, 0
 		fx.burst(color, amount, scale_factor)
 
 
-## Parpadeo blanco sobre un MeshInstance3D. Requiere material propio por
-## instancia; de lo contrario parpadearían todos los enemigos a la vez.
+## Destello blanco sobre un MeshInstance3D. Requiere material propio por
+## instancia; de lo contrario destellarían todos los enemigos a la vez.
+##
+## Acepta materiales PBR (cápsulas de prototipo) y MToon (modelos reales). Sin
+## esta doble ruta, los enemigos con modelo se quedaban sin destello al recibir
+## el golpe y el impacto perdía la mitad de su fuerza.
 func flash(mesh: MeshInstance3D, duration: float = 0.09) -> void:
 	if not juice_enabled or mesh == null:
 		return
-	var material := mesh.get_active_material(0) as StandardMaterial3D
+	var material := mesh.get_active_material(0)
 	if material == null:
 		return
-	var original: Color = material.albedo_color
-	material.albedo_color = Color(1, 1, 1, original.a)
+
+	var toon := material as ShaderMaterial
+	var pbr := material as BaseMaterial3D
+	var original: Color
+
+	if toon != null:
+		original = toon.get_shader_parameter("_Color")
+		toon.set_shader_parameter("_Color", Color.WHITE)
+	elif pbr != null:
+		original = pbr.albedo_color
+		pbr.albedo_color = Color(1, 1, 1, original.a)
+	else:
+		return
+
 	await get_tree().create_timer(duration, true, false, true).timeout
-	if is_instance_valid(mesh) and material != null:
-		material.albedo_color = original
+	if not is_instance_valid(mesh):
+		return
+	if toon != null:
+		toon.set_shader_parameter("_Color", original)
+	elif pbr != null:
+		pbr.albedo_color = original
 
 
 func set_juice_enabled(enabled: bool) -> void:

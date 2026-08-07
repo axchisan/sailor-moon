@@ -5,12 +5,12 @@
 [resource]
 script = ExtResource("1_ad")
 display_name = "Embestida"
-windup = 1.2
+windup = 0.75
 active = 0.18
-recovery = 0.7
+recovery = 0.45
 damage = 1
 knockback = 5.0
 knockback_up = 1.0
-lunge = 3.0
+lunge = 4.0
 hit_stop = 0.08
 shake = 0.45

@@ -19,18 +19,18 @@ var health: int = MAX_HEALTH
 var special_charge: int = 0
 var stars_this_level: int = 0
 var sparkles_this_level: int = 0
-var friends_this_level: int = 0
+var defeated_this_level: int = 0
 var last_checkpoint: Vector3 = Vector3.ZERO
 
-# --- Progreso persistente: { level_id: { stars, sparkles, friends } } ---
+# --- Progreso persistente: { level_id: { stars, sparkles, defeated } } ---
 var level_progress: Dictionary = {}
 
 
-## Registra un enemigo purificado. Lo llama el propio enemigo al limpiarse,
-## para que el contador y la señal salgan siempre sincronizados.
-func register_friend(enemy_name: String) -> void:
-	friends_this_level += 1
-	EventBus.enemy_purified.emit(enemy_name, friends_this_level)
+## Registra un enemigo derrotado. Lo llama el propio enemigo, para que el
+## contador y la señal salgan siempre sincronizados.
+func register_defeat(enemy_name: String) -> void:
+	defeated_this_level += 1
+	EventBus.enemy_defeated.emit(enemy_name, defeated_this_level)
 
 
 # --- Salud -------------------------------------------------------------------
@@ -93,7 +93,7 @@ func start_level(level_id: String) -> void:
 	current_level_id = level_id
 	stars_this_level = 0
 	sparkles_this_level = 0
-	friends_this_level = 0
+	defeated_this_level = 0
 	special_charge = 0
 	last_checkpoint = Vector3.ZERO
 	reset_health()
@@ -104,7 +104,7 @@ func finish_level() -> void:
 	level_progress[current_level_id] = {
 		"stars": maxi(previous.get("stars", 0), stars_this_level),
 		"sparkles": maxi(previous.get("sparkles", 0), sparkles_this_level),
-		"friends": maxi(previous.get("friends", 0), friends_this_level),
+		"defeated": maxi(previous.get("defeated", 0), defeated_this_level),
 	}
 	EventBus.level_completed.emit(current_level_id)
 	SaveManager.save_game()

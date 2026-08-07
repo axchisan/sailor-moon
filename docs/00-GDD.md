@@ -22,7 +22,7 @@
 1. **Imposible perder de forma frustrante.** No hay *game over*. Si te quedas sin corazones, Serena "se marea", pierde estrellas y reaparece en la misma arena con la salud llena. El combate se reintenta, nunca el nivel.
 2. **Machacar un botón tiene que sentirse increíble.** Todo el presupuesto de esfuerzo va al *feel* del golpe: pausa de impacto, partículas, sonido, retroceso. Un beat 'em up es un 20% de sistemas y un 80% de sensación.
 3. **La transformación y el ataque especial son el espectáculo.** Son los dos momentos que va a querer repetir. Deben verse desproporcionadamente bien respecto al resto.
-4. **Nada muere, todo se purifica.** Los enemigos se limpian de energía oscura y se quedan en el escenario como criaturas amistosas animando. Cero violencia explícita, cero sangre, cero desaparición.
+4. **Los enemigos atacan de verdad y se derrotan.** ⚠️ *Pilar cambiado el 2026-08-04 a petición directa de la jugadora.* Originalmente los enemigos se "purificaban" y se quedaban de adorno como amigos; al probarlo pidió enemigos más hostiles y que desaparecieran al vencerlos. **Sigue sin haber nada desagradable:** el enemigo sale despedido, gira, se encoge y se deshace en un estallido de estrellas. Es la mejor fuente de diseño que existe —la propia jugadora— y manda sobre cualquier suposición previa.
 5. **Se juega con dos pulgares, y uno solo machaca.** Joystick virtual + botón de ataque grande. Sin bloqueo, sin combos que memorizar, sin *timing* estricto.
 
 ## 3. Temática y tono
@@ -37,7 +37,7 @@ Referencia estética: la etapa más luminosa de la franquicia (arco *SuperS*, el
 
 La **Dama del Espejo Roto** roba los *Cristales de Sueño* de los habitantes de Tokio. Sin su sueño, la gente se queda apagada y gris. Luna despierta a Serena: solo el Cristal de Plata puede devolver los sueños, pero está debilitado y se recarga con las **Estrellas de Sueño** que quedaron esparcidas al romperse el espejo.
 
-Cada nivel es un barrio donde una amiga está perdiendo su sueño. Al limpiar el barrio de monstruos y purificar al guardián del espejo, esa amiga despierta y se une al equipo como Sailor jugable.
+Cada nivel es un barrio donde una amiga está perdiendo su sueño. Al limpiar el barrio de monstruos y derrotar al guardián del espejo, esa amiga despierta y se une al equipo como Sailor jugable.
 
 ### Acto 1 — Despertar
 
@@ -61,7 +61,7 @@ Escenario giratorio, cortinas, focos. Arenas con peligros ambientales (focos de 
 ### Acto 3 — El sueño
 
 **Nivel 6 · Torre del Espejo Roto**
-Gauntlet de arenas que reutiliza a todos los enemigos del juego, con **cambio de Sailor en tiempo real** desde un menú radial. La Dama del Espejo Roto en tres fases, cada una vulnerable al poder de una Sailor distinta (fuego → hielo → rayo), lo que obliga a usar el equipo completo. Final: las cinco combinan poderes, los sueños vuelven, celebración en el parque con todos los enemigos purificados bailando.
+Gauntlet de arenas que reutiliza a todos los enemigos del juego, con **cambio de Sailor en tiempo real** desde un menú radial. La Dama del Espejo Roto en tres fases, cada una vulnerable al poder de una Sailor distinta (fuego → hielo → rayo), lo que obliga a usar el equipo completo. Final: las cinco combinan poderes, los sueños vuelven, celebración en el parque con toda la ciudad despertando.
 
 ### Post-créditos
 Aparece Chibiusa — o mejor, un personaje sorpresa con el nombre de tu prima, desbloqueable como Sailor extra. Gancho barato y muy efectivo.
@@ -94,7 +94,7 @@ Al atacar, el personaje **gira automáticamente hacia el enemigo más cercano** 
 
 - Una **barra de energía** se llena golpeando enemigos (~12 golpes la llenan).
 - Al llenarse, el botón brilla y suena un *ding*. Es imposible no darse cuenta.
-- Al pulsarlo: pausa breve, zoom de cámara, el nombre del ataque en pantalla grande (*"¡Por el poder del prisma lunar!"*), y un ataque en área que purifica a todos los enemigos cercanos de una vez.
+- Al pulsarlo: pausa breve, zoom de cámara, el nombre del ataque en pantalla grande (*"¡Por el poder del prisma lunar!"*), y un ataque en área que barre a todos los enemigos cercanos de una vez.
 - Es invulnerable durante la ejecución: también funciona como botón de pánico cuando se agobia.
 
 Este es el momento que va a querer repetir una y otra vez. Merece que le dediquemos VFX de más.
@@ -117,13 +117,13 @@ Tres arquetipos, con variantes cosméticas por nivel (mismo esqueleto, distinto 
 
 | Arquetipo | Comportamiento | Contra |
 |---|---|---|
-| **Peluchín** (básico) | Se acerca y golpea. Telegrafía 1,2 s brillando en rojo | Machacar |
+| **Peluchín** (básico) | Se acerca y golpea. Telegrafía 0,75 s brillando en rojo | Machacar |
 | **Globito** (a distancia) | Se mantiene lejos y lanza burbujas lentas y esquivables | Acercarse o proyectil |
 | **Cofrecito** (escudo) | Se protege de frente; hay que romperle el escudo | Ataque especial o Jupiter |
 
 **Reglas de compasión, no negociables:**
-- Nunca más de **3 enemigos atacando a la vez**. Los demás esperan en un anillo alrededor y solo entran cuando se libera un turno (sistema de fichas de ataque, el patrón clásico del género).
-- Todo ataque enemigo se telegrafía **mínimo 1,2 s** con brillo y sonido.
+- Nunca más de **4 enemigos atacando a la vez**. Los demás esperan en un anillo alrededor y solo entran cuando se libera un turno (sistema de fichas de ataque, el patrón clásico del género). Se subió de 3 a 4 al pedir la jugadora más intensidad.
+- Todo ataque enemigo se telegrafía **con brillo rojo** antes de conectar. Se bajó de 1,2 s a 0,75 s para subir la tensión, pero el aviso NUNCA se quita: es la regla de compasión que queda intacta.
 - Los enemigos nunca atacan por la espalda sin avisar.
 - Al recibir daño hay 1,5 s de invulnerabilidad con parpadeo.
 
@@ -139,7 +139,7 @@ Lo que separa un beat 'em up bueno de uno malo. Todo esto es barato de implement
 | **Retroceso** | El enemigo sale despedido; el 3er golpe lo manda lejos |
 | **Sonido** | *Pop* alegre con pitch aleatorizado ±10% para que no canse |
 | **Flash** | El enemigo parpadea en blanco 80 ms |
-| **Purificación** | Explosión de purpurina, el monstruo se convierte en criatura tierna que se queda saltando |
+| **Derrota** | El enemigo sale despedido, gira, se encoge y estalla en estrellas |
 
 ### 5.8 Estructura de nivel
 
@@ -150,9 +150,9 @@ Las arenas cierran con una barrera mágica rosa y se abren al limpiar las oleada
 ## 6. Economía y progresión
 
 - **Estrellas de Sueño:** 3 por nivel — una por arena limpiada, una por el guardián, una por encontrar el secreto del nivel.
-- **Chispas:** sueltan los enemigos purificados. ~50 por nivel. Se gastan en el armario.
-- **Corazones:** 5 de salud (más generoso que un beat 'em up normal). Los enemigos purificados sueltan corazones a veces.
-- **Amigos:** contador de enemigos purificados que se quedan en el escenario. *"¡Has hecho 34 amigos!"*
+- **Chispas:** las sueltan los enemigos al caer. ~50 por nivel. Se gastan en el armario.
+- **Corazones:** 5 de salud (más generoso que un beat 'em up normal). Los enemigos sueltan corazones a veces al caer.
+- **Derrotados:** contador de enemigos vencidos en el nivel. *"¡34 derrotados!"*
 - **Armario:** lazos, colores de falda y accesorios comprables con chispas. La rejugabilidad más barata y más efectiva a esta edad.
 
 ## 7. Accesibilidad para 8 años
