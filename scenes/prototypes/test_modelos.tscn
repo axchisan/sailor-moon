@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://src/core/toon_root.gd" id="1_toon"]
-[ext_resource type="PackedScene" path="res://assets/models/characters/serena_sailor.glb" id="2_serena"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/serena_rigged.fbx" id="2_serena"]
 [ext_resource type="PackedScene" path="res://assets/models/characters/peluchin.glb" id="3_peluchin"]
 [ext_resource type="PackedScene" path="res://assets/models/characters/cofrecito.glb" id="4_cofrecito"]
 

@@ -84,23 +84,37 @@ tamaño. El daño no debe depender de la animación.
 | Enemigo | Modelo | Escena | Comportamiento | Estado |
 |---|---|---|---|---|
 | **Peluchín** (básico) | ✅ 5.000 tris | ✅ | ✅ acercarse y golpear | **Terminado** |
-| **Cofrecito** (escudo) | ✅ 5.000 tris | ⬜ | ⬜ escudo frontal | Falta escena y lógica |
+| **Cofrecito** (escudo) | ✅ 5.000 tris | ✅ | ✅ escudo frontal 130° | **Terminado** |
 | **Globito** (a distancia) | ⬜ | ⬜ | ⬜ proyectil lento | Falta todo |
 
-### 4.1 Cofrecito — enemigo con escudo
+### 4.1 Cofrecito — TERMINADO
 
-El modelo ya está procesado. Falta:
+| Propiedad | Valor | Por qué |
+|---|---|---|
+| Vida | 4 | Aguanta más que el Peluchín (3) |
+| Arco de escudo | **130°** frontal | Bloquea de frente, pasa por los lados |
+| Velocidad de giro | **2,2** (Peluchín: 9,0) | **Es lo que lo hace jugable** |
+| Velocidad | 2,4 | Más pesado y lento |
+| Ataque | `enemy_cofrecito.tres` | Aviso 0,9 s, más retroceso |
 
-1. **Escena** copiando `peluchin.tscn`, cambiando el modelo y los colores
-2. **Lógica de escudo** en `enemy.gd`: un `@export var shield_arc: float = 110.0`
-   y en `_on_hurtbox_hit()`, si el golpe viene dentro de ese arco frontal, el
-   daño se anula y suena un *clonk* con retroceso para el jugador
-3. **Rompible con el especial:** el ataque especial ignora el escudo. Así la
-   barra deja de ser opcional y enseña a usarla
-4. **Aviso visual:** un destello del escudo al bloquear, para que se entienda a
-   la primera que hay que rodearlo
+**El detalle de diseño que importa:** el enemigo gira para encararte, así que un
+escudo frontal bloquearía SIEMPRE si girase rápido. Lo que lo hace jugable es su
+`turn_speed` de 2,2: tarda en encararte y rodearlo funciona.
 
-Presupuesto: 5.000 tris, textura 1024, altura 0,80 m.
+> ⚠️ **`shield_arc` y `turn_speed` van juntos.** Si alguien sube la velocidad de
+> giro del Cofrecito, se vuelve invencible salvo con el especial.
+
+**Cómo se le gana** — tres caminos, y los tres enseñan algo:
+1. Rodearlo mientras gira despacio
+2. Golpearle mientras está comprometido en su ataque
+3. **Reventarle la guardia con el especial**, que ignora el escudo
+   (`breaks_shield` en `AttackData`). Así la barra deja de ser opcional
+
+**Verificado:** 2 golpes de frente → salud 4 → 4 (bloquea). 1 golpe por la
+espalda → 4 → 2 (pasa). Especial de frente → destruido.
+
+Al bloquear no hay hit stop: congelar el juego premiaría un golpe que no ha
+servido. Solo un *clonk* metálico, chispas doradas y un destello del escudo.
 
 ### 4.2 Globito — enemigo a distancia
 
@@ -156,8 +170,19 @@ la más agresiva a la baja es bajar `max_attackers` a 3.
 
 ## 6. Orden de trabajo sugerido
 
-1. **Cofrecito** — el modelo ya está, es solo escena + lógica de escudo. Además
-   introduce una mecánica nueva sin pedir arte
-2. **Probar en el móvil** el nivel de hostilidad actual antes de añadir más
+1. ~~Cofrecito~~ ✅ **Terminado y mezclado en las oleadas**
+2. **Probar en el móvil** la hostilidad y el escudo antes de añadir más
 3. **Globito** — necesita modelo, proyectil y un estado nuevo. Es el más caro
 4. **Variantes de color** cuando existan los niveles 2 y 3
+
+### Oleadas mixtas
+
+`Arena` ahora acepta `enemy_scenes_extra` y los mezcla con el enemigo básico:
+
+| Ajuste | Valor | Para qué |
+|---|---|---|
+| `extra_ratio` | 0.34 | Un tercio de la oleada son extra |
+| `extra_from_wave` | 1 | La **primera** oleada es solo Peluchines |
+
+Ese `extra_from_wave` es deliberado: primero se aprende a pegar, y solo cuando
+eso ya funciona aparece el enemigo que obliga a rodear. Una mecánica cada vez.

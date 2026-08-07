@@ -17,6 +17,7 @@ const SFX_HIT := preload("res://assets/audio/sfx/hit.wav")
 const SFX_HIT_HEAVY := preload("res://assets/audio/sfx/hit_heavy.wav")
 const SFX_HURT := preload("res://assets/audio/sfx/hurt.wav")
 const SFX_DEFEAT := preload("res://assets/audio/sfx/purify.wav")
+const SFX_BLOCK := preload("res://assets/audio/sfx/block.wav")
 const SFX_SPECIAL := preload("res://assets/audio/sfx/special.wav")
 
 ## Presets de impacto por tipo de golpe.
@@ -63,6 +64,16 @@ func player_hurt(world_position: Vector3) -> void:
 	shake(0.45, 0.35)
 	spawn_impact_particles(world_position, Color(1.0, 0.45, 0.55))
 	AudioManager.play_sfx(SFX_HURT, -1.0, 0.06)
+
+
+## El escudo aguanta el golpe. Suena metálico y NO congela el juego: un hit stop
+## premiaría un golpe que no ha servido de nada. La sacudida es mínima y las
+## chispas son doradas, para que se lea distinto de un impacto bueno.
+func block(world_position: Vector3) -> void:
+	if juice_enabled:
+		shake(0.12, 0.10)
+	spawn_impact_particles(world_position, Color(1.0, 0.92, 0.5), 12, 0.7)
+	AudioManager.play_sfx(SFX_BLOCK, -3.0, 0.08)
 
 
 ## Golpe final. Pega más fuerte que un impacto normal para que se note que el

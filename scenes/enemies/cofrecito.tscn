@@ -1,0 +1,116 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://src/enemies/enemy.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://src/core/state_machine.gd" id="2_fsm"]
+[ext_resource type="Script" path="res://src/core/hitbox.gd" id="3_hitbox"]
+[ext_resource type="Script" path="res://src/core/hurtbox.gd" id="4_hurtbox"]
+[ext_resource type="Script" path="res://src/core/toon_root.gd" id="5_toon"]
+[ext_resource type="Script" path="res://src/enemies/blob_animator.gd" id="6_blob"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/cofrecito.glb" id="7_modelo"]
+[ext_resource type="Script" path="res://src/enemies/states/e_idle.gd" id="10_idle"]
+[ext_resource type="Script" path="res://src/enemies/states/e_approach.gd" id="11_approach"]
+[ext_resource type="Script" path="res://src/enemies/states/e_wait.gd" id="12_wait"]
+[ext_resource type="Script" path="res://src/enemies/states/e_telegraph.gd" id="13_telegraph"]
+[ext_resource type="Script" path="res://src/enemies/states/e_attack.gd" id="14_attack"]
+[ext_resource type="Script" path="res://src/enemies/states/e_stagger.gd" id="15_stagger"]
+[ext_resource type="Script" path="res://src/enemies/states/e_defeated.gd" id="16_defeated"]
+[ext_resource type="Resource" path="res://assets/data/attacks/enemy_cofrecito.tres" id="18_ataque"]
+
+[sub_resource type="CapsuleShape3D" id="Shape_body"]
+radius = 0.42
+height = 1.1
+
+[sub_resource type="BoxShape3D" id="Shape_hitbox"]
+size = Vector3(1.1, 1.0, 1.3)
+
+[sub_resource type="CapsuleShape3D" id="Shape_hurtbox"]
+radius = 0.5
+height = 1.2
+
+[node name="Cofrecito" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 5
+script = ExtResource("1_enemy")
+display_name = "Cofrecito"
+max_health = 4
+move_speed = 2.4
+attack_range = 2.1
+wait_distance = 3.0
+turn_speed = 2.2
+attack = ExtResource("18_ataque")
+sparkles_on_defeat = 5
+shield_arc = 130.0
+base_color = Color(0.85, 0.62, 0.42, 1)
+telegraph_color = Color(1, 0.35, 0.3, 1)
+shield_color = Color(1, 0.93, 0.5, 1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("Shape_body")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Deform" type="Node3D" parent="Model"]
+
+[node name="Visual" type="Node3D" parent="Model/Deform"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+script = ExtResource("5_toon")
+outline_width = 0.008
+
+[node name="Cofrecito" parent="Model/Deform/Visual" instance=ExtResource("7_modelo")]
+
+[node name="Hitbox" type="Area3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -0.85)
+collision_layer = 16
+collision_mask = 32
+monitoring = false
+monitorable = false
+script = ExtResource("3_hitbox")
+
+[node name="Shape" type="CollisionShape3D" parent="Model/Hitbox"]
+shape = SubResource("Shape_hitbox")
+
+[node name="Hurtbox" type="Area3D" parent="."]
+collision_layer = 64
+collision_mask = 0
+monitoring = false
+monitorable = true
+script = ExtResource("4_hurtbox")
+
+[node name="Shape" type="CollisionShape3D" parent="Hurtbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62, 0)
+shape = SubResource("Shape_hurtbox")
+
+[node name="Animador" type="Node" parent="."]
+script = ExtResource("6_blob")
+modelo_path = NodePath("../Model/Deform")
+rebote = 0.02
+rebote_andando = 0.045
+velocidad_andando = 5.0
+inclinacion = 6.0
+aplastado = 0.82
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("2_fsm")
+initial_state = NodePath("Idle")
+
+[node name="Idle" type="Node" parent="StateMachine"]
+script = ExtResource("10_idle")
+
+[node name="Approach" type="Node" parent="StateMachine"]
+script = ExtResource("11_approach")
+
+[node name="Wait" type="Node" parent="StateMachine"]
+script = ExtResource("12_wait")
+
+[node name="Telegraph" type="Node" parent="StateMachine"]
+script = ExtResource("13_telegraph")
+
+[node name="Attack" type="Node" parent="StateMachine"]
+script = ExtResource("14_attack")
+
+[node name="Stagger" type="Node" parent="StateMachine"]
+script = ExtResource("15_stagger")
+
+[node name="Defeated" type="Node" parent="StateMachine"]
+script = ExtResource("16_defeated")

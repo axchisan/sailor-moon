@@ -27,6 +27,9 @@ class_name AttackData
 @export var knockback_up: float = 0.0
 ## Cuánto se lanza el personaje hacia delante al golpear. Da sensación de peso.
 @export var lunge: float = 2.0
+## Si es true, ignora el escudo del Cofrecito. Solo el especial lo lleva: así
+## la barra deja de ser opcional y el juego enseña a usarla.
+@export var breaks_shield: bool = false
 
 @export_group("Sensación")
 @export_range(0.0, 0.5, 0.01) var hit_stop: float = 0.06
