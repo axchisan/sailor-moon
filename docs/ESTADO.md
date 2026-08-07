@@ -4,7 +4,7 @@
 > retoma tras un tiempo, lee esto primero y luego el documento específico que
 > necesites.
 >
-> **Última actualización:** 2026-08-04 · Enemigos con eliminación real y cámara ajustada
+> **Última actualización:** 2026-08-07 · Reparto de 7 personajes procesado
 
 ---
 
@@ -66,7 +66,10 @@ principal del proyecto):
 5. **Mover la activación de la hitbox a *call method tracks* de la animación.**
    Hoy la enciende un temporizador del estado; con la animación real conectaría
    en el frame exacto del impacto
-6. Escenario del Nivel 1 — especificación en [`07-ESCENARIOS.md`](07-ESCENARIOS.md)
+6. **Riguear el reparto en Mixamo.** 6 personajes listos en `Models/mixamo/`.
+   Reutilizan la misma AnimationLibrary sin descargar nada
+   — ver [`12-REPARTO.md`](12-REPARTO.md)
+7. Escenario del Nivel 1 — especificación en [`07-ESCENARIOS.md`](07-ESCENARIOS.md)
 
 ---
 
@@ -86,6 +89,7 @@ principal del proyecto):
 | [`09-FISICA-PELO.md`](09-FISICA-PELO.md) | Coletas con inercia: cadenas de huesos + spring bones |
 | [`10-ANIMATION-TREE.md`](10-ANIMATION-TREE.md) | AnimationTree montado, TimeScale y el lío de reposos de Mixamo |
 | [`11-PLAN-ENEMIGOS.md`](11-PLAN-ENEMIGOS.md) | **Plan de enemigos:** plantilla, animación procedural y palancas de dificultad |
+| [`12-REPARTO.md`](12-REPARTO.md) | **Reparto de personajes:** 7 procesados, qué falta por cada uno |
 | [`CREDITOS.md`](CREDITOS.md) | Atribuciones de assets |
 
 ---
