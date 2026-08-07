@@ -85,7 +85,7 @@ tamaño. El daño no debe depender de la animación.
 |---|---|---|---|---|
 | **Peluchín** (básico) | ✅ 5.000 tris | ✅ | ✅ acercarse y golpear | **Terminado** |
 | **Cofrecito** (escudo) | ✅ 5.000 tris | ✅ | ✅ escudo frontal 130° | **Terminado** |
-| **Hadita** (a distancia) | ⬜ | ⬜ | ⬜ proyectil lento | Falta todo |
+| **Hadita** (a distancia) | ✅ 5.000 tris | ✅ | ✅ vuela, dispara y huye | **Terminado** |
 
 ### 4.1 Cofrecito — TERMINADO
 
@@ -180,21 +180,35 @@ watermark, photorealistic, scary, sharp teeth, weapons
 Genera 3 o 4 variaciones y quédate con la de **silueta más legible**, no con la
 más bonita: la IA de 3D reconstruye la forma, no el arte.
 
-#### Comportamiento a implementar
+#### Comportamiento — TERMINADO
 
-El arquetipo que falta: rompe la monotonía de machacar obligando a perseguir.
+| Propiedad | Valor | Por qué |
+|---|---|---|
+| Vida | **2** | La más frágil: el precio de ser molesta desde lejos |
+| Alcance | 7,0 m | Ataca sin acercarse |
+| Distancia de huida | **3,2 m** | Retrocede si te pegas a ella |
+| Vuela a | 1,0 m | No pisa el suelo |
+| Aviso | 0,85 s | Como todos: nunca dispara sin telegrafiar |
 
-1. **Mantiene la distancia.** `wait_distance` y `attack_range` altos
-2. **Huye si te acercas.** Si el jugador entra en su radio mínimo, retrocede
-3. **Lanza esquirlas** en vez de embestir: un proyectil lento y esquivable, con
-   su propia `Hitbox` y vida limitada
-4. **Telegrafía igual que los demás**: brillo rojo antes de disparar
+**Tres piezas nuevas que ahora sirven para cualquier enemigo volador o a
+distancia:**
 
-Necesita una escena de proyectil y un estado `e_shoot.gd` que la instancie al
-terminar la anticipación.
+1. **Vuelo** (`Enemy.flota`): ignora la gravedad y busca su altura con un muelle
+   amortiguado sobre un rayo al suelo. Sin la amortiguación rebotaría como una
+   pelota
+2. **Proyectil** (`src/enemies/projectile.gd` + `scenes/enemies/esquirla.tscn`):
+   se mueve a mano y comprueba el suelo con un rayo. Un `RigidBody3D` para esto
+   sería pagar por nada
+3. **Huida** (`Enemy.huir_si_esta_cerca()`): usada desde `Approach` y `Wait`
 
-Presupuesto: 5.000 tris, textura 1024, altura 0,70 m — grande para ser un hada,
-pero tiene que poder golpearse con el dedo en un móvil.
+> **El proyectil va a 5 m/s a propósito.** Uno rápido en un juego para una niña
+> de 8 años es imposible de esquivar y se percibe como injusto. Este se ve venir
+> de lejos y se esquiva andando de lado, que es justo la lección que enseña
+> este enemigo.
+
+**Verificado:** altura estable a 1,00 m sin oscilar, 2 esquirlas lanzadas,
+al acercarse a 1,2 m retrocedió hasta 6,0 m, y el impacto baja la salud del
+jugador de 5 a 4.
 
 ### 4.3 Variantes por nivel — el truco que ahorra el 80%
 
