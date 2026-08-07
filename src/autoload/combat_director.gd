@@ -12,8 +12,9 @@ extends Node
 signal token_granted(enemy: Node)
 signal token_released(enemy: Node)
 
-## Enemigos que pueden atacar simultáneamente.
-@export var max_attackers: int = 3
+## Enemigos que pueden atacar simultáneamente. Subir esto es la palanca más
+## directa para que el combate se sienta más agobiante.
+@export var max_attackers: int = 4
 
 var _holders: Array[int] = []
 

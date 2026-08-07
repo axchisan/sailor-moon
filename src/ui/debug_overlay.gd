@@ -24,9 +24,8 @@ func _process(_delta: float) -> void:
 			return
 
 	var enemies := get_tree().get_nodes_in_group("enemies").size()
-	var friends := get_tree().get_nodes_in_group("friends").size()
 
-	text = "FPS: %d   (%s)\nEstado: %s\nVel H: %.1f m/s\nCombo: %d (%.2fs)\nEspecial: %d%%\nEnemigos: %d   Amigos: %d\nAtacando: %d / %d" % [
+	text = "FPS: %d   (%s)\nEstado: %s\nVel H: %.1f m/s\nCombo: %d (%.2fs)\nEspecial: %d%%\nEnemigos: %d\nAtacando: %d / %d" % [
 		Engine.get_frames_per_second(),
 		RenderingServer.get_current_rendering_method(),
 		_player.state_machine.get_state_name(),
@@ -35,7 +34,6 @@ func _process(_delta: float) -> void:
 		_player.combo_timer,
 		int(GameManager.get_special_ratio() * 100.0),
 		enemies,
-		friends,
 		CombatDirector.active_attackers(),
 		CombatDirector.max_attackers,
 	]

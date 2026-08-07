@@ -4,7 +4,7 @@
 > retoma tras un tiempo, lee esto primero y luego el documento específico que
 > necesites.
 >
-> **Última actualización:** 2026-08-04 · Física de pelo resuelta
+> **Última actualización:** 2026-08-04 · Enemigos con eliminación real y cámara ajustada
 
 ---
 
@@ -30,7 +30,7 @@ DTO, signals ≈ event bus).
 | Fase | Estado |
 |---|---|
 | **Fase 0 — Cimientos** | ✅ **Cerrada.** APK corriendo en el móvil real |
-| **Fase 1 — Combate** | 🟡 **Núcleo funcionando y verificado.** Falta pulir el *feel*, y los enemigos Globito y Cofrecito |
+| **Fase 1 — Combate** | 🟡 **Núcleo verificado con modelos reales.** Faltan Cofrecito y Globito |
 | **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Serena jugable con animaciones, pelo y cel shading. Falta el escenario del Nivel 1 |
 | Fases 3–5 | ⬜ Sin empezar |
 
@@ -45,8 +45,8 @@ principal del proyecto):
 - Ataque especial con barra de carga, zoom, invulnerabilidad y área amplia
 - `CombatFeel`: hit stop, screen shake, partículas, flash y SFX
 - Enemigo Peluchín con FSM de 7 estados
-- **Sistema de fichas: nunca más de 3 enemigos atacando a la vez** (verificado)
-- Purificación en vez de muerte
+- **Sistema de fichas: nunca más de 4 enemigos atacando a la vez** (verificado)
+- Enemigos con modelo real, animación procedural y eliminación al derrotarlos
 - Arena con barrera mágica y oleadas configurables
 - HUD por EventBus y controles táctiles (joystick flotante + botones)
 - 60 fps con 9 enemigos y partículas
@@ -59,11 +59,12 @@ principal del proyecto):
 2. ~~Montar el `AnimationTree`~~ ✅ Verificado a 60 fps con pelo y cel shading
 3. ~~Sustituir la cápsula por Serena~~ ✅ **Serena ya es el jugador.**
    Combo verificado con sus animaciones, física de pelo y cel shading, 60 fps
-4. **Mover la activación de la hitbox a *call method tracks* de la animación**
-   ← siguiente paso. Hoy la enciende un temporizador del estado; con la
-   animación real conectaría en el frame exacto del impacto
-5. Enemigos Globito y Cofrecito (el Cofrecito ya tiene modelo)
-6. Escenario del Nivel 1 — ver [`07-ESCENARIOS.md`](07-ESCENARIOS.md)
+4. **Cofrecito**: el modelo está listo, faltan escena y lógica de escudo.
+   Ver [`11-PLAN-ENEMIGOS.md`](11-PLAN-ENEMIGOS.md) §4.1
+5. **Mover la activación de la hitbox a *call method tracks* de la animación.**
+   Hoy la enciende un temporizador del estado; con la animación real conectaría
+   en el frame exacto del impacto
+6. Escenario del Nivel 1 — especificación en [`07-ESCENARIOS.md`](07-ESCENARIOS.md)
 
 ---
 
@@ -81,7 +82,8 @@ principal del proyecto):
 | [`07-ESCENARIOS.md`](07-ESCENARIOS.md) | Cómo se construyen los escenarios (3 capas) |
 | [`08-ANIMACIONES-MIXAMO.md`](08-ANIMACIONES-MIXAMO.md) | Qué animaciones bajar y con qué ajustes |
 | [`09-FISICA-PELO.md`](09-FISICA-PELO.md) | Coletas con inercia: cadenas de huesos + spring bones |
-| [`10-ANIMATION-TREE.md`](10-ANIMATION-TREE.md) | AnimationTree montado, TimeScale y el lio de reposos de Mixamo |
+| [`10-ANIMATION-TREE.md`](10-ANIMATION-TREE.md) | AnimationTree montado, TimeScale y el lío de reposos de Mixamo |
+| [`11-PLAN-ENEMIGOS.md`](11-PLAN-ENEMIGOS.md) | **Plan de enemigos:** plantilla, animación procedural y palancas de dificultad |
 | [`CREDITOS.md`](CREDITOS.md) | Atribuciones de assets |
 
 ---
@@ -99,7 +101,7 @@ src/autoload/          Los "servicios". Orden en project.godot IMPORTA
   scene_loader.gd        Carga asíncrona
   settings.gd            Volúmenes, idioma, assisted_mode
   combat_feel.gd         ⭐ TODO el jugo del combate en un solo sitio
-  combat_director.gd     ⭐ Fichas de ataque (máx. 3 atacando)
+  combat_director.gd     ⭐ Fichas de ataque (máx. 4 atacando)
 
 src/core/
   state.gd, state_machine.gd   FSM genérica (jugador y enemigos)
@@ -109,7 +111,7 @@ src/core/
   impact_particles.gd
 
 src/player/            player.gd + camera_rig.gd + states/ (8 estados)
-src/enemies/           enemy.gd + states/ (7 estados)
+src/enemies/           enemy.gd + blob_animator.gd + states/ (7 estados)
 src/level/arena.gd     Oleadas y barrera mágica
 src/ui/                hud.gd, touch_controls.gd, debug_overlay.gd
 src/data/attack_data.gd
@@ -213,7 +215,13 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
    `CharacterAnimator._ampliar_aabb()`).
 12. **Los modelos de Mixamo miran hacia +Z**, y Godot usa −Z como frente. Hay
    que girar el nodo visual 180° en Y.
-13. **GDScript no es Python:** no hay listas por comprensión y `round()` solo
+13. **Un nodo hijo no puede conectarse a un `@onready` de su padre en `_ready()`.**
+   Los hijos se inicializan primero, así que la propiedad todavía es `null` y la
+   conexión se pierde EN SILENCIO. Hay que engancharse en el primer `_process`
+   (lo hace `BlobAnimator`).
+14. **Los modelos de hi3d.ai miran a +Z, igual que los de Mixamo.** Todo modelo
+   importado necesita 180° en Y, personajes y enemigos por igual.
+15. **GDScript no es Python:** no hay listas por comprensión y `round()` solo
    acepta un argumento (para decimales, `snappedf(x, 0.1)`). Un error de sintaxis
    dentro de `game_eval` deja el juego atrapado en el depurador y bloquea el MCP.
 
@@ -266,7 +274,7 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
 | Auto-orientación por puntuación, no por cono | Apuntar en 3D con joystick virtual es la barrera nº 1 para una niña de 8 años |
 | Ventana de combo de 0,8 s | Deliberadamente enorme: machacar debe funcionar SIEMPRE |
 | El especial no se recarga a sí mismo | Devolvía el 41% por uso y era encadenable siendo invulnerable |
-| Purificar en vez de matar | Pilar de diseño: cero violencia explícita |
+| ~~Purificar en vez de matar~~ → **eliminación real** | Lo pidió la jugadora al probarlo. El aviso rojo antes de cada golpe se mantiene |
 | Joystick flotante | Aparece donde pone el dedo; a los 8 años es mejor que uno fijo |
 | Enemigos con animación procedural | Son bolas y cofres: Mixamo no puede riguearlos y no hace falta |
 | `Models/` fuera de git | 231 MB de originales regenerables desde hi3d.ai |

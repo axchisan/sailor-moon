@@ -168,7 +168,7 @@ func _alive_count() -> int:
 			continue
 		still_valid.append(node)
 		var enemy := node as Enemy
-		if enemy != null and not enemy.purified:
+		if enemy != null and not enemy.defeated:
 			alive += 1
 	_spawned = still_valid
 	return alive

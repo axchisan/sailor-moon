@@ -135,6 +135,69 @@ Todos pasan por `tools/blender_preparar_modelo.py` igual que los personajes.
 
 ---
 
+## Especificación del Nivel 1 — Parque Juuban
+
+Concretando la receta para el primer nivel real. La arena de pruebas actual mide
+11 m de radio y ha demostrado funcionar con 8 enemigos, así que es la unidad.
+
+### Recorrido
+
+```
+   INICIO ──tramo A── [ARENA 1] ──tramo B── [ARENA 2] ──tramo C── [GUARDIÁN]
+   (Luna te                2 oleadas          3 oleadas            jefe suave
+    guía)                  2 y 3 enemigos     3, 4 y 4
+```
+
+| Zona | Largo | Qué pasa |
+|---|---|---|
+| Tramo A | ~20 m | Se aprende a mover y saltar. Chispas por el camino guían |
+| Arena 1 | Ø 22 m | Primer combate. Solo Peluchines |
+| Tramo B | ~25 m | Plataformas bajas para saltar. Primera Estrella de Sueño escondida |
+| Arena 2 | Ø 22 m | Aparece el Cofrecito: enseña que hay que rodear |
+| Tramo C | ~15 m | Subida hacia el guardián, sin enemigos: tensión |
+| Guardián | Ø 26 m | Jefe con más vida y tres oleadas de apoyo |
+
+**Duración objetivo:** 8–10 minutos. Es un tutorial, no una maratón.
+
+### Presupuesto de props
+
+Con 7 piezas distintas se decora el nivel entero, repitiéndolas y rotándolas:
+
+| Pieza | Cantidad | Polígonos c/u |
+|---|---|---|
+| Árbol de cerezo | ~14 | 3.000 |
+| Arbusto redondo | ~25 | 1.500 |
+| Farol de piedra | ~10 | 3.000 |
+| Banco | ~6 | 3.000 |
+| Valla baja | ~20 | 1.500 |
+| Papelera | ~4 | 1.000 |
+| Fuente | 1 | 3.000 |
+
+Los arbustos y las vallas, al repetirse tanto, van con
+`MultiMeshInstance3D`: 25 arbustos pasan de 25 draw calls a **1**.
+
+### Orden de montaje
+
+1. **Blockout en CSG** y jugarlo en gris de principio a fin. Si el recorrido no
+   se entiende sin decoración, tampoco se entenderá con ella
+2. **Skybox** de parque japonés al atardecer
+3. **Props** por bloques: primero árboles y arbustos (definen el espacio),
+   después el mobiliario
+4. **Colisión:** los props decorativos NO llevan colisión. Solo el suelo, las
+   paredes invisibles del recorrido y las plataformas. Menos física y menos
+   sitios donde atascarse
+5. **Medir** draw calls y triángulos contra el presupuesto de
+   [`01-ARQUITECTURA.md`](01-ARQUITECTURA.md) §8
+
+### Lo que define el nivel más que los props
+
+- **El suelo debe leerse.** Un camino de color distinto marcando por dónde ir
+  vale más que veinte árboles
+- **Las arenas se ven de lejos.** Un círculo en el suelo o un cambio de textura
+  avisa de que ahí va a pasar algo
+- **Nada de callejones sin salida.** A los 8 años, perderse no es un reto, es un
+  abandono
+
 ## Lo que NO conviene hacer
 
 - ❌ Buscar la herramienta mágica que genere el nivel entero. No existe

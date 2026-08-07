@@ -4,7 +4,7 @@ extends State
 ## Este tiempo es lo que permite encadenar el combo sin que el enemigo
 ## contraataque en medio. Si se acorta, el combate se vuelve injusto.
 
-const STAGGER_TIME := 0.30
+const STAGGER_TIME := 0.22
 
 var _timer: float = 0.0
 
