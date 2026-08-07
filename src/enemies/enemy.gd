@@ -22,6 +22,22 @@ class_name Enemy
 @export var sparkles_on_defeat: int = 3
 @export var knockback_friction: float = 8.0
 
+@export_group("Vuelo")
+## Flota en vez de andar: ignora la gravedad y se mantiene a `altura_vuelo`.
+@export var flota: bool = false
+@export var altura_vuelo: float = 0.9
+
+@export_group("A distancia")
+## Si se asigna, el enemigo dispara esto en vez de embestir.
+@export var proyectil: PackedScene
+## Retrocede si el jugador se acerca más que esto. 0 = no huye.
+##
+## Es lo que le da su papel: obliga a perseguirlo y rompe la monotonía de
+## quedarse quieto machacando el botón.
+@export var distancia_huida: float = 0.0
+## Desde dónde sale el disparo, respecto al centro del enemigo.
+@export var origen_disparo: Vector3 = Vector3(0, 0.35, -0.4)
+
 @export_group("Escudo")
 ## Arco frontal que bloquea, en grados. 0 = sin escudo (Peluchín).
 ##
@@ -83,13 +99,63 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if not is_on_floor():
+	if flota:
+		_mantener_altura(delta)
+	elif not is_on_floor():
 		velocity.y -= _gravity * delta
 	else:
 		velocity.y = maxf(velocity.y, -0.1)
 
 	state_machine.physics_update(delta)
 	move_and_slide()
+
+
+## Los que vuelan buscan su altura con un muelle suave en vez de caer. Sin
+## amortiguación rebotarían como una pelota.
+func _mantener_altura(delta: float) -> void:
+	var suelo := _altura_del_suelo()
+	var objetivo := suelo + altura_vuelo
+	var error := objetivo - global_position.y
+	velocity.y = lerpf(velocity.y, error * 6.0, clampf(delta * 8.0, 0.0, 1.0))
+
+
+func _altura_del_suelo() -> float:
+	var espacio := get_world_3d().direct_space_state
+	var desde := global_position + Vector3.UP * 2.0
+	var consulta := PhysicsRayQueryParameters3D.create(desde, desde + Vector3.DOWN * 40.0)
+	consulta.collision_mask = 1
+	consulta.exclude = [get_rid()]
+	var golpe := espacio.intersect_ray(consulta)
+	return golpe["position"].y if golpe.has("position") else 0.0
+
+
+## Retrocede alejándose del jugador. Devuelve true si estaba demasiado cerca.
+func huir_si_esta_cerca(delta: float) -> bool:
+	if distancia_huida <= 0.0:
+		return false
+	if distance_to_target() > distancia_huida:
+		return false
+	move_towards(-direction_to_target(), delta, 1.15)
+	return true
+
+
+## Lanza el proyectil hacia el jugador.
+func disparar() -> void:
+	if proyectil == null:
+		return
+	var bala := proyectil.instantiate() as Node3D
+	if bala == null:
+		return
+	get_tree().current_scene.add_child(bala)
+	bala.global_position = model.global_transform * origen_disparo
+
+	var hacia := direction_to_target()
+	# Apunta un poco al torso, no a los pies
+	var objetivo := get_target()
+	if objetivo != null:
+		hacia = ((objetivo.global_position + Vector3.UP * 0.8) - bala.global_position).normalized()
+	if bala.has_method("lanzar"):
+		bala.lanzar(hacia, self)
 
 
 # --- Consultas ----------------------------------------------------------------

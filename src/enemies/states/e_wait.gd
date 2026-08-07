@@ -21,6 +21,9 @@ func physics_update(delta: float) -> String:
 	var to_player := e.direction_to_target()
 	var distance := e.distance_to_target()
 
+	if e.huir_si_esta_cerca(delta):
+		return ""
+
 	# Se mantiene a `wait_distance`: si esta muy cerca retrocede, si lejos avanza.
 	var radial := to_player * signf(distance - e.wait_distance)
 	var tangent := Vector3(-to_player.z, 0.0, to_player.x) * _orbit_dir
