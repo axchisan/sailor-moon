@@ -118,7 +118,7 @@ Tres arquetipos, con variantes cosméticas por nivel (mismo esqueleto, distinto 
 | Arquetipo | Comportamiento | Contra |
 |---|---|---|
 | **Peluchín** (básico) | Se acerca y golpea. Telegrafía 0,75 s brillando en rojo | Machacar |
-| **Globito** (a distancia) | Se mantiene lejos y lanza burbujas lentas y esquivables | Acercarse o proyectil |
+| **Hadita** (a distancia) | Hada de espejo roto: se mantiene lejos y lanza esquirlas brillantes lentas y esquivables. Huye si te acercas | Perseguirla |
 | **Cofrecito** (escudo) | Se protege de frente; hay que romperle el escudo | Ataque especial o Jupiter |
 
 **Reglas de compasión, no negociables:**
