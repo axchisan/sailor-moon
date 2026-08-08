@@ -75,6 +75,15 @@ const ESTRELLAS: Array[Dictionary] = [
 	{"tramo": 1, "t": 0.75, "lado": -0.22, "alto": 3.0, "secreta": true},
 ]
 
+## Dónde espera cada personaje del reparto, en coordenadas del recorrido.
+## Mismo criterio que las estrellas: si cambian las medidas del nivel, siguen
+## en su sitio.
+const ENCUENTROS: Array[Dictionary] = [
+	# Mercury, nada más salir de la Arena 2: se la encuentra escondida a un
+	# lado del camino que sube hacia el guardián.
+	{"nodo": "EncuentroMercury", "tramo": 2, "t": 0.30, "lado": 0.55, "alto": 0.0},
+]
+
 var _origen: Vector3 = Vector3.ZERO
 var _direccion: Vector3 = Vector3.FORWARD
 var _altura: float = 0.0
@@ -129,8 +138,21 @@ func construir() -> void:
 					i += 1
 		i += 1
 
+	_colocar_encuentros()
 	print("[Nivel] blockout construido: %d piezas, %d arenas" % [
 		_piezas, centros_arena.size()])
+
+
+## Lleva cada encuentro a su punto del recorrido. Los nodos ya están en la
+## escena (para poder configurar diálogo y personaje en el inspector); lo único
+## que se decide aquí es dónde caen.
+func _colocar_encuentros() -> void:
+	for ficha in ENCUENTROS:
+		var nodo := get_parent().get_node_or_null(ficha["nodo"]) as Node3D
+		if nodo == null:
+			continue
+		nodo.global_position = punto_en_tramo(
+			ficha["tramo"], ficha["t"], ficha["lado"], ficha.get("alto", 0.0))
 
 
 # --- Tramos --------------------------------------------------------------------

@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://53qtgsevg1hq"
-path="res://.godot/imported/valla_madera_tex_madera.png-c83584fc08111f4aff24abf374430b0f.ctex"
+path.s3tc="res://.godot/imported/valla_madera_tex_madera.png-c83584fc08111f4aff24abf374430b0f.s3tc.ctex"
+path.etc2="res://.godot/imported/valla_madera_tex_madera.png-c83584fc08111f4aff24abf374430b0f.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "2adfaa876654631f795fbf2736c446e2"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/valla_madera_tex_madera.png"
-dest_files=["res://.godot/imported/valla_madera_tex_madera.png-c83584fc08111f4aff24abf374430b0f.ctex"]
+dest_files=["res://.godot/imported/valla_madera_tex_madera.png-c83584fc08111f4aff24abf374430b0f.s3tc.ctex", "res://.godot/imported/valla_madera_tex_madera.png-c83584fc08111f4aff24abf374430b0f.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
