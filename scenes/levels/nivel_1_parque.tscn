@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3]
+[gd_scene load_steps=26 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/prototypes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/peluchin.tscn" id="2_peluchin"]
@@ -19,6 +19,7 @@
 [ext_resource type="Script" path="res://src/gameplay/puerta_magica.gd" id="17_puerta"]
 [ext_resource type="PackedScene" path="res://assets/models/characters/luna.glb" id="18_luna"]
 [ext_resource type="Script" path="res://src/level/decorador_nivel.gd" id="19_decorador"]
+[ext_resource type="Script" path="res://src/core/modo_desarrollador.gd" id="20_dev"]
 
 [sub_resource type="ShaderMaterial" id="SkyMat_1"]
 shader = ExtResource("9_cielo")
@@ -168,3 +169,6 @@ lado = -1.0
 [node name="GameUI" parent="." instance=ExtResource("5_ui")]
 
 [node name="PanelDialogo" parent="." instance=ExtResource("11_dialogo")]
+
+[node name="ModoDesarrollador" type="CanvasLayer" parent="."]
+script = ExtResource("20_dev")

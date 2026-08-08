@@ -30,6 +30,8 @@ signal linea_mostrada(indice: int)
 @onready var _flecha: Label = $Marco/Flecha
 @onready var _voz: AudioStreamPlayer = $Voz
 
+var _boton_cerrar: Button = null
+
 var _dialogo: Dialogo = null
 var _indice: int = -1
 var _escritos: float = 0.0
@@ -46,6 +48,44 @@ func _ready() -> void:
 	visible = false
 	set_process(false)
 	_flecha.visible = false
+	_dejar_pasar_el_toque(_marco)
+	_montar_cerrar()
+
+
+## Hace que el cuadro no se coma los toques.
+##
+## Un `Control` con el filtro por defecto (`STOP`) consume el clic antes de que
+## llegue a `_unhandled_input`. Como el cuadro ocupa media pantalla, el diálogo
+## solo avanzaba tocando FUERA de él — que es justo donde nadie toca, porque lo
+## que se está mirando es el texto.
+##
+## Se aplica a todo el árbol del marco: basta que un hijo lo pare (la etiqueta
+## del nombre, el texto) para que el agujero siga ahí.
+func _dejar_pasar_el_toque(nodo: Node) -> void:
+	if nodo is Control:
+		(nodo as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for hijo in nodo.get_children():
+		_dejar_pasar_el_toque(hijo)
+
+
+## Botón de cerrar, arriba a la derecha del cuadro.
+##
+## Este SÍ para el toque: es la única parte del cuadro que hace algo distinto
+## de avanzar, y hay que poder salir de una conversación ya vista sin tener que
+## pasar todas las frases.
+func _montar_cerrar() -> void:
+	_boton_cerrar = Button.new()
+	_boton_cerrar.name = "Cerrar"
+	_boton_cerrar.text = "✕"
+	_boton_cerrar.focus_mode = Control.FOCUS_NONE
+	_boton_cerrar.mouse_filter = Control.MOUSE_FILTER_STOP
+	_boton_cerrar.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	# Área generosa: en un móvil, una equis de veinte píxeles no se acierta.
+	_boton_cerrar.custom_minimum_size = Vector2(56, 56)
+	_boton_cerrar.position = Vector2(-64, 8)
+	_boton_cerrar.add_theme_font_size_override("font_size", 26)
+	_boton_cerrar.pressed.connect(_al_pulsar_cerrar)
+	_marco.add_child(_boton_cerrar)
 
 
 ## Arranca una conversación. Devuelve false si no hay nada que decir.
@@ -74,6 +114,9 @@ func _process(delta: float) -> void:
 	# llega si alguien lo emite de verdad; `Input.action_press()` —que es lo que
 	# usan los botones táctiles y las herramientas de prueba— cambia el estado
 	# sin generar evento, y por `_unhandled_input` el diálogo no avanzaba nunca.
+	if Input.is_action_just_pressed("ui_cancel"):
+		_al_pulsar_cerrar()
+		return
 	if Input.is_action_just_pressed("attack") \
 			or Input.is_action_just_pressed("jump") \
 			or Input.is_action_just_pressed("ui_accept"):
@@ -117,6 +160,21 @@ func _unhandled_input(evento: InputEvent) -> void:
 		return
 	get_viewport().set_input_as_handled()
 	avanzar()
+
+
+## Salir de la conversación sin pasar todas las frases.
+##
+## Corta la voz: si no, el personaje sigue hablando con el cuadro ya cerrado.
+## El diálogo se da por terminado igual que si se hubiera leído entero, para
+## que lo que desbloquee se desbloquee — cerrar es una comodidad, no un castigo.
+func _al_pulsar_cerrar() -> void:
+	if not visible:
+		return
+	_voz.stop()
+	_esperando = false
+	_escribiendo = false
+	_indice = _dialogo.tamano() if _dialogo != null else 0
+	_cerrar()
 
 
 ## Un paso del diálogo: primero completa la línea, después pasa a la siguiente.

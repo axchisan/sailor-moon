@@ -340,7 +340,29 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     reparten **por distancia al segmento del hueso**: menos fino, pero
     determinista y sin depender de que la malla esté sana. Y siempre se cuenta
     cuántos vértices quedaron sueltos antes de exportar.
-34. **El blockout también cuenta para el presupuesto de draw calls.** 84 cajas
+34. **Un `Control` se come el toque antes de `_unhandled_input`.** El cuadro de
+    diálogo ocupa media pantalla y venía con el filtro por defecto (`STOP`), así
+    que tocarlo no hacía nada: solo avanzaba tocando FUERA, que es justo donde
+    nadie toca. Se arregla poniendo `MOUSE_FILTER_IGNORE` en **todo el árbol**
+    del cuadro — basta que un hijo lo pare para que el agujero siga ahí.
+35. **Dos superficies tangentes no cierran.** Un pasillo que acaba exactamente
+    donde empieza el disco de la arena deja rendijas por las que se cae del
+    mundo: en el Nivel 1 eran 67. Las losas se solapan medio metro, los discos
+    de arena sobresalen para cubrir las esquinas contra el borde curvo, y el
+    disco de hierba lleva colisión como red de seguridad. Para comprobarlo,
+    barrido de rayos en rejilla de 50 cm, **excluyendo los cuerpos de los
+    props**: si no, un tronco tapa el rayo y falsea el resultado.
+36. **La altura de un tramo solo vale ENCIMA del tramo.** En el pasillo que sube
+    al guardián, todo lo sembrado fuera del muro se calculaba a la altura del
+    camino —hasta 2,5 m— mientras el terreno de al lado es la hierba, plana:
+    árboles, rocas y un farol flotando. Cualquier cosa que se coloque sobre el
+    escenario se posa con un rayo, no con una cuenta.
+37. **Las capas de colisión hay que mirarlas las dos.** La jugadora tenía
+    `collision_mask = 1` (solo `world`), así que atravesaba a los enemigos por
+    mucho cuerpo que estos tuvieran. Un `Area3D` como el de `Encuentro` no da
+    bulto ninguno: para que no se atraviese a un personaje hace falta un
+    `StaticBody3D` aparte del área que escucha.
+38. **El blockout también cuenta para el presupuesto de draw calls.** 84 cajas
     como `MeshInstance3D` sueltos son 84 draw calls, más de la mitad de los 150
     del §8. Agrupadas en un `MultiMeshInstance3D` por color son 4, y los
     `StaticBody3D` se quedan solo con la colisión, que no cuesta dibujado. El
