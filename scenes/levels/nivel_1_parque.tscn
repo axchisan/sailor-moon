@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=23 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/prototypes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/peluchin.tscn" id="2_peluchin"]
@@ -15,6 +15,8 @@
 [ext_resource type="Resource" path="res://assets/data/dialogos/n1_mercury.tres" id="13_dlg_mercury"]
 [ext_resource type="Resource" path="res://assets/data/personajes/sailor_mercury.tres" id="14_mercury"]
 [ext_resource type="Script" path="res://src/gameplay/companero.gd" id="15_companero"]
+[ext_resource type="PackedScene" path="res://scenes/props/farol.tscn" id="16_farol"]
+[ext_resource type="Script" path="res://src/gameplay/puerta_magica.gd" id="17_puerta"]
 
 [sub_resource type="ShaderMaterial" id="SkyMat_1"]
 shader = ExtResource("9_cielo")
@@ -62,6 +64,8 @@ radius = 6.0
 script = ExtResource("8_nivel")
 escena_estrella = ExtResource("10_estrella")
 estrellas_del_nivel = 7
+escena_farol = ExtResource("16_farol")
+puerta = NodePath("PuertaGuardian")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Env_1")
@@ -135,6 +139,11 @@ shape = SubResource("Shape_encuentro")
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 4)
+
+[node name="PuertaGuardian" type="Node3D" parent="."]
+script = ExtResource("17_puerta")
+ancho = 9.5
+alto = 3.8
 
 [node name="Luna" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 0.6, 2.0)

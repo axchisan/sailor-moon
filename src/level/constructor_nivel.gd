@@ -75,6 +75,17 @@ const ESTRELLAS: Array[Dictionary] = [
 	{"tramo": 1, "t": 0.75, "lado": -0.22, "alto": 3.0, "secreta": true},
 ]
 
+## Los tres faroles del tramo antes del jefe. Mismo sistema de coordenadas.
+##
+## Uno en mitad del camino (imposible no verlo), otro pegado al borde (hay que
+## fijarse) y el tercero alto (hay que subir). Así el objetivo se entiende solo:
+## el primero se enciende sin querer y ya sabes qué toca.
+const FAROLES: Array[Dictionary] = [
+	{"id": "farol_1", "tramo": 2, "t": 0.18, "lado": 0.0, "alto": 0.0},
+	{"id": "farol_2", "tramo": 2, "t": 0.52, "lado": -0.82, "alto": 0.0},
+	{"id": "farol_3", "tramo": 2, "t": 0.78, "lado": 0.80, "alto": 1.6},
+]
+
 ## Dónde espera cada personaje del reparto, en coordenadas del recorrido.
 ## Mismo criterio que las estrellas: si cambian las medidas del nivel, siguen
 ## en su sitio.
@@ -153,6 +164,16 @@ func _colocar_encuentros() -> void:
 			continue
 		nodo.global_position = punto_en_tramo(
 			ficha["tramo"], ficha["t"], ficha["lado"], ficha.get("alto", 0.0))
+
+	# La puerta va cruzada al final del último pasillo, tapando la entrada del
+	# guardián. Se gira 90° respecto al camino: una barrera paralela al pasillo
+	# no corta nada.
+	var barrera := get_parent().get_node_or_null("PuertaGuardian") as Node3D
+	if barrera != null and not tramos.is_empty():
+		var ultimo: int = tramos.size() - 1
+		barrera.global_position = punto_en_tramo(ultimo, 0.99, 0.0, 0.0)
+		var direccion: Vector3 = tramos[ultimo]["direccion"]
+		barrera.rotation.y = atan2(-direccion.x, -direccion.z) + PI * 0.5
 
 
 # --- Tramos --------------------------------------------------------------------
@@ -361,6 +382,39 @@ func punto_en_tramo(indice: int, t: float, lado: float, alto: float) -> Vector3:
 		+ Vector3.UP * (grosor_suelo * 0.5 + subida + alto)
 
 
+## Coloca los faroles del nivel. Devuelve cuántos puso.
+##
+## El tercero va sobre una peana: sin ella estaría flotando, y colgar un
+## objetivo en el aire sin nada que lo sostenga se lee como un error.
+func sembrar_faroles(escena: PackedScene, destino: Node) -> int:
+	if escena == null:
+		return 0
+	var puestos := 0
+	for ficha in FAROLES:
+		var farol := escena.instantiate() as Node3D
+		if farol == null:
+			continue
+		destino.add_child(farol)
+		# El nombre se pone a mano: instanciando la misma escena varias veces,
+		# Godot renombra las copias a `@Area3D@388` y compañía, y con eso no hay
+		# quien depure ni quien las referencie desde fuera.
+		farol.name = ficha["id"].capitalize()
+		var sitio := punto_en_tramo(
+			ficha["tramo"], ficha["t"], ficha["lado"], ficha["alto"])
+		farol.global_position = sitio
+		if "id" in farol:
+			farol.set("id", ficha["id"])
+		if ficha["alto"] > 0.1:
+			_peana(sitio, ficha["alto"])
+		puestos += 1
+	return puestos
+
+
+func _peana(cima: Vector3, altura: float) -> void:
+	_losa("Peana", cima - Vector3.UP * (altura * 0.5),
+		Vector3(2.2, altura, 2.2), color_plataforma, 0.0)
+
+
 ## Siembra las Estrellas de Sueño. Devuelve cuántas colocó.
 func sembrar_estrellas(escena: PackedScene, destino: Node) -> int:
 	if escena == null:
@@ -371,6 +425,7 @@ func sembrar_estrellas(escena: PackedScene, destino: Node) -> int:
 		if estrella == null:
 			continue
 		destino.add_child(estrella)
+		estrella.name = "Estrella%d" % (puestas + 1)
 		estrella.global_position = punto_en_tramo(
 			ficha["tramo"], ficha["t"], ficha["lado"], ficha["alto"])
 		if ficha.get("secreta", false) and "es_secreta" in estrella:
