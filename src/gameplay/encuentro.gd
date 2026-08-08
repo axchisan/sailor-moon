@@ -138,12 +138,16 @@ func _al_terminar(_id_dialogo: String) -> void:
 	encuentro_terminado.emit(id)
 
 
-## Se apaga el procesado del jugador, no el nodo entero: apagar el nodo pararía
-## también las animaciones y el pelo, y la jugadora se quedaría como una
-## estatua en mitad de la escena.
+## Quitar el control es más que apagar el proceso de física: hay que parar la
+## animación y descartar las pulsaciones pendientes. Lo hace `Player`, que es
+## quien conoce su animador y su máquina de estados.
 func _congelar_jugador(congelado: bool) -> void:
 	if _jugador == null:
 		return
+	if _jugador.has_method("set_control_enabled"):
+		_jugador.call("set_control_enabled", not congelado)
+		return
+	# Sustituto para cualquier cosa que no sea el Player (pruebas, cápsulas).
 	_jugador.set_physics_process(not congelado)
 	if congelado and _jugador is CharacterBody3D:
 		(_jugador as CharacterBody3D).velocity = Vector3.ZERO
