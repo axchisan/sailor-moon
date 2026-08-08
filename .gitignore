@@ -16,3 +16,7 @@
 # Las versiones procesadas viven en assets/models/
 /Models/
 Models/rigged_originales/
+
+# Artefactos de compilación: el APK se regenera con
+#   ./tools/configurar_android.sh && Godot --headless --path . --export-debug "Android" build/sailor-moon.apk
+build/
