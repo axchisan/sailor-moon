@@ -36,9 +36,12 @@ from mathutils import Vector
 ENTRADA = "/Users/mac/Downloads"
 SALIDA = "/Users/mac/Documents/Dev/Games/sailor-moon/assets/models/characters"
 
-# Un gato adulto mide unos 25-30 cm de cruz. Se deja en 0,30: al lado de
-# Serena (1,55 m) tiene que leerse como un gato, no como un perro.
-ALTURA_CRUZ = 0.30
+# A escala real un gato mide unos 30 cm de cruz, pero en pantalla se pierde:
+# al lado de Serena queda como una mota que no se ve. Se sube a 45 cm, que es
+# lo que hace la serie —sus gatos son grandotes— y así tiene presencia sin
+# dejar de leerse como un gato. Subido a 52 tras verlo en marcha: a 45 aún se
+# perdía junto a Serena.
+ALTURA_CRUZ = 0.52
 TRIS_OBJETIVO = 4000
 
 GATOS = {
@@ -122,64 +125,114 @@ def _material(nombre, color, textura=None, emision=0.0):
     return material
 
 
-# --- Piezas de la cara ---------------------------------------------------------
-
-def _disco(centro, radio, grosor, normal_y=-1.0, achatado=1.0):
-    """Disco mirando al frente (−Y), que es hacia donde mira el gato."""
-    bm = bmesh.new()
-    bmesh.ops.create_circle(bm, cap_ends=True, segments=14, radius=radio)
-    for v in bm.verts:
-        v.co.z = v.co.y * achatado
-        v.co.y = 0.0
-    r = bmesh.ops.extrude_face_region(bm, geom=list(bm.faces))
-    movidos = [g for g in r["geom"] if isinstance(g, bmesh.types.BMVert)]
-    bmesh.ops.translate(bm, verts=movidos, vec=(0.0, grosor * normal_y, 0.0))
-    bmesh.ops.translate(bm, verts=bm.verts, vec=centro)
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    return bm
+# --- La cara, pintada en la textura -------------------------------------------
+#
+# El primer intento puso los rasgos como GEOMETRÍA: discos de ojo, iris, nariz.
+# Se veían bien de frente pero de perfil eran pegatinas 3D asomando de la cara,
+# y no hay forma de arreglar eso hundiéndolos más: o sobresalen, o desaparecen
+# dentro del cráneo.
+#
+# Lo que hace un artista es pintarlos en la textura, y eso es lo que se hace
+# aquí. El truco para poder pintarlos sin adivinar dónde caen es **desplegar la
+# cara con una proyección plana frontal**: con ese despliegue, la coordenada UV
+# de un punto es directamente su (x, z) en el modelo, así que se sabe
+# exactamente qué píxel pintar para poner un ojo en su sitio.
 
 
-def _media_luna(centro, radio, grosor):
-    """La luna creciente de la frente: un disco al que se le resta otro
-    desplazado. Es su seña de identidad, así que va en geometría propia."""
-    bm = bmesh.new()
-    puntos = []
-    pasos = 16
-    # borde exterior
-    for i in range(pasos + 1):
-        a = math.pi * 0.5 + math.pi * (float(i) / pasos)
-        puntos.append((math.cos(a) * radio, math.sin(a) * radio))
-    # borde interior, de vuelta
-    for i in range(pasos, -1, -1):
-        a = math.pi * 0.5 + math.pi * (float(i) / pasos)
-        puntos.append((math.cos(a) * radio * 0.62 + radio * 0.30,
-                       math.sin(a) * radio * 0.78))
-    verts = [bm.verts.new((p[0], 0.0, p[1])) for p in puntos]
-    bm.verts.ensure_lookup_table()
-    try:
-        cara = bm.faces.new(verts)
-    except ValueError:
-        bm.free()
-        return None
-    r = bmesh.ops.extrude_face_region(bm, geom=[cara])
-    movidos = [g for g in r["geom"] if isinstance(g, bmesh.types.BMVert)]
-    bmesh.ops.translate(bm, verts=movidos, vec=(0.0, -grosor, 0.0))
-    bmesh.ops.translate(bm, verts=bm.verts, vec=centro)
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    return bm
+def _elipse(pix, n, cx, cy, rx, ry, color, borde=0.0, color_borde=None):
+    """Pinta una elipse en la textura. `cx`,`cy`,`rx`,`ry` van en 0..1."""
+    x0 = max(0, int((cx - rx - borde) * n))
+    x1 = min(n - 1, int((cx + rx + borde) * n))
+    y0 = max(0, int((cy - ry - borde) * n))
+    y1 = min(n - 1, int((cy + ry + borde) * n))
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            dx = (x / float(n) - cx) / max(rx, 1e-6)
+            dy = (y / float(n) - cy) / max(ry, 1e-6)
+            d = math.sqrt(dx * dx + dy * dy)
+            i = (y * n + x) * 4
+            if borde > 0.0 and color_borde is not None and d <= 1.0 + borde / max(rx, 1e-6):
+                if d > 1.0:
+                    pix[i] = color_borde[0]
+                    pix[i + 1] = color_borde[1]
+                    pix[i + 2] = color_borde[2]
+                    continue
+            if d <= 1.0:
+                # Antialiasing barato en el último 12 % del radio: sin él los
+                # ojos se ven dentados en cuanto la cámara se acerca.
+                mezcla = min(1.0, (1.0 - d) / 0.12)
+                for c in range(3):
+                    pix[i + c] += (color[c] - pix[i + c]) * mezcla
 
 
-def _objeto(nombre, material, bm, suave=True):
-    malla = bpy.data.meshes.new(nombre)
-    bm.to_mesh(malla)
-    bm.free()
-    objeto = bpy.data.objects.new(nombre, malla)
-    objeto.data.materials.append(material)
-    bpy.context.collection.objects.link(objeto)
-    if suave:
-        _activar(objeto)
-        bpy.ops.object.shade_smooth()
-    return objeto
+def _luna_pintada(pix, n, cx, cy, radio, color):
+    """Media luna: se pinta un disco y se le borra otro desplazado."""
+    x0 = max(0, int((cx - radio) * n))
+    x1 = min(n - 1, int((cx + radio) * n))
+    y0 = max(0, int((cy - radio) * n))
+    y1 = min(n - 1, int((cy + radio) * n))
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            px = x / float(n)
+            py = y / float(n)
+            fuera = math.hypot(px - cx, py - cy) / radio
+            dentro = math.hypot(px - (cx + radio * 0.42), py - cy) / (radio * 0.78)
+            if fuera <= 1.0 and dentro > 1.0:
+                mezcla = min(1.0, (1.0 - fuera) / 0.10, (dentro - 1.0) / 0.10)
+                i = (y * n + x) * 4
+                for c in range(3):
+                    pix[i + c] += (color[c] - pix[i + c]) * max(0.0, mezcla)
+
+
+def _textura_cara(nombre, ficha, n=512):
+    """Pinta la cara entera: pelaje de fondo y encima los rasgos."""
+    clave = "cara_" + nombre
+    if clave in bpy.data.images:
+        return bpy.data.images[clave]
+
+    base = ficha["pelaje"]
+    pix = [0.0] * (n * n * 4)
+    for y in range(n):
+        for x in range(n):
+            i = (y * n + x) * 4
+            ruido = (_aleatorio(x * 2.3 + y * 5.7) - 0.5) * 0.05
+            pix[i] = min(1.0, max(0.0, base[0] + ruido))
+            pix[i + 1] = min(1.0, max(0.0, base[1] + ruido))
+            pix[i + 2] = min(1.0, max(0.0, base[2] + ruido))
+            pix[i + 3] = 1.0
+
+    # Coordenadas en el despliegue frontal: u es el ancho de la cara (0,5 es el
+    # centro) y v la altura (0 abajo, 1 arriba).
+    contorno = (0.13, 0.11, 0.15)
+    for lado in (-1, 1):
+        cx = 0.5 + lado * 0.180
+        cy = 0.575
+        # Delineado del ojo. Va grueso ARRIBA y se va perdiendo abajo, que es
+        # como se dibuja un ojo de anime: cerrando el círculo entero queda un
+        # aro redondo de dibujo animado viejo, y en Artemis cantaba mucho.
+        #
+        # Se consigue pintando el contorno entero y tapándolo después con el
+        # blanco del ojo ligeramente bajado: arriba asoma, abajo no.
+        _elipse(pix, n, cx, cy, 0.150, 0.188, contorno)
+        _elipse(pix, n, cx, cy - 0.020, 0.146, 0.180, BLANCO_OJO)
+        _elipse(pix, n, cx, cy, 0.104, 0.132, ficha["iris"])
+        _elipse(pix, n, cx, cy, 0.048, 0.068, NEGRO_PUPILA)
+        _elipse(pix, n, cx + lado * 0.042, cy + 0.055, 0.036, 0.042, BLANCO_OJO)
+        # Pestañas: un arco FINO en el borde de arriba, no una ceja gruesa
+        # flotando por encima —eso en un gato blanco parecen dos orugas.
+        _elipse(pix, n, cx, cy + 0.176, 0.132, 0.016, contorno)
+        _elipse(pix, n, cx, cy + 0.196, 0.140, 0.018, base)
+
+    _elipse(pix, n, 0.5, 0.385, 0.036, 0.025, ficha["nariz"])
+    for lado in (-1, 1):
+        _elipse(pix, n, 0.5 + lado * 0.036, 0.335, 0.032, 0.013, contorno)
+    # La luna va en la FRENTE, justo encima de los ojos. Más arriba se sube al
+    # filo del cráneo y desde el juego parece que flota entre las orejas.
+    _luna_pintada(pix, n, 0.5, 0.845, 0.092, LUNA_DORADA)
+
+    imagen = bpy.data.images.new(clave, n, n)
+    imagen.pixels = pix
+    return imagen
 
 
 # --- Proceso -------------------------------------------------------------------
@@ -313,76 +366,91 @@ def _medir_cabeza(gato):
     }
 
 
-def _poner_cara(gato, nombre, ficha):
+def _superficie_y(gato, x, z, radio):
+    """Hasta dónde llega la cara en ese punto concreto.
+
+    Es lo que faltaba: colocar todos los rasgos a la altura del MORRO los deja
+    flotando en el aire, porque el morro sobresale bastante más que la frente
+    o los pómulos. Cada pieza tiene que pegarse a la superficie que le toca.
+    """
+    cerca = [v.co.y for v in gato.data.vertices
+             if abs(v.co.x - x) < radio and abs(v.co.z - z) < radio]
+    if not cerca:
+        cerca = [v.co.y for v in gato.data.vertices
+                 if abs(v.co.x - x) < radio * 2.5 and abs(v.co.z - z) < radio * 2.5]
+    return min(cerca) if cerca else 0.0
+
+
+def _pintar_cara(gato, nombre, ficha):
+    """Despliega la cara con proyección frontal y le asigna la textura pintada.
+
+    La clave es el despliegue: proyectando de frente, la UV de cada punto es su
+    (x, z) normalizado dentro de la caja de la cara. Eso permite pintar un ojo
+    «a un 18 % del centro y a un 60 % de altura» y saber que va a caer donde
+    tiene que caer, sin adivinar y sin depender de las UV originales, que en
+    estos modelos están rotas.
+    """
     m = _medir_cabeza(gato)
-    piezas = []
-    a = m["ancho"]
-    # Proporciones de gato de anime: ojos enormes, separados algo menos de un
-    # tercio del ancho de la cara, y colocados en la mitad alta del morro.
-    sep = a * 0.25
-    alto_ojo = m["z"]
-    # Los rasgos van justo POR DELANTE de la cara, no dentro: metidos hacia
-    # atrás la geometría del morro los tapa a medias y quedan como cortados.
-    frente = m["y"] + a * 0.015
-    radio_ojo = a * 0.21
 
-    mat_blanco = _material("ojo_blanco", BLANCO_OJO)
-    mat_iris = _material("iris_" + nombre, ficha["iris"])
-    mat_pupila = _material("pupila", NEGRO_PUPILA)
-    mat_brillo = _material("brillo_ojo", BLANCO_OJO, emision=0.5)
-    mat_oreja = _material("oreja_" + nombre, ficha["oreja"])
-    mat_nariz = _material("nariz_" + nombre, ficha["nariz"])
-    mat_luna = _material("luna_dorada", LUNA_DORADA, emision=0.25)
+    # La cara: lo que está en la mitad delantera de la cabeza y mirando al
+    # frente. Se pide que la normal apunte hacia −Y para no pillar el cogote,
+    # que en la proyección caería encima de los ojos.
+    media_x = m["ancho"] * 0.62
+    limite_y = m["y"] + m["alto"] * 0.85
+    cara = set()
+    for poligono in gato.data.polygons:
+        centro = poligono.center
+        if centro.y > limite_y:
+            continue
+        if abs(centro.x - m["x"]) > media_x:
+            continue
+        if centro.z < m["z"] - m["alto"] * 0.75 or centro.z > m["z"] + m["alto"] * 0.85:
+            continue
+        # Solo lo que mira de frente de verdad. Con un umbral flojo entra el
+        # lateral del cráneo, y como la proyección es plana, el ojo se estira
+        # envolviendo la mejilla.
+        if poligono.normal.y > -0.42:
+            continue
+        cara.add(poligono.index)
+    if not cara:
+        return 0
 
-    for lado in (-1, 1):
-        cx = m["x"] + lado * sep
-        piezas.append(_objeto("ojo%d" % lado, mat_blanco,
-            _disco(Vector((cx, frente + 0.004, alto_ojo)), radio_ojo, 0.012,
-                   achatado=1.18)))
-        piezas.append(_objeto("iris%d" % lado, mat_iris,
-            _disco(Vector((cx, frente, alto_ojo)), radio_ojo * 0.72, 0.010,
-                   achatado=1.15)))
-        piezas.append(_objeto("pupila%d" % lado, mat_pupila,
-            _disco(Vector((cx, frente - 0.004, alto_ojo)), radio_ojo * 0.34, 0.008,
-                   achatado=1.3)))
-        piezas.append(_objeto("brillo%d" % lado, mat_brillo,
-            _disco(Vector((cx + lado * radio_ojo * 0.22, frente - 0.008,
-                           alto_ojo + radio_ojo * 0.32)),
-                   radio_ojo * 0.20, 0.006)))
+    material = _material("cara_" + nombre, ficha["pelaje"],
+                         _textura_cara(nombre, ficha))
+    gato.data.materials.append(material)
+    indice_cara = len(gato.data.materials) - 1
 
-    piezas.append(_objeto("nariz", mat_nariz,
-        _disco(Vector((m["x"], frente - 0.002, m["z"] - m["alto"] * 0.26)),
-               a * 0.06, 0.008, achatado=0.75)))
+    # Caja de la cara, para normalizar. Se toma de los polígonos elegidos y no
+    # de la cabeza entera: así los rasgos quedan centrados en lo que se ve.
+    xs, zs = [], []
+    for i in cara:
+        for vi in gato.data.polygons[i].vertices:
+            co = gato.data.vertices[vi].co
+            xs.append(co.x)
+            zs.append(co.z)
+    x0, x1 = min(xs), max(xs)
+    z0, z1 = min(zs), max(zs)
+    ancho = max(x1 - x0, 1e-6)
+    alto = max(z1 - z0, 1e-6)
 
-    # La luna va en la frente, entre los ojos y las orejas.
-    for lado in (-1, 1):
-        piezas.append(_objeto("boca%d" % lado, mat_pupila,
-            _disco(Vector((m["x"] + lado * a * 0.045, frente - 0.001,
-                           m["z"] - m["alto"] * 0.36)),
-                   a * 0.045, 0.006, achatado=0.42)))
-
-    luna = _media_luna(Vector((m["x"], frente + 0.002,
-                               m["z"] + m["alto"] * 0.40)),
-                       a * 0.15, 0.008)
-    if luna is not None:
-        piezas.append(_objeto("luna_frente", mat_luna, luna, suave=False))
-
-    return piezas
+    capa = gato.data.uv_layers.active
+    if capa is None:
+        capa = gato.data.uv_layers.new(name="UVMap")
+    for i in cara:
+        poligono = gato.data.polygons[i]
+        poligono.material_index = indice_cara
+        for bucle in range(poligono.loop_start, poligono.loop_start + poligono.loop_total):
+            co = gato.data.vertices[gato.data.loops[bucle].vertex_index].co
+            capa.data[bucle].uv = ((co.x - x0) / ancho, (co.z - z0) / alto)
+    return len(cara)
 
 
 def preparar(nombre):
     ficha = GATOS[nombre]
     gato = _cargar_y_orientar(ficha)
     gato = _limpiar_malla(gato, nombre, ficha)
-    piezas = _poner_cara(gato, nombre, ficha)
-
-    bpy.ops.object.select_all(action='DESELECT')
-    gato.select_set(True)
-    for p in piezas:
-        p.select_set(True)
-    bpy.context.view_layer.objects.active = gato
-    bpy.ops.object.join()
-    final = bpy.context.view_layer.objects.active
+    caras = _pintar_cara(gato, nombre, ficha)
+    final = gato
     final.name = nombre
     final.data.name = nombre
 
@@ -393,7 +461,8 @@ def preparar(nombre):
     bpy.ops.export_scene.gltf(filepath=ruta, export_format='GLB',
                               use_selection=True, export_apply=True,
                               export_yup=True, export_materials='EXPORT')
-    return {"tris": sum(len(p.vertices) - 2 for p in final.data.polygons),
+    return {"caras_pintadas": caras,
+            "tris": sum(len(p.vertices) - 2 for p in final.data.polygons),
             "kb": round(os.path.getsize(ruta) / 1024),
             "alto_cm": round(final.dimensions.z * 100),
             "largo_cm": round(final.dimensions.y * 100)}

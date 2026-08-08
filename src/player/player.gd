@@ -132,6 +132,38 @@ func play(estado: String, duracion: float = 0.0) -> void:
 		animator.travel(estado, duracion)
 
 
+## Quita o devuelve el control a la jugadora. Lo usan los diálogos.
+##
+## No basta con apagar el `_physics_process`, que es lo que se hacía antes:
+##
+##   · La animación se queda **congelada en el último fotograma**, así que si
+##     llegaste corriendo te pasas la conversación corriendo sin moverte.
+##   · La velocidad se queda guardada y al recuperar el control sales
+##     disparada.
+##   · Y al soltar, la pulsación con la que cerraste el diálogo sigue marcada
+##     como recién pulsada, así que el primer toque de cerrar el diálogo se
+##     convierte en un puñetazo.
+func set_control_enabled(activo: bool) -> void:
+	set_physics_process(activo)
+
+	if not activo:
+		velocity = Vector3.ZERO
+		if animator != null:
+			# El estado se llama `locomocion`, no `idle`: es un blend space que
+			# mezcla parado ↔ andar ↔ correr según la velocidad. Poniéndola a
+			# cero queda quieta. Pedir un estado que no existe no da error, se
+			# queda en la pose de reposo y el personaje se planta en T.
+			animator.set_locomotion_speed(0.0)
+			animator.travel("locomocion")
+		return
+
+	# Al devolver el control se descartan las acciones que quedaran pulsadas,
+	# para que el toque que cerró la conversación no se cuele como ataque.
+	for accion in ["attack", "jump", "special"]:
+		if Input.is_action_pressed(accion):
+			Input.action_release(accion)
+
+
 func _tick_timers(delta: float) -> void:
 	if is_on_floor():
 		_coyote_timer = coyote_time
