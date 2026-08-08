@@ -1,12 +1,17 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://src/core/toon_root.gd" id="1_toon"]
 [ext_resource type="PackedScene" path="res://assets/models/characters/chibi_moon.glb" id="2_chibi"]
 [ext_resource type="PackedScene" path="res://assets/models/characters/sailor_saturno.glb" id="3_saturno"]
-[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_mars.glb" id="4_mars"]
-[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_neptuno.glb" id="5_neptuno"]
-[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_uranus.glb" id="6_uranus"]
-[ext_resource type="PackedScene" path="res://assets/models/characters/tuxedo_mask.glb" id="7_tuxedo"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/serena_rigged.fbx" id="4_serena"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_mercury.glb" id="5_mercury"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_mars.glb" id="6_mars"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_venus.glb" id="7_venus"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_neptuno.glb" id="8_neptuno"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_jupiter.glb" id="9_jupiter"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_uranus.glb" id="10_uranus"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_pluto.glb" id="11_pluto"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/tuxedo_mask.glb" id="12_tuxedo"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat_1"]
 sky_top_color = Color(0.5, 0.64, 0.94, 1)
@@ -39,23 +44,38 @@ shadow_enabled = true
 script = ExtResource("1_toon")
 
 [node name="ChibiMoon" parent="Reparto" instance=ExtResource("2_chibi")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -3.9, 0, 0)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -5.4, 0, 0)
 
 [node name="Saturno" parent="Reparto" instance=ExtResource("3_saturno")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -2.3, 0, 0)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -4.3, 0, 0)
 
-[node name="Mars" parent="Reparto" instance=ExtResource("4_mars")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -0.7, 0, 0)
+[node name="Serena" parent="Reparto" instance=ExtResource("4_serena")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -3.2, 0, 0)
 
-[node name="Neptuno" parent="Reparto" instance=ExtResource("5_neptuno")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.9, 0, 0)
+[node name="Mercury" parent="Reparto" instance=ExtResource("5_mercury")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -2.1, 0, 0)
 
-[node name="Uranus" parent="Reparto" instance=ExtResource("6_uranus")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 2.5, 0, 0)
+[node name="Mars" parent="Reparto" instance=ExtResource("6_mars")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -1, 0, 0)
 
-[node name="Tuxedo" parent="Reparto" instance=ExtResource("7_tuxedo")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 4.2, 0, 0)
+[node name="Venus" parent="Reparto" instance=ExtResource("7_venus")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.1, 0, 0)
+
+[node name="Neptuno" parent="Reparto" instance=ExtResource("8_neptuno")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1.2, 0, 0)
+
+[node name="Jupiter" parent="Reparto" instance=ExtResource("9_jupiter")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 2.3, 0, 0)
+
+[node name="Uranus" parent="Reparto" instance=ExtResource("10_uranus")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 3.4, 0, 0)
+
+[node name="Pluto" parent="Reparto" instance=ExtResource("11_pluto")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 4.5, 0, 0)
+
+[node name="Tuxedo" parent="Reparto" instance=ExtResource("12_tuxedo")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 5.7, 0, 0)
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.9945, 0.1045, 0, -0.1045, 0.9945, 0.15, 1.1, 8.5)
-fov = 45.0
+transform = Transform3D(1, 0, 0, 0, 0.9962, 0.0872, 0, -0.0872, 0.9962, 0.15, 1.2, 15.5)
+fov = 48.0

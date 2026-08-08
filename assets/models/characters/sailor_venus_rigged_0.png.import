@@ -2,21 +2,21 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://q7ckdvmskfjb"
-path.s3tc="res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.s3tc.ctex"
-path.etc2="res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.etc2.ctex"
+uid="uid://hmun2dic1y4k"
+path.s3tc="res://.godot/imported/sailor_venus_rigged_0.png-10627dfa43ebe71ebfeed8d31e0597af.s3tc.ctex"
+path.etc2="res://.godot/imported/sailor_venus_rigged_0.png-10627dfa43ebe71ebfeed8d31e0597af.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "f1612e5c7b21ed7a9f58b41bf7181eb1"
+"md5": "e1d6acedf89ae13a3ef0c2b44d7e3af8"
 }
 
 [deps]
 
-source_file="res://assets/models/characters/sailor_pluto_Image_0.png"
-dest_files=["res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.s3tc.ctex", "res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.etc2.ctex"]
+source_file="res://assets/models/characters/sailor_venus_rigged_0.png"
+dest_files=["res://.godot/imported/sailor_venus_rigged_0.png-10627dfa43ebe71ebfeed8d31e0597af.s3tc.ctex", "res://.godot/imported/sailor_venus_rigged_0.png-10627dfa43ebe71ebfeed8d31e0597af.etc2.ctex"]
 
 [params]
 

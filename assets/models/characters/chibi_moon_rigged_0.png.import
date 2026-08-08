@@ -2,21 +2,21 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://q7ckdvmskfjb"
-path.s3tc="res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.s3tc.ctex"
-path.etc2="res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.etc2.ctex"
+uid="uid://deki3g4tqs0gt"
+path.s3tc="res://.godot/imported/chibi_moon_rigged_0.png-0cdaefc42c91b364deefc3735f3a3bd8.s3tc.ctex"
+path.etc2="res://.godot/imported/chibi_moon_rigged_0.png-0cdaefc42c91b364deefc3735f3a3bd8.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "f1612e5c7b21ed7a9f58b41bf7181eb1"
+"md5": "fc50b7db97005ef3e70cc7953456e101"
 }
 
 [deps]
 
-source_file="res://assets/models/characters/sailor_pluto_Image_0.png"
-dest_files=["res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.s3tc.ctex", "res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.etc2.ctex"]
+source_file="res://assets/models/characters/chibi_moon_rigged_0.png"
+dest_files=["res://.godot/imported/chibi_moon_rigged_0.png-0cdaefc42c91b364deefc3735f3a3bd8.s3tc.ctex", "res://.godot/imported/chibi_moon_rigged_0.png-0cdaefc42c91b364deefc3735f3a3bd8.etc2.ctex"]
 
 [params]
 
