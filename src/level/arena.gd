@@ -81,7 +81,11 @@ func _build_barrier() -> void:
 		body.collision_mask = 0
 		body.position = Vector3(cos(angle), barrier_height * 0.5, sin(angle)) * \
 			Vector3(barrier_radius, 1.0, barrier_radius)
-		body.rotation.y = -angle
+		# Tangente al círculo, no radial: rotando `Y` un ángulo φ el eje Z local
+		# va a (sin φ, 0, cos φ), y para que mire al centro hay que igualarlo a
+		# la normal (cos θ, 0, sin θ) → φ = 90° − θ. Con `−θ` los paneles
+		# quedaban de canto y la barrera se veía como los radios de una rueda.
+		body.rotation.y = PI * 0.5 - angle
 
 		var visual := MeshInstance3D.new()
 		visual.mesh = mesh

@@ -1,0 +1,101 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/prototypes/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/peluchin.tscn" id="2_peluchin"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/cofrecito.tscn" id="3_cofrecito"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/hadita.tscn" id="4_hadita"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="5_ui"]
+[ext_resource type="Script" path="res://src/level/arena.gd" id="6_arena"]
+[ext_resource type="Script" path="res://src/level/constructor_nivel.gd" id="7_constructor"]
+[ext_resource type="Script" path="res://src/level/nivel.gd" id="8_nivel"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMat_1"]
+sky_top_color = Color(0.42, 0.58, 0.92, 1)
+sky_horizon_color = Color(0.99, 0.82, 0.72, 1)
+ground_bottom_color = Color(0.55, 0.5, 0.55, 1)
+ground_horizon_color = Color(0.99, 0.82, 0.72, 1)
+sun_angle_max = 25.0
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("SkyMat_1")
+
+[sub_resource type="Environment" id="Env_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+ambient_light_source = 3
+ambient_light_energy = 0.85
+reflected_light_source = 2
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.99, 0.85, 0.78, 1)
+fog_density = 0.006
+
+[sub_resource type="CylinderShape3D" id="Shape_arena"]
+height = 4.0
+radius = 6.0
+
+[node name="Nivel1Parque" type="Node3D"]
+script = ExtResource("8_nivel")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, 0.25, -0.433, 0, 0.866, 0.5, 0.5, -0.433, 0.75, 0, 12, 0)
+light_color = Color(1, 0.94, 0.86, 1)
+light_energy = 1.1
+shadow_enabled = true
+
+[node name="Blockout" type="Node3D" parent="."]
+script = ExtResource("7_constructor")
+
+[node name="Arena1" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("6_arena")
+arena_id = "n1_arena_1"
+waves = Array[int]([2, 3])
+enemy_scene = ExtResource("2_peluchin")
+extra_from_wave = 99
+barrier_radius = 11.0
+
+[node name="Shape" type="CollisionShape3D" parent="Arena1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+shape = SubResource("Shape_arena")
+
+[node name="Arena2" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("6_arena")
+arena_id = "n1_arena_2"
+waves = Array[int]([3, 4, 4])
+enemy_scene = ExtResource("2_peluchin")
+enemy_scenes_extra = Array[PackedScene]([ExtResource("3_cofrecito")])
+extra_ratio = 0.34
+extra_from_wave = 1
+barrier_radius = 11.0
+
+[node name="Shape" type="CollisionShape3D" parent="Arena2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+shape = SubResource("Shape_arena")
+
+[node name="Guardian" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("6_arena")
+arena_id = "n1_guardian"
+waves = Array[int]([3, 4, 5])
+enemy_scene = ExtResource("2_peluchin")
+enemy_scenes_extra = Array[PackedScene]([ExtResource("3_cofrecito"), ExtResource("4_hadita")])
+extra_ratio = 0.4
+extra_from_wave = 0
+barrier_radius = 13.0
+
+[node name="Shape" type="CollisionShape3D" parent="Guardian"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+shape = SubResource("Shape_arena")
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 4)
+
+[node name="GameUI" parent="." instance=ExtResource("5_ui")]
