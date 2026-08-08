@@ -201,12 +201,29 @@ def _textura_cara(nombre, ficha, n=512):
             pix[i + 2] = min(1.0, max(0.0, base[2] + ruido))
             pix[i + 3] = 1.0
 
-    # Coordenadas en el despliegue frontal: u es el ancho de la cara (0,5 es el
-    # centro) y v la altura (0 abajo, 1 arriba).
+    # Coordenadas en el despliegue frontal: `u` es el ancho de la cabeza (0,5 es
+    # el centro) y `v` la altura de la IMAGEN, que va **al revés que la cara**:
+    # v = 0 es la coronilla y v = 1 el mentón.
+    #
+    # Eso ha costado tres intentos y una textura de calibración con bandas de
+    # colores. Para no volver a equivocarse, aquí no se escriben `v` a pelo: se
+    # usa `arriba()`, que recibe la altura tal como se piensa —0 en el mentón,
+    # 1 en las orejas— y la convierte. Y para subir un rasgo se SUMA a esa
+    # altura, no se resta a la `v`.
+    #
+    # Las alturas están calibradas contra las cuencas que los modelos traen
+    # esculpidas. Salen bajas, en el cuarto inferior de la cabeza, y no es un
+    # error: es donde el generador puso los ojos. Puestas por proporciones
+    # «razonables» quedaban muy por encima de los huecos, que es justo lo que se
+    # veía mirando al gato desde abajo.
+    def arriba(altura):
+        return 1.0 - altura
+
     contorno = (0.13, 0.11, 0.15)
+    alto_ojos = 0.25
     for lado in (-1, 1):
         cx = 0.5 + lado * 0.180
-        cy = 0.575
+        cy = arriba(alto_ojos)
         # Delineado del ojo. Va grueso ARRIBA y se va perdiendo abajo, que es
         # como se dibuja un ojo de anime: cerrando el círculo entero queda un
         # aro redondo de dibujo animado viejo, y en Artemis cantaba mucho.
@@ -214,21 +231,23 @@ def _textura_cara(nombre, ficha, n=512):
         # Se consigue pintando el contorno entero y tapándolo después con el
         # blanco del ojo ligeramente bajado: arriba asoma, abajo no.
         _elipse(pix, n, cx, cy, 0.150, 0.188, contorno)
-        _elipse(pix, n, cx, cy - 0.020, 0.146, 0.180, BLANCO_OJO)
+        _elipse(pix, n, cx, arriba(alto_ojos - 0.020), 0.146, 0.180, BLANCO_OJO)
         _elipse(pix, n, cx, cy, 0.104, 0.132, ficha["iris"])
         _elipse(pix, n, cx, cy, 0.048, 0.068, NEGRO_PUPILA)
-        _elipse(pix, n, cx + lado * 0.042, cy + 0.055, 0.036, 0.042, BLANCO_OJO)
+        _elipse(pix, n, cx + lado * 0.042, arriba(alto_ojos + 0.055),
+                0.036, 0.042, BLANCO_OJO)
         # Pestañas: un arco FINO en el borde de arriba, no una ceja gruesa
         # flotando por encima —eso en un gato blanco parecen dos orugas.
-        _elipse(pix, n, cx, cy + 0.176, 0.132, 0.016, contorno)
-        _elipse(pix, n, cx, cy + 0.196, 0.140, 0.018, base)
+        _elipse(pix, n, cx, arriba(alto_ojos + 0.176), 0.132, 0.016, contorno)
+        _elipse(pix, n, cx, arriba(alto_ojos + 0.196), 0.140, 0.018, base)
 
-    _elipse(pix, n, 0.5, 0.385, 0.036, 0.025, ficha["nariz"])
+    # Nariz y boca, por debajo de los ojos.
+    _elipse(pix, n, 0.5, arriba(0.115), 0.036, 0.025, ficha["nariz"])
     for lado in (-1, 1):
-        _elipse(pix, n, 0.5 + lado * 0.036, 0.335, 0.032, 0.013, contorno)
-    # La luna va en la FRENTE, justo encima de los ojos. Más arriba se sube al
-    # filo del cráneo y desde el juego parece que flota entre las orejas.
-    _luna_pintada(pix, n, 0.5, 0.845, 0.092, LUNA_DORADA)
+        _elipse(pix, n, 0.5 + lado * 0.036, arriba(0.065), 0.032, 0.013, contorno)
+    # La luna va en la FRENTE, encima de los ojos y por debajo del filo del
+    # cráneo: más arriba se sube entre las orejas y parece que flota.
+    _luna_pintada(pix, n, 0.5, arriba(0.60), 0.092, LUNA_DORADA)
 
     imagen = bpy.data.images.new(clave, n, n)
     imagen.pixels = pix
@@ -363,6 +382,7 @@ def _medir_cabeza(gato):
         "ancho": ancho,
         "alto": alto,
         "z_orejas": oz,
+        "z_menton": z_menton,
     }
 
 
@@ -420,16 +440,23 @@ def _pintar_cara(gato, nombre, ficha):
     gato.data.materials.append(material)
     indice_cara = len(gato.data.materials) - 1
 
-    # Caja de la cara, para normalizar. Se toma de los polígonos elegidos y no
-    # de la cabeza entera: así los rasgos quedan centrados en lo que se ve.
-    xs, zs = [], []
-    for i in cara:
-        for vi in gato.data.polygons[i].vertices:
-            co = gato.data.vertices[vi].co
-            xs.append(co.x)
-            zs.append(co.z)
-    x0, x1 = min(xs), max(xs)
-    z0, z1 = min(zs), max(zs)
+    # Caja de la cara, para normalizar. Va anclada a DOS PUNTOS FIJOS de la
+    # anatomía —el mentón y la base de las orejas— y no a la envolvente de los
+    # polígonos elegidos.
+    #
+    # Tomarla de los polígonos era el error que desplazaba toda la cara: la
+    # selección se cuela por debajo del mentón hasta el cuello, así que la caja
+    # se estiraba hacia abajo y un rasgo pintado «al 57 % de altura» acababa muy
+    # por encima de donde tenía que ir. Se veía mirando al gato desde abajo: los
+    # ojos pintados quedaban por encima de las cuencas que el modelo trae
+    # esculpidas.
+    #
+    # Anclada, la misma coordenada cae en el mismo sitio de la cara en los dos
+    # gatos, aunque tengan la cabeza de distinto tamaño.
+    x0 = m["x"] - m["ancho"] * 0.5
+    x1 = m["x"] + m["ancho"] * 0.5
+    z0 = m["z_menton"]
+    z1 = m["z_orejas"]
     ancho = max(x1 - x0, 1e-6)
     alto = max(z1 - z0, 1e-6)
 
@@ -441,7 +468,13 @@ def _pintar_cara(gato, nombre, ficha):
         poligono.material_index = indice_cara
         for bucle in range(poligono.loop_start, poligono.loop_start + poligono.loop_total):
             co = gato.data.vertices[gato.data.loops[bucle].vertex_index].co
-            capa.data[bucle].uv = ((co.x - x0) / ancho, (co.z - z0) / alto)
+            # La V va INVERTIDA. La fila 0 del mapa de píxeles es la de arriba
+            # de la imagen, así que sin el `1 -` todo sale del revés: la luna
+            # de la frente aparece en el mentón y los ojos suben a la altura de
+            # las orejas. Se detectó justo así — poniendo la luna a 0,815 y
+            # viéndola en la barbilla.
+            capa.data[bucle].uv = ((co.x - x0) / ancho,
+                                   1.0 - (co.z - z0) / alto)
     return len(cara)
 
 

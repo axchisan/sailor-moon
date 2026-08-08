@@ -4,25 +4,62 @@
 > explica el proceso. Esto es **la lista de la compra** para las mecánicas
 > nuevas del [plan maestro](15-PLAN-MAESTRO.md).
 
-## Lo primero: solo hay que bajarlas UNA vez
+## EL ARCHIVO: `serena_rigged.fbx`
 
-El auto-rigger de Mixamo le pone **el mismo esqueleto a todos** los personajes.
-Por eso el proyecto carga una única librería (`serena_animaciones.res`) y la
-usan Serena, Mercury y las demás.
+```
+/Users/mac/Documents/Dev/Games/sailor-moon/Models/rigged_originales/serena_rigged.fbx
+```
 
-**No hace falta subir a Mercury para tener sus animaciones.** Se sube un
-personaje cualquiera —el que ya esté subido vale— y lo que se descargue sirve
-para las once. Si alguna vez hace falta un gesto exclusivo de alguien, se baja
-igual y se le pone nombre propio; pero de momento, todo es común.
+**Ese, y solo ese.** Ya está rigueado (bajó así de Mixamo), así que **no hay que
+volver a riguear nada**: se sube, Mixamo reconoce el esqueleto, y ya se pueden
+descargar animaciones. Si sigues teniéndolo en *My Assets* de tu cuenta, ni
+siquiera hace falta subirlo — se elige de ahí y listo.
+
+### Por qué precisamente ese
+
+No es porque sea la protagonista. Es porque **su esqueleto es el más completo de
+los once**, y lo he comprobado hueso a hueso:
+
+| Personaje | Huesos | Huesos que Serena no tenga |
+|---|---|---|
+| **Serena** | **65** | — |
+| Mars, Jupiter, Venus, Neptuno, Pluto | 65 | 0 |
+| Chibi Moon, Uranus, Tuxedo | 41 | 0 |
+| Mercury, Saturno | 33 | 0 |
+
+Los once se rigearon con distinto nivel de detalle en las manos: Serena tiene
+los dedos completos (cuatro falanges por dedo) y Mercury no tiene dedos. Pero
+**ninguno tiene un hueso que Serena no tenga**: todos los esqueletos son un
+subconjunto del suyo.
+
+Eso significa que una animación bajada con Serena:
+
+- Funciona en los once, porque las pistas de huesos que no existen se ignoran
+- **Anima los dedos** en los que sí los tienen
+
+Y al revés no: bajándolas con Mercury, a Serena se le quedarían las manos
+rígidas para siempre. De ahí que importe cuál subes.
+
+### Resumiendo
+
+1. Subes **`serena_rigged.fbx`** (o lo eliges de *My Assets*)
+2. **No lo rigueas** — ya lo está
+3. Descargas de él **todas** las animaciones de las tablas de abajo
+4. Sirven para los once personajes, ahora y en el futuro
+
+El proyecto ya funciona así: hay una única librería compartida
+(`serena_animaciones.res`) que usan Serena, Mercury y las que vengan.
 
 ## Ajustes de descarga
 
 Los mismos de siempre, sin cambiarlos:
 
+- **Skin:** *Without Skin* — solo el movimiento, sin el modelo. Son archivos
+  pequeños y es lo que las hace válidas para cualquier personaje
 - **Formato:** FBX Binary
 - **FPS:** 30
 - **Keyframe Reduction:** none
-- **In Place:** activado en TODAS (menos `idle`, que ya está bajada)
+- **In Place:** activado en TODAS
 
 Sin *In Place*, la animación arrastra al personaje por el suelo y pelea con el
 movimiento del juego.
