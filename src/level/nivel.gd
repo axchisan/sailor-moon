@@ -19,11 +19,18 @@ class_name Nivel
 ## Cuántas hay en total. Al llegar, se anuncia y se guarda en el progreso.
 @export var estrellas_del_nivel: int = 7
 
+@export_group("Faroles")
+@export var escena_farol: PackedScene
+## La barrera que se abre al encenderlos todos.
+@export var puerta: NodePath
+
 var _jugador: Node3D = null
 var _constructor: ConstructorNivel = null
 var _limpias: int = 0
 var _ultimo_suelo: Vector3 = Vector3.ZERO
 var _camara_plano: Camera3D = null
+var _faroles_totales: int = 0
+var _faroles_encendidos: int = 0
 
 
 func _ready() -> void:
@@ -37,6 +44,12 @@ func _ready() -> void:
 	if _constructor != null and escena_estrella != null:
 		var puestas := _constructor.sembrar_estrellas(escena_estrella, self)
 		print("[Nivel] %d Estrellas de Sueño sembradas" % puestas)
+
+	if _constructor != null and escena_farol != null:
+		_faroles_totales = _constructor.sembrar_faroles(escena_farol, self)
+		for nodo in get_tree().get_nodes_in_group("faroles"):
+			(nodo as Farol).encendido.connect(_al_encender_farol)
+		print("[Nivel] %d faroles colocados" % _faroles_totales)
 
 	EventBus.arena_cleared.connect(_al_limpiar_arena)
 	EventBus.star_collected.connect(_al_coger_estrella)
@@ -70,6 +83,22 @@ func rescatar() -> void:
 	for nodo in _jugador.find_children("*", "HairPhysics", true, false):
 		(nodo as HairPhysics).reset()
 	EventBus.player_respawned.emit(destino)
+
+
+func _al_encender_farol(_farol: Farol) -> void:
+	_faroles_encendidos += 1
+	if _faroles_encendidos < _faroles_totales:
+		# Se dice cuántos quedan, no cuántos llevas: lo que hace falta saber es
+		# si esto se ha acabado o hay que seguir buscando.
+		var quedan := _faroles_totales - _faroles_encendidos
+		EventBus.show_message.emit(
+			"Farol encendido — quedan %d" % quedan, 2.0)
+		return
+
+	EventBus.show_message.emit("¡Se abre el camino!", 2.5)
+	var barrera := get_node_or_null(puerta) as PuertaMagica
+	if barrera != null:
+		barrera.abrir()
 
 
 func _al_coger_estrella(total: int) -> void:

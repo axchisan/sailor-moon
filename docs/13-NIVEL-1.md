@@ -105,6 +105,6 @@ No se alarga metiendo más oleadas: se alarga dando **cosas distintas que hacer*
 |---|---|
 | 1. Estrellas de Sueño | ✅ hecho |
 | 2. Encuentro con Mercury | ✅ hecho (falta la voz) |
-| 3. Faroles | ⬜ |
+| 3. Faroles | ✅ hecho |
 | 4. Cruce | ⬜ |
 | 5. Decoración | ⬜ |
