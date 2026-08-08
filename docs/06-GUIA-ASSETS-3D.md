@@ -243,7 +243,7 @@ de dibujos y encaja perfecto con la estética.
 | Cofrecito | ✅ Procesado e importado. Falta animación procedural |
 | Serena – civil | Pendiente de generar |
 | Globito | Pendiente de generar |
-| Luna (gato) | Pendiente de generar |
+| Luna y Artemis (gatos) | ✅ Rigueados a mano con [`blender_riguear_gatos.py`](../tools/blender_riguear_gatos.py) |
 | Coleccionables | Pendiente (o CC0) |
 | **Escenarios** | Ver [`07-ESCENARIOS.md`](07-ESCENARIOS.md) |
 

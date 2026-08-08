@@ -13,6 +13,13 @@ class_name Companero
 ## atrás**, y solo se mueve cuando se ha quedado demasiado lejos. Si estás
 ## quieta, él también.
 ##
+## ## La cola no está animada
+##
+## La mueve `HairPhysics` con la misma `SpringBoneChain` que las coletas de
+## Serena. Una cola animada a mano siempre va a destiempo del movimiento; una
+## con física reacciona sola a los giros y a los frenazos, que es lo que hace
+## una cola de gato de verdad.
+##
 ## ## Sin modelo
 ##
 ## Funciona sin `modelo` asignado: coloca una cápsula gris. Así el
@@ -24,6 +31,9 @@ class_name Companero
 @export var modelo: PackedScene
 ## A quién sigue. Vacío = a la jugadora.
 @export var sigue_a: NodePath
+## Multiplica el tamaño del modelo. Los gatos se exportan a 52 cm de cruz, que
+## junto a Serena todavía se queda corto.
+@export_range(0.5, 2.5) var escala: float = 1.18
 
 @export_group("Movimiento")
 ## Distancia a la que se planta. Menos de esto, se queda quieto.
@@ -37,20 +47,33 @@ class_name Companero
 @export_range(-1.0, 1.0) var lado: float = -1.0
 
 @export_group("Vida")
-## Balanceo al andar y respiración al parar. Un gato inmóvil parece de piedra.
+## Reproduce `andar` e `idle` del modelo. Un gato inmóvil parece de piedra.
 @export var animar: bool = true
-@export var altura_salto: float = 0.10
+## A qué velocidad avanza el gato cuando el ciclo de `andar` corre a velocidad
+## normal. Se usa para acelerar la animación con el desplazamiento y que las
+## patas no patinen. Se ajusta a ojo: si resbala, bajarlo.
+@export var velocidad_de_la_zancada: float = 1.5
+## Tope de aceleración de la animación. Sin él, corriendo a 6 m/s las patas
+## giran como un dibujo animado.
+@export_range(1.0, 5.0) var zancada_maxima: float = 2.4
+
+@export_group("Cola")
+## La mueve la física, no la animación.
+@export var cola_viva: bool = true
+@export var cola_raiz: String = "cola_1"
+@export_range(1, 6) var cola_huesos: int = 3
 
 var _objetivo: Node3D = null
 var _visual: Node3D = null
-var _tiempo: float = 0.0
+var _animador: AnimationPlayer = null
+var _pelo: HairPhysics = null
 var _andando: bool = false
-var _base_y: float = 0.0
 
 
 func _ready() -> void:
 	_montar_visual()
-	_base_y = position.y
+	if _animador != null:
+		_animador.play("idle")
 
 
 func _physics_process(delta: float) -> void:
@@ -71,37 +94,44 @@ func _physics_process(delta: float) -> void:
 	hacia.y = 0.0
 	var distancia := hacia.length()
 
+	var andaba := _andando
 	_andando = distancia > distancia_comoda
+	var avance := 0.0
 	if _andando:
 		var rapido: float = velocidad_carrera if distancia > distancia_carrera else velocidad
 		# Cerca del destino afloja, para no quedarse temblando encima del punto.
 		var freno: float = clampf((distancia - distancia_comoda * 0.5) / 1.5, 0.0, 1.0)
-		global_position += hacia.normalized() * rapido * freno * delta
+		avance = rapido * freno
+		global_position += hacia.normalized() * avance * delta
 		var mirando := atan2(-hacia.x, -hacia.z)
 		rotation.y = lerp_angle(rotation.y, mirando, minf(delta * giro, 1.0))
 
 	if animar:
-		_animar(delta)
+		_animar(andaba, avance)
 
 
-## Trotecillo al andar y respiración al pararse. Es todo lo que necesita un
-## gato de fondo: una animación de verdad para esto no compensa.
-func _animar(delta: float) -> void:
-	if _visual == null:
+## Cambia entre `andar` e `idle`, y acompasa la zancada al avance real.
+##
+## Sin lo segundo el gato patina: las patas van a un ritmo fijo mientras el
+## cuerpo se desplaza a otro, y se nota inmediatamente aunque el bicho sea
+## pequeño. Con tope, eso sí — a la velocidad de carrera la proporción exacta
+## daría siete zancadas por segundo.
+func _animar(andaba: bool, avance: float) -> void:
+	if _animador == null:
 		return
-	_tiempo += delta
+	if _andando != andaba or not _animador.is_playing():
+		_animador.play("andar" if _andando else "idle", 0.18)
 	if _andando:
-		_visual.position.y = absf(sin(_tiempo * 9.0)) * altura_salto
-		_visual.rotation.z = sin(_tiempo * 9.0) * 0.06
+		_animador.speed_scale = clampf(
+			avance / maxf(velocidad_de_la_zancada, 0.01), 0.7, zancada_maxima)
 	else:
-		_visual.position.y = lerpf(_visual.position.y,
-			sin(_tiempo * 1.8) * 0.02, minf(delta * 6.0, 1.0))
-		_visual.rotation.z = lerpf(_visual.rotation.z, 0.0, minf(delta * 6.0, 1.0))
+		_animador.speed_scale = 1.0
 
 
 func _montar_visual() -> void:
 	_visual = Node3D.new()
 	_visual.name = "Visual"
+	_visual.scale = Vector3.ONE * escala
 	add_child(_visual)
 
 	if modelo != null:
@@ -110,8 +140,31 @@ func _montar_visual() -> void:
 		toon.set_script(load("res://src/core/toon_root.gd"))
 		# Igual que los personajes: los modelos importados miran a +Z.
 		toon.rotation.y = PI
-		toon.add_child(modelo.instantiate())
+
+		var instancia := modelo.instantiate()
+		if cola_viva:
+			# El mismo orden que en `personaje_visual.gd`: la física tiene que
+			# tener ya al esqueleto colgando cuando entra en el árbol, si no
+			# `_ready()` no encuentra nada y no monta la cadena sin avisar.
+			_pelo = HairPhysics.new()
+			_pelo.name = "Cola"
+			_pelo.chain_roots = [cola_raiz] as Array[String]
+			_pelo.chain_length = cola_huesos
+			# Más tiesa y menos pesada que una melena: una cola de gato tiene
+			# músculo, no cuelga muerta.
+			_pelo.stiffness = 2.2
+			_pelo.drag = 0.5
+			_pelo.gravity_power = 0.35
+			_pelo.max_angle = 55.0
+			_pelo.add_child(instancia)
+			toon.add_child(_pelo)
+		else:
+			toon.add_child(instancia)
+
 		_visual.add_child(toon)
+		_animador = _buscar_animador(instancia)
+		if _animador == null:
+			push_warning("Companero '%s': el modelo no trae AnimationPlayer" % id)
 		return
 
 	# Sustituto mientras no hay modelo: una cápsula del tamaño de un gato.
@@ -139,8 +192,21 @@ func _buscar_objetivo() -> Node3D:
 	return _objetivo
 
 
+static func _buscar_animador(nodo: Node) -> AnimationPlayer:
+	if nodo is AnimationPlayer:
+		return nodo
+	for hijo in nodo.get_children():
+		var encontrado := _buscar_animador(hijo)
+		if encontrado != null:
+			return encontrado
+	return null
+
+
 ## Lo llama el nivel al teletransportar: si no, el gato cruza el mapa andando.
 func teletransportar_junto_al_objetivo() -> void:
 	var objetivo := _buscar_objetivo()
 	if objetivo != null:
 		global_position = objetivo.global_position
+	# Sin esto la cola sale disparada con la inercia del salto de posición.
+	if _pelo != null:
+		_pelo.reset()

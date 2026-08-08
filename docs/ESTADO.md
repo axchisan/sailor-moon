@@ -332,7 +332,15 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     la deja atravesada (sin sumar 90°) y para la valla hay que sumarlos. Sumar
     o no sumar «los 90° de siempre» sin mirar la pieza da una barrera pegada al
     muro que no corta nada, o una fila de vallas cruzadas como aspas.
-33. **El blockout también cuenta para el presupuesto de draw calls.** 84 cajas
+33. **El pintado automático de pesos falla EN SILENCIO y el `.glb` sale sin
+    skin.** `bpy.ops.object.parent_set(type='ARMATURE_AUTO')` con la malla de
+    Luna avisó «Falla al buscar solución para uno o más huesos», dejó los 3135
+    vértices sin grupo y el exportador sacó un modelo que se ve perfecto, no da
+    ningún error y no se mueve. En `blender_riguear_gatos.py` los pesos se
+    reparten **por distancia al segmento del hueso**: menos fino, pero
+    determinista y sin depender de que la malla esté sana. Y siempre se cuenta
+    cuántos vértices quedaron sueltos antes de exportar.
+34. **El blockout también cuenta para el presupuesto de draw calls.** 84 cajas
     como `MeshInstance3D` sueltos son 84 draw calls, más de la mitad de los 150
     del §8. Agrupadas en un `MultiMeshInstance3D` por color son 4, y los
     `StaticBody3D` se quedan solo con la colisión, que no cuesta dibujado. El
