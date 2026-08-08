@@ -103,7 +103,7 @@ No se alarga metiendo más oleadas: se alarga dando **cosas distintas que hacer*
 
 | Parte | Estado |
 |---|---|
-| 1. Estrellas de Sueño | 🟡 en curso |
+| 1. Estrellas de Sueño | ✅ hecho |
 | 2. Encuentro con Mercury | ⬜ |
 | 3. Faroles | ⬜ |
 | 4. Cruce | ⬜ |
