@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/prototypes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/peluchin.tscn" id="2_peluchin"]
@@ -8,16 +8,29 @@
 [ext_resource type="Script" path="res://src/level/arena.gd" id="6_arena"]
 [ext_resource type="Script" path="res://src/level/constructor_nivel.gd" id="7_constructor"]
 [ext_resource type="Script" path="res://src/level/nivel.gd" id="8_nivel"]
+[ext_resource type="Shader" path="res://src/level/cielo_anime.gdshader" id="9_cielo"]
 
-[sub_resource type="ProceduralSkyMaterial" id="SkyMat_1"]
-sky_top_color = Color(0.42, 0.58, 0.92, 1)
-sky_horizon_color = Color(0.99, 0.82, 0.72, 1)
-ground_bottom_color = Color(0.55, 0.5, 0.55, 1)
-ground_horizon_color = Color(0.99, 0.82, 0.72, 1)
-sun_angle_max = 25.0
+[sub_resource type="ShaderMaterial" id="SkyMat_1"]
+shader = ExtResource("9_cielo")
+shader_parameter/color_cenit = Color(0.33, 0.55, 0.9, 1)
+shader_parameter/color_medio = Color(0.78, 0.8, 0.96, 1)
+shader_parameter/color_horizonte = Color(1, 0.83, 0.7, 1)
+shader_parameter/altura_mezcla = 0.34
+shader_parameter/color_nube = Color(1, 0.97, 0.96, 1)
+shader_parameter/color_nube_sombra = Color(0.87, 0.75, 0.85, 1)
+shader_parameter/cobertura = 0.42
+shader_parameter/dureza_borde = 0.94
+shader_parameter/escala_nubes = 3.1
+shader_parameter/velocidad_nubes = 0.004
+shader_parameter/color_sol = Color(1, 0.96, 0.86, 1)
+shader_parameter/tamano_sol = 0.035
+shader_parameter/halo = 14.0
+shader_parameter/estrellas = 0.0
 
 [sub_resource type="Sky" id="Sky_1"]
 sky_material = SubResource("SkyMat_1")
+process_mode = 2
+radiance_size = 2
 
 [sub_resource type="Environment" id="Env_1"]
 background_mode = 2
@@ -28,7 +41,8 @@ reflected_light_source = 2
 tonemap_mode = 2
 fog_enabled = true
 fog_light_color = Color(0.99, 0.85, 0.78, 1)
-fog_density = 0.006
+fog_density = 0.004
+fog_sky_affect = 0.15
 
 [sub_resource type="CylinderShape3D" id="Shape_arena"]
 height = 4.0
