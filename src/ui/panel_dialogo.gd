@@ -36,6 +36,7 @@ var _escritos: float = 0.0
 var _escribiendo: bool = false
 var _esperando: bool = false
 var _pausa: float = 0.0
+var _velocidad_actual: float = 42.0
 
 
 func _ready() -> void:
@@ -91,8 +92,7 @@ func _process(delta: float) -> void:
 	var linea := _linea_actual()
 	if linea == null:
 		return
-	var velocidad: float = linea.velocidad if linea.velocidad > 0.0 else velocidad_por_defecto
-	_escritos += velocidad * delta
+	_escritos += _velocidad_actual * delta
 	var total := _texto.get_total_character_count()
 	_texto.visible_characters = int(_escritos)
 	if _escritos >= float(total):
@@ -154,10 +154,20 @@ func _siguiente_linea() -> void:
 	_escritos = 0.0
 	_escribiendo = true
 	_flecha.visible = false
+	_velocidad_actual = linea.velocidad if linea.velocidad > 0.0 else velocidad_por_defecto
 
 	if linea.audio != null:
 		_voz.stream = linea.audio
 		_voz.play()
+		# La escritura se acompasa a la voz: se reparte el texto entre lo que
+		# dura el audio. Con una velocidad fija, el texto acaba mucho antes que
+		# la frase y parece que el personaje sigue hablando solo, o al revés.
+		var duracion := linea.audio.get_length()
+		var letras := float(_texto.get_total_character_count())
+		if duracion > 0.15 and letras > 0.0:
+			# Un pelín más rápido que la voz: es mejor terminar de leer justo
+			# antes de que acabe la frase que ir por detrás.
+			_velocidad_actual = (letras / duracion) * 1.08
 
 	linea_mostrada.emit(_indice)
 
@@ -193,7 +203,7 @@ static func _nombre_visible(id: String) -> String:
 	match id:
 		"serena": return "Serena"
 		"luna": return "Luna"
-		"mercury": return "Ami"
+		"mercury": return "Amy"
 		"mars": return "Rei"
 		"jupiter": return "Makoto"
 		"venus": return "Minako"

@@ -1,13 +1,30 @@
-[gd_resource type="Resource" script_class="Dialogo" load_steps=19 format=3]
+[gd_resource type="Resource" script_class="Dialogo" load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://src/dialogo/dialogo.gd" id="1_dialogo"]
 [ext_resource type="Script" path="res://src/dialogo/linea_dialogo.gd" id="2_linea"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/luna_01.mp3" id="a0"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/serena_01.mp3" id="a1"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/luna_02.mp3" id="a2"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/mercury_01.mp3" id="a3"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/serena_02.mp3" id="a4"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/mercury_02.mp3" id="a5"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/mercury_03.mp3" id="a6"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/luna_03.mp3" id="a7"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/mercury_04.mp3" id="a8"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/serena_03.mp3" id="a9"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/mercury_05.mp3" id="a10"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/luna_04.mp3" id="a11"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/mercury_06.mp3" id="a12"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/mercury_07.mp3" id="a13"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/serena_04.mp3" id="a14"]
+[ext_resource type="AudioStream" path="res://assets/audio/voces/n1_mercury/luna_05.mp3" id="a15"]
 
 [sub_resource type="Resource" id="L00"]
 script = ExtResource("2_linea")
 hablante = "luna"
 texto = "¡Serena, espera! Hay alguien detrás de esos árboles…"
 emocion = "[whispering]"
+audio = ExtResource("a0")
 pausa_final = 0.3
 velocidad = 42.0
 
@@ -16,6 +33,7 @@ script = ExtResource("2_linea")
 hablante = "serena"
 texto = "¿Otra criatura? ¡Ya verás lo que le espera!"
 emocion = "[excited]"
+audio = ExtResource("a1")
 pausa_final = 0.25
 velocidad = 42.0
 
@@ -24,6 +42,7 @@ script = ExtResource("2_linea")
 hablante = "luna"
 texto = "No, tonta. Esa energía es distinta. Es… nuestra."
 emocion = "[soft]"
+audio = ExtResource("a2")
 pausa_final = 0.4
 velocidad = 42.0
 
@@ -32,14 +51,16 @@ script = ExtResource("2_linea")
 hablante = "mercury"
 texto = "¿Ho-hola? ¿Hay alguien ahí?"
 emocion = "[breathy]"
+audio = ExtResource("a3")
 pausa_final = 0.35
 velocidad = 42.0
 
 [sub_resource type="Resource" id="L04"]
 script = ExtResource("2_linea")
 hablante = "serena"
-texto = "¡Ami! ¿Qué haces aquí sola?"
+texto = "¡Amy! ¿Qué haces aquí sola?"
 emocion = ""
+audio = ExtResource("a4")
 pausa_final = 0.25
 velocidad = 42.0
 
@@ -48,6 +69,7 @@ script = ExtResource("2_linea")
 hablante = "mercury"
 texto = "Serena… menos mal que eres tú. Salí a estudiar al parque y de pronto todo se puso oscuro."
 emocion = "[embarrassed]"
+audio = ExtResource("a5")
 pausa_final = 0.4
 velocidad = 42.0
 
@@ -56,14 +78,16 @@ script = ExtResource("2_linea")
 hablante = "mercury"
 texto = "Los peluches de la feria se levantaron solos. Me escondí aquí y no me atrevía a salir."
 emocion = "[sad]"
+audio = ExtResource("a6")
 pausa_final = 0.45
 velocidad = 42.0
 
 [sub_resource type="Resource" id="L07"]
 script = ExtResource("2_linea")
 hablante = "luna"
-texto = "Ami, escúchame bien. Eso que sientes en el pecho no es miedo. Es tu poder despertando."
+texto = "Amy, escúchame bien. Eso que sientes en el pecho no es miedo. Es tu poder despertando."
 emocion = "[emphasis]"
+audio = ExtResource("a7")
 pausa_final = 0.5
 velocidad = 42.0
 
@@ -72,6 +96,7 @@ script = ExtResource("2_linea")
 hablante = "mercury"
 texto = "¿Mi… poder? Pero si yo solo sé resolver ecuaciones."
 emocion = ""
+audio = ExtResource("a8")
 pausa_final = 0.3
 velocidad = 42.0
 
@@ -80,6 +105,7 @@ script = ExtResource("2_linea")
 hablante = "serena"
 texto = "¡Eso es justo lo que nos hace falta! Yo pego fuerte, pero pensar se me da fatal."
 emocion = "[excited]"
+audio = ExtResource("a9")
 pausa_final = 0.35
 velocidad = 42.0
 
@@ -88,22 +114,25 @@ script = ExtResource("2_linea")
 hablante = "mercury"
 texto = "Eso sí es verdad."
 emocion = "[chuckling]"
+audio = ExtResource("a10")
 pausa_final = 0.3
 velocidad = 42.0
 
 [sub_resource type="Resource" id="L11"]
 script = ExtResource("2_linea")
 hablante = "luna"
-texto = "Di las palabras, Ami. Ya las conoces, aunque no sepas de dónde."
+texto = "Di las palabras, Amy. Ya las conoces, aunque no sepas de dónde."
 emocion = "[emphasis]"
+audio = ExtResource("a11")
 pausa_final = 0.45
 velocidad = 42.0
 
 [sub_resource type="Resource" id="L12"]
 script = ExtResource("2_linea")
 hablante = "mercury"
-texto = "¡Por el poder del planeta Mercurio… transformación!"
+texto = "¡Por el poder estelar del planeta Mercurio… transformación!"
 emocion = "[excited]"
+audio = ExtResource("a12")
 pausa_final = 0.6
 velocidad = 42.0
 
@@ -112,6 +141,7 @@ script = ExtResource("2_linea")
 hablante = "mercury"
 texto = "…Serena. Puedo verlo todo. Dónde están, cuántos son, por dónde vienen."
 emocion = "[soft]"
+audio = ExtResource("a13")
 pausa_final = 0.4
 velocidad = 42.0
 
@@ -120,6 +150,7 @@ script = ExtResource("2_linea")
 hablante = "serena"
 texto = "¡Sailor Mercury! ¡Ahora sí que estamos completas!"
 emocion = "[excited]"
+audio = ExtResource("a14")
 pausa_final = 0.3
 velocidad = 42.0
 
@@ -128,6 +159,7 @@ script = ExtResource("2_linea")
 hablante = "luna"
 texto = "Completas no. Pero un poco menos solas. Vamos, queda camino."
 emocion = "[soft]"
+audio = ExtResource("a15")
 pausa_final = 0.4
 velocidad = 42.0
 

@@ -101,9 +101,21 @@ jugadora necesita entender sin que suene a tutorial.
 
 ---
 
-## Pendiente
+## Estado
 
-- [ ] Generar las 16 líneas en fish.audio
-- [ ] Guardarlas como `.ogg` en `assets/audio/voces/n1_mercury/`
-- [ ] Asignarlas al campo `audio` de cada línea en `n1_mercury.tres`
+- [x] Las 16 líneas generadas y conectadas (67 s de diálogo, 1 MB en `.mp3`)
+- [x] Escritura sincronizada con la voz
 - [ ] Ajustar el volumen del bus `Voice` para que no tape la música
+
+### Dos cosas que aprendimos moviendo los archivos
+
+**El texto en pantalla se ajustó a lo que dicen los audios.** Se generaron con
+«Amy» y «poder estelar», así que el guion se cambió para que coincida: si lo
+escrito y lo que se oye no cuadran, canta muchísimo.
+
+**Los nombres de fish.audio traen la hora y el principio del texto**, así que se
+emparejan buscando un trozo distintivo de la frase, no por orden. Y hay que
+comparar **sin acentos**: macOS guarda los nombres en Unicode descompuesto, y
+las cinco líneas con tilde no casaban con el literal. Además fish.audio **trunca
+el nombre**, así que la marca tiene que caber en lo que quede («resolver
+ecuacione», sin la s).
