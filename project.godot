@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Sailor Moon: El Cristal de los Suenos"
 config/description="Aventura de accion 3D. Proyecto personal, no comercial."
-run/main_scene="res://scenes/prototypes/test_combat.tscn"
+run/main_scene="res://scenes/levels/nivel_1_parque.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
 
