@@ -13,6 +13,15 @@ class_name CameraRig
 @export var stick_sensitivity: float = 2.8
 @export var touch_sensitivity: float = 0.004
 
+@export_group("Ratón")
+## En escritorio el cursor se captura y la cámara sigue al ratón sin pulsar
+## nada, como en cualquier juego en tercera persona. Antes había que mantener
+## el botón derecho, lo que dejaba sin manos para atacar.
+##
+## `Esc` suelta el cursor y un clic vuelve a capturarlo. En Android no se toca
+## nada: allí manda el arrastre con el dedo en la mitad derecha.
+@export var capturar_raton: bool = true
+
 @export_group("Límites")
 @export var min_pitch: float = -55.0
 @export var max_pitch: float = 25.0
@@ -32,6 +41,7 @@ class_name CameraRig
 var _yaw: float = 0.0
 var _pitch: float = -15.0
 var _looking_with_mouse: bool = false
+var _es_escritorio: bool = false
 
 # Sacudida de cámara, alimentada por CombatFeel
 var _shake_strength: float = 0.0
@@ -46,14 +56,35 @@ func _ready() -> void:
 	_yaw = rotation.y
 	CombatFeel.shake_requested.connect(_on_shake_requested)
 
+	_es_escritorio = not OS.has_feature("mobile")
+	if _es_escritorio and capturar_raton:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Ratón: se mira manteniendo el botón derecho. Así el izquierdo queda libre.
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
-		_looking_with_mouse = event.pressed
+	if _es_escritorio and capturar_raton:
+		# `Esc` suelta el cursor para poder salir de la ventana; el siguiente
+		# clic dentro del juego lo vuelve a capturar.
+		if event.is_action_pressed("ui_cancel"):
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			get_viewport().set_input_as_handled()
+			return
+		if event is InputEventMouseButton and event.pressed \
+				and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			get_viewport().set_input_as_handled()
+			return
 
-	elif event is InputEventMouseMotion and _looking_with_mouse:
-		_add_look(-event.relative.x * mouse_sensitivity, -event.relative.y * mouse_sensitivity)
+	if event is InputEventMouseMotion:
+		# Con el cursor capturado se mira sin pulsar nada. Si está suelto, se
+		# mantiene el comportamiento antiguo del botón derecho, que sigue
+		# siendo útil con el ratón visible.
+		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or _looking_with_mouse:
+			_add_look(-event.relative.x * mouse_sensitivity,
+				-event.relative.y * mouse_sensitivity)
+
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_MIDDLE:
+		_looking_with_mouse = event.pressed
 
 	elif event is InputEventScreenDrag:
 		if event.position.x > get_viewport().get_visible_rect().size.x * 0.5:

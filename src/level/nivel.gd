@@ -14,6 +14,11 @@ class_name Nivel
 @export var altura_de_rescate: float = -6.0
 @export var mensajes: bool = true
 
+@export_group("Coleccionables")
+@export var escena_estrella: PackedScene
+## Cuántas hay en total. Al llegar, se anuncia y se guarda en el progreso.
+@export var estrellas_del_nivel: int = 7
+
 var _jugador: Node3D = null
 var _constructor: ConstructorNivel = null
 var _limpias: int = 0
@@ -29,7 +34,12 @@ func _ready() -> void:
 		_jugador.global_position = _constructor.punto_inicio
 		_ultimo_suelo = _constructor.punto_inicio
 
+	if _constructor != null and escena_estrella != null:
+		var puestas := _constructor.sembrar_estrellas(escena_estrella, self)
+		print("[Nivel] %d Estrellas de Sueño sembradas" % puestas)
+
 	EventBus.arena_cleared.connect(_al_limpiar_arena)
+	EventBus.star_collected.connect(_al_coger_estrella)
 	if mensajes:
 		EventBus.arena_started.connect(_al_empezar_arena)
 
@@ -60,6 +70,12 @@ func rescatar() -> void:
 	for nodo in _jugador.find_children("*", "HairPhysics", true, false):
 		(nodo as HairPhysics).reset()
 	EventBus.player_respawned.emit(destino)
+
+
+func _al_coger_estrella(total: int) -> void:
+	if total < estrellas_del_nivel:
+		return
+	EventBus.show_message.emit("¡Todas las Estrellas de Sueño!", 3.0)
 
 
 func _al_empezar_arena(id: String, oleadas: int) -> void:
