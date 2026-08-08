@@ -1,27 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://src/gameplay/estrella_sueno.gd" id="1_estrella"]
+[ext_resource type="PackedScene" path="res://assets/models/pickups/estrella_sueno.glb" id="2_modelo"]
+[ext_resource type="Script" path="res://src/core/toon_root.gd" id="3_toon"]
 
 [sub_resource type="SphereShape3D" id="Shape_1"]
 radius = 0.55
-
-[sub_resource type="StandardMaterial3D" id="Mat_1"]
-albedo_color = Color(1, 0.88, 0.42, 1)
-emission_enabled = true
-emission = Color(1, 0.8, 0.35, 1)
-emission_energy_multiplier = 1.8
-shading_mode = 0
-
-[sub_resource type="PrismMesh" id="Mesh_1"]
-material = SubResource("Mat_1")
-size = Vector3(0.42, 0.42, 0.42)
-
-[sub_resource type="SphereMesh" id="Mesh_2"]
-material = SubResource("Mat_1")
-radius = 0.13
-height = 0.26
-radial_segments = 8
-rings = 4
 
 [node name="EstrellaSueno" type="Area3D"]
 collision_layer = 0
@@ -33,16 +17,13 @@ script = ExtResource("1_estrella")
 shape = SubResource("Shape_1")
 
 [node name="Visual" type="Node3D" parent="."]
+script = ExtResource("3_toon")
+shade_color = Color(0.95, 0.72, 0.45, 1)
+outline_width = 0.008
+outline_color = Color(0.42, 0.24, 0.12, 1)
 
-[node name="Punta" type="MeshInstance3D" parent="Visual"]
-mesh = SubResource("Mesh_1")
-
-[node name="PuntaAbajo" type="MeshInstance3D" parent="Visual"]
-transform = Transform3D(1, 0, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0)
-mesh = SubResource("Mesh_1")
-
-[node name="Nucleo" type="MeshInstance3D" parent="Visual"]
-mesh = SubResource("Mesh_2")
+[node name="Modelo" parent="Visual" instance=ExtResource("2_modelo")]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0, 0)
 
 [node name="Luz" type="OmniLight3D" parent="Visual"]
 light_color = Color(1, 0.85, 0.45, 1)
