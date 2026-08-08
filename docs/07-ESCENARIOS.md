@@ -176,9 +176,51 @@ Con 7 piezas distintas se decora el nivel entero, repitiéndolas y rotándolas:
 Los arbustos y las vallas, al repetirse tanto, van con
 `MultiMeshInstance3D`: 25 arbustos pasan de 25 draw calls a **1**.
 
+### Estado: blockout hecho y jugado ✅
+
+`scenes/levels/nivel_1_parque.tscn`. Se recorrió de principio a fin y se llegó
+a `[Nivel] nivel_1 completado`.
+
+Lo levanta **`src/level/constructor_nivel.gd`** a partir de una lista de tramos:
+
+```gdscript
+{"tipo": "pasillo", "largo": 20.0, "ancho": 9.0},
+{"tipo": "arena",   "radio": 11.0, "nodo": "Arena1"},
+{"tipo": "giro",    "grados": -90.0},
+...
+```
+
+Cambiar el largo de un tramo recoloca **todo lo que va detrás**, arenas
+incluidas. Es lo que hace usable un blockout: se toca veinte veces, y a mano
+cada retoque obliga a recolocar cada pieza posterior.
+
+> **Se generó con `MeshInstance3D` + `StaticBody3D`, no con CSG.** CSG es cómodo
+> cuando montas a mano en el editor; generando por código no aporta nada, es más
+> caro en móvil y Godot lo recompila en cada arranque.
+
+Oleadas del nivel: 2+3 en la Arena 1 (solo Peluchines, se aprende a pegar),
+3+4+4 en la Arena 2 (entra el Cofrecito: hay que rodear), 3+4+5 en el Guardián
+(con Cofrecito y Hadita). **28 enemigos en total.**
+
+Con la tecla **P** se ve la planta desde arriba. Un blockout se juzga mirando el
+plano: si desde ahí no se entiende por dónde se va, jugándolo tampoco.
+
+#### Dos fallos que costaron encontrar
+
+**Los paneles curvos salían radiales, como los radios de una rueda.** Al colocar
+un segmento en el ángulo θ de un círculo hay que rotarlo **φ = 90° − θ**, no
+`−θ`: rotando `Y` un ángulo φ el eje Z local va a `(sin φ, 0, cos φ)`, y para
+que mire al centro hay que igualarlo a la normal `(cos θ, 0, sin θ)`. El mismo
+error estaba en la barrera mágica de `arena.gd` desde la Fase 1.
+
+**Los huecos de entrada y salida de las arenas caían en el lado equivocado.** Si
+detrás de una arena viene un giro, la salida va en la dirección **ya girada**;
+usando la de entrada, el pasillo siguiente arranca de un punto del borde que
+está tapado y la arena se convierte en una trampa sin salida.
+
 ### Orden de montaje
 
-1. **Blockout en CSG** y jugarlo en gris de principio a fin. Si el recorrido no
+1. **Blockout** y jugarlo en gris de principio a fin. Si el recorrido no
    se entiende sin decoración, tampoco se entenderá con ella
 2. **Skybox** de parque japonés al atardecer
 3. **Props** por bloques: primero árboles y arbustos (definen el espacio),

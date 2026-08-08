@@ -32,7 +32,7 @@ DTO, signals ≈ event bus).
 |---|---|
 | **Fase 0 — Cimientos** | ✅ **Cerrada.** APK corriendo en el móvil real |
 | **Fase 1 — Combate** | ✅ **Cerrada.** Los tres enemigos terminados: Peluchín, Cofrecito y Hadita |
-| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Serena jugable. Reparto de 11 personajes procesado, rigueado y montado con física de pelo. **Falta el escenario del Nivel 1** |
+| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Serena jugable, reparto de 11 montado con física, y **blockout del Nivel 1 jugado de principio a fin**. Falta decorarlo (skybox y props) |
 | Fases 3–5 | ⬜ Sin empezar |
 
 ### Lo que funciona hoy
@@ -299,7 +299,14 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     Media Sailor va de rojo: con marca roja es imposible saber qué está marcado
     y qué era así de fábrica. Una hora perdida creyendo que la falda de Mars
     estaba mal seleccionada cuando solo era su color.
-26. **Comparar contra el original, no contra el recuerdo.** Hay copia de los FBX
+26. **Un panel colocado en el ángulo θ de un círculo se rota `90° − θ`, no `−θ`.**
+    Con `−θ` los paneles quedan de canto y el anillo se ve como los radios de
+    una rueda. Estaba mal en la barrera de `arena.gd` desde la Fase 1.
+27. **Para mover al jugador desde el MCP hay que enviar la ACCIÓN
+    (`move_forward`), no la tecla (`W`).** El jugador lee
+    `Input.get_vector("move_left", …)`; las pulsaciones de tecla sueltas no
+    llegan y el personaje se queda quieto sin dar ningún error.
+28. **Comparar contra el original, no contra el recuerdo.** Hay copia de los FBX
     tal como bajaron de Mixamo en `Models/rigged_originales/` (fuera de git).
     Antes de tocar uno, se restaura desde ahí. *(El FBX original de Uranus se
     perdió por no tener esto todavía.)*
