@@ -41,6 +41,14 @@ func _ready() -> void:
 		_jugador.global_position = _constructor.punto_inicio
 		_ultimo_suelo = _constructor.punto_inicio
 
+	# Decorar va después de construir y antes que nada más: las Estrellas y los
+	# faroles se colocan por coordenadas del recorrido, no por lo que haya
+	# plantado alrededor, así que el orden entre ellos da igual — pero si el
+	# decorador corriera primero, no tendría tramos que consultar.
+	var decorador := get_node_or_null("Decorado") as DecoradorNivel
+	if decorador != null and _constructor != null:
+		decorador.decorar(_constructor)
+
 	if _constructor != null and escena_estrella != null:
 		var puestas := _constructor.sembrar_estrellas(escena_estrella, self)
 		print("[Nivel] %d Estrellas de Sueño sembradas" % puestas)

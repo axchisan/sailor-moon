@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/prototypes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/peluchin.tscn" id="2_peluchin"]
@@ -18,6 +18,7 @@
 [ext_resource type="PackedScene" path="res://scenes/props/farol.tscn" id="16_farol"]
 [ext_resource type="Script" path="res://src/gameplay/puerta_magica.gd" id="17_puerta"]
 [ext_resource type="PackedScene" path="res://assets/models/characters/luna.glb" id="18_luna"]
+[ext_resource type="Script" path="res://src/level/decorador_nivel.gd" id="19_decorador"]
 
 [sub_resource type="ShaderMaterial" id="SkyMat_1"]
 shader = ExtResource("9_cielo")
@@ -45,13 +46,16 @@ radiance_size = 2
 background_mode = 2
 sky = SubResource("Sky_1")
 ambient_light_source = 3
-ambient_light_energy = 0.85
+ambient_light_energy = 0.6
 reflected_light_source = 2
 tonemap_mode = 2
 fog_enabled = true
 fog_light_color = Color(0.99, 0.85, 0.78, 1)
-fog_density = 0.004
-fog_sky_affect = 0.15
+fog_density = 0.0016
+fog_sky_affect = 0.1
+adjustment_enabled = true
+adjustment_contrast = 1.08
+adjustment_saturation = 1.25
 
 [sub_resource type="CylinderShape3D" id="Shape_encuentro"]
 height = 4.0
@@ -76,9 +80,17 @@ transform = Transform3D(0.866, 0.25, -0.433, 0, 0.866, 0.5, 0.5, -0.433, 0.75, 0
 light_color = Color(1, 0.94, 0.86, 1)
 light_energy = 1.1
 shadow_enabled = true
+shadow_bias = 0.06
+shadow_normal_bias = 2.5
+directional_shadow_max_distance = 55.0
+directional_shadow_split_1 = 0.12
+directional_shadow_split_2 = 0.32
 
 [node name="Blockout" type="Node3D" parent="."]
 script = ExtResource("7_constructor")
+
+[node name="Decorado" type="Node3D" parent="."]
+script = ExtResource("19_decorador")
 
 [node name="Arena1" type="Area3D" parent="."]
 collision_layer = 0

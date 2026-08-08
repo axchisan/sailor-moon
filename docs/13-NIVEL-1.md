@@ -72,21 +72,48 @@ y de paso justifica la caja de luz del `tōrō`, que ya lleva material propio.
 
 ## 4. El cruce
 
-A mitad del tramo B, el camino se parte en dos y se vuelve a juntar:
+El tramo B ya no es un pasillo: es un tipo de tramo propio, `cruce`, que se
+declara en el `RECORRIDO` como cualquier otro. Se construye como boca de
+entrada ancha → dos ramas paralelas → boca de salida.
 
-- **Camino corto:** directo, sin nada.
-- **Camino largo:** una plataforma más, dos Estrellas y una vista del torii.
+- **Rama derecha:** directa, con una Estrella a media altura de hombre. Irse
+  por el camino corto no castiga.
+- **Rama izquierda:** tres plataformas y las **dos Estrellas secretas** del
+  nivel, con la pagoda de fondo.
 
-Ninguno castiga. El que explora se lleva algo; el que va directo, llega antes.
+Entre las dos ramas queda un hueco de 9 m sin suelo, poblado de cerezos: desde
+una rama **no se ve la otra**, y elegir camino tiene gracia solo si lo que no
+coges queda fuera de la vista.
+
+### Coordenadas de rama
+
+`punto_en_tramo()` acepta un quinto argumento, `rama`: −1 la larga, +1 la
+directa, 0 el eje (las bocas). Las fichas de `ESTRELLAS`, `FAROLES` y
+`ENCUENTROS` lo pasan con `ficha.get("rama", 0.0)`, así que todo lo anterior
+sigue funcionando sin tocarlo.
 
 ## 5. Decoración
 
-Con todo lo anterior funcionando:
+[`decorador_nivel.gd`](../src/level/decorador_nivel.gd), separado del
+constructor a propósito: el constructor decide **por dónde se juega** y el
+decorador **qué se ve**. Se puede borrar el nodo `Decorado` entero y el nivel
+se sigue jugando igual, que es la prueba de que la separación está bien puesta.
 
-- Props sembrados por el recorrido, `MultiMeshInstance3D` donde se repitan
-- Anillo de fondo lejano: montañas, pagoda, torii y cerezos gigantes
-- Medir draw calls contra el presupuesto de
-  [`01-ARQUITECTURA.md`](01-ARQUITECTURA.md) §8
+- 267 props del kit sembrados por recorrido y arenas, en **11 draw calls**
+- Fondo lejano a 60–200 m: montañas, pagoda, dos torii y cerezos gigantes, sin
+  colisión ni sombra
+- Disco de hierba de 210 m para que nada flote sobre el vacío y no se vea el
+  canto del mundo contra el cielo
+- Nada de esto tiene colisión: lo caminable ya lo definen los muros del
+  blockout, y dar cuerpo a un arbusto solo añade sitios donde engancharse
+
+### Presupuesto
+
+Medido en el nivel entero, sin enemigos: **57 draw calls** de los 150 de
+[`01-ARQUITECTURA.md`](01-ARQUITECTURA.md) §8. Para llegar ahí hubo que
+agrupar también las cajas del blockout: eran 84 `MeshInstance3D` sueltos, o sea
+84 draw calls, y ahora son 4 `MultiMeshInstance3D` (uno por color) con los
+`StaticBody3D` reducidos a pura colisión. De 163 a 57.
 
 ---
 
@@ -106,5 +133,10 @@ No se alarga metiendo más oleadas: se alarga dando **cosas distintas que hacer*
 | 1. Estrellas de Sueño | ✅ hecho |
 | 2. Encuentro con Mercury | ✅ hecho (falta la voz) |
 | 3. Faroles | ✅ hecho |
-| 4. Cruce | ⬜ |
-| 5. Decoración | ⬜ |
+| 4. Cruce | ✅ hecho |
+| 5. Decoración | ✅ hecho |
+
+Queda fuera de este plan y pendiente: animar a Luna y Artemis (cola y patas),
+ajustar el bus de audio `Voice` para que no tape la música, y revisar la altura
+de la cámara del jugador, que va muy rasante y deja el camino casi fuera de
+cuadro.

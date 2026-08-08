@@ -29,7 +29,14 @@ const RECORRIDO: Array[Dictionary] = [
 	{"tipo": "pasillo", "largo": 20.0, "ancho": 9.0},
 	{"tipo": "arena", "radio": 11.0, "nodo": "Arena1"},
 	{"tipo": "giro", "grados": -90.0},
-	{"tipo": "pasillo", "largo": 25.0, "ancho": 9.0, "plataformas": true},
+	# El tramo B se parte en dos: por la derecha se va directo, por la
+	# izquierda se rodea saltando plataformas y se recogen dos Estrellas.
+	# Ninguno castiga; el que explora se lleva algo, el que va directo llega
+	# antes. Es lo único del nivel donde hay algo que decidir.
+	# La separación es generosa a propósito: entre las dos ramas cabe un
+	# bosquete, y eso hace que desde una no se vea la otra. Elegir camino tiene
+	# gracia solo si el que no coges queda fuera de la vista.
+	{"tipo": "cruce", "largo": 30.0, "ancho": 7.0, "separacion": 16.0},
 	{"tipo": "arena", "radio": 11.0, "nodo": "Arena2"},
 	{"tipo": "giro", "grados": 90.0},
 	{"tipo": "pasillo", "largo": 15.0, "ancho": 9.0, "subida": 2.5},
@@ -65,14 +72,16 @@ const RECORRIDO: Array[Dictionary] = [
 const ESTRELLAS: Array[Dictionary] = [
 	# En el camino: enseñan qué son, es imposible no cogerlas
 	{"tramo": 0, "t": 0.45, "lado": 0.0, "alto": 1.1},
-	{"tramo": 1, "t": 0.20, "lado": 0.0, "alto": 1.1},
+	{"tramo": 1, "t": 0.09, "lado": 0.0, "alto": 1.1},
 	{"tramo": 2, "t": 0.55, "lado": 0.0, "alto": 1.3},
 	# A la vista pero fuera del camino: hay que desviarse
 	{"tramo": 0, "t": 0.80, "lado": 0.72, "alto": 1.1},
-	{"tramo": 1, "t": 0.72, "lado": -0.74, "alto": 1.1},
-	# Arriba, sobre las plataformas del tramo B: hay que saltar
-	{"tramo": 1, "t": 0.50, "lado": 0.22, "alto": 2.5, "secreta": true},
-	{"tramo": 1, "t": 0.75, "lado": -0.22, "alto": 3.0, "secreta": true},
+	# Una en la rama directa del cruce: irse por el camino corto no castiga
+	{"tramo": 1, "t": 0.50, "lado": 0.0, "alto": 1.1, "rama": 1.0},
+	# Las dos secretas, sobre las plataformas de la rama larga. Son la razón de
+	# que exista el cruce: el que se desvía se lleva algo que el otro no ve.
+	{"tramo": 1, "t": 0.48, "lado": 0.44, "alto": 2.0, "rama": -1.0, "secreta": true},
+	{"tramo": 1, "t": 0.67, "lado": -0.44, "alto": 2.3, "rama": -1.0, "secreta": true},
 ]
 
 ## Los tres faroles del tramo antes del jefe. Mismo sistema de coordenadas.
@@ -99,9 +108,14 @@ var _origen: Vector3 = Vector3.ZERO
 var _direccion: Vector3 = Vector3.FORWARD
 var _altura: float = 0.0
 var _piezas: int = 0
+## Poses de las cajas, agrupadas por color. Se vuelca al terminar de construir.
+var _lotes: Dictionary = {}
 
 var punto_inicio: Vector3 = Vector3.ZERO
 var centros_arena: Dictionary = {}
+## Radio de cada arena, con la misma clave. Va aparte de `centros_arena` para
+## no cambiarle el tipo de valor, que ya se usa como posición en varios sitios.
+var radios_arena: Dictionary = {}
 ## Un registro por pasillo, en orden, para poder situar cosas encima después.
 var tramos: Array[Dictionary] = []
 
@@ -117,8 +131,10 @@ func construir() -> void:
 	_direccion = Vector3.FORWARD
 	_altura = 0.0
 	_piezas = 0
+	_lotes.clear()
 	tramos.clear()
 	centros_arena.clear()
+	radios_arena.clear()
 	# Un par de metros DENTRO del primer tramo: el recorrido arranca en el
 	# origen y avanza hacia −Z, así que empezar en +Z es empezar en el aire.
 	# La altura es la cara superior de la losa (grosor/2) más un margen.
@@ -134,6 +150,8 @@ func construir() -> void:
 		match paso.get("tipo", ""):
 			"pasillo":
 				_pasillo(paso)
+			"cruce":
+				_cruce(paso)
 			"giro":
 				_direccion = _direccion.rotated(Vector3.UP, deg_to_rad(paso["grados"]))
 			"arena":
@@ -149,9 +167,10 @@ func construir() -> void:
 					i += 1
 		i += 1
 
+	var lotes := _volcar_lotes()
 	_colocar_encuentros()
-	print("[Nivel] blockout construido: %d piezas, %d arenas" % [
-		_piezas, centros_arena.size()])
+	print("[Nivel] blockout construido: %d piezas en %d lotes, %d arenas" % [
+		_piezas, lotes, centros_arena.size()])
 
 
 ## Lleva cada encuentro a su punto del recorrido. Los nodos ya están en la
@@ -163,17 +182,23 @@ func _colocar_encuentros() -> void:
 		if nodo == null:
 			continue
 		nodo.global_position = punto_en_tramo(
-			ficha["tramo"], ficha["t"], ficha["lado"], ficha.get("alto", 0.0))
+			ficha["tramo"], ficha["t"], ficha["lado"], ficha.get("alto", 0.0),
+			ficha.get("rama", 0.0))
 
 	# La puerta va cruzada al final del último pasillo, tapando la entrada del
-	# guardián. Se gira 90° respecto al camino: una barrera paralela al pasillo
-	# no corta nada.
+	# guardián.
+	#
+	# El giro es el rumbo del camino a secas, SIN los 90° que uno esperaría:
+	# la cortina se construye a lo largo de su eje X local
+	# ([`puerta_magica.gd`](../gameplay/puerta_magica.gd)), y `atan2(−d.x, −d.z)`
+	# orienta el −Z hacia el avance, que deja la X justo atravesada. Añadiendo
+	# 90° queda paralela al pasillo, pegada a un muro y sin cortar nada.
 	var barrera := get_parent().get_node_or_null("PuertaGuardian") as Node3D
 	if barrera != null and not tramos.is_empty():
 		var ultimo: int = tramos.size() - 1
 		barrera.global_position = punto_en_tramo(ultimo, 0.99, 0.0, 0.0)
 		var direccion: Vector3 = tramos[ultimo]["direccion"]
-		barrera.rotation.y = atan2(-direccion.x, -direccion.z) + PI * 0.5
+		barrera.rotation.y = atan2(-direccion.x, -direccion.z)
 
 
 # --- Tramos --------------------------------------------------------------------
@@ -215,6 +240,84 @@ func _pasillo(paso: Dictionary) -> void:
 	_altura += subida
 
 
+## Dos caminos que salen del mismo sitio y se vuelven a juntar.
+##
+## Se construye como un pasillo corto de entrada, dos ramas paralelas y otro
+## pasillo corto de salida. El registro de `tramos` solo guarda la rama
+## **derecha**: es la directa, y es la que sirve de referencia para colocar
+## cosas «a lo largo del tramo B». La izquierda se sitúa a partir de ella.
+##
+## Las dos ramas son suelo firme y ninguna castiga. La gracia no es acertar,
+## es que haya algo que elegir.
+func _cruce(paso: Dictionary) -> void:
+	var largo: float = paso["largo"]
+	var ancho: float = paso["ancho"]
+	var separacion: float = paso["separacion"]
+	var entrada: float = largo * 0.18
+	var salida: float = largo * 0.18
+	var ramas: float = largo - entrada - salida
+
+	var lado := _direccion.cross(Vector3.UP).normalized()
+	var giro := _giro_actual()
+	var alto_base := _altura + grosor_suelo * 0.5
+
+	# Bocas de entrada y salida: anchas, para que se vean las dos ramas de un
+	# vistazo y no haya que adivinar que el camino se parte.
+	var ancho_boca := separacion + ancho
+	for boca: Array in [[entrada * 0.5, entrada], [largo - salida * 0.5, salida]]:
+		var eje: float = boca[0]
+		var fondo: float = boca[1]
+		_losa("SueloCruce", _origen + _direccion * eje + Vector3.UP * _altura,
+			Vector3(ancho_boca, grosor_suelo, fondo), color_suelo, giro)
+		_losa("CaminoCruce", _origen + _direccion * eje
+			+ Vector3.UP * (_altura + grosor_suelo * 0.5 + 0.02),
+			Vector3(ancho_boca * 0.8, 0.08, fondo), color_camino, giro, 0.0, false)
+		# Los costados de la boca dan al vacío: sin muro se cae por ellos justo
+		# en el punto donde hay que pararse a mirar por dónde tirar.
+		for borde: float in [-1.0, 1.0]:
+			_losa("BordeCruce",
+				_origen + _direccion * eje
+					+ lado * borde * (ancho_boca * 0.5 + ancho_borde * 0.5)
+					+ Vector3.UP * (_altura + alto_borde * 0.5 + grosor_suelo * 0.5),
+				Vector3(ancho_borde, alto_borde, fondo), color_borde, giro)
+
+	# Las dos ramas
+	for signo: float in [1.0, -1.0]:
+		var centro_rama: Vector3 = _origen + _direccion * (entrada + ramas * 0.5) \
+			+ lado * signo * (separacion * 0.5) + Vector3.UP * _altura
+		_losa("SueloRama", centro_rama, Vector3(ancho, grosor_suelo, ramas),
+			color_suelo, giro)
+		_losa("CaminoRama", centro_rama + Vector3.UP * (grosor_suelo * 0.5 + 0.02),
+			Vector3(ancho_camino, 0.08, ramas), color_camino, giro, 0.0, false)
+		# Bordes: solo el exterior y el interior de cada rama, para que el hueco
+		# del medio se lea como un vacío y no como un tercer camino.
+		for borde: float in [-1.0, 1.0]:
+			_losa("BordeRama",
+				centro_rama + lado * borde * (ancho * 0.5 + ancho_borde * 0.5)
+					+ Vector3.UP * (alto_borde * 0.5 + grosor_suelo * 0.5),
+				Vector3(ancho_borde, alto_borde, ramas), color_borde, giro)
+
+	# La rama de la izquierda lleva plataformas: es la que cuesta y la que paga.
+	var base_izq := _origen + _direccion * entrada - lado * (separacion * 0.5)
+	for i in 3:
+		var t := (float(i) + 0.6) / 3.4
+		var pos := base_izq + _direccion * (ramas * t) \
+			+ lado * (-1.0 if i % 2 == 0 else 1.0) * (ancho * 0.22) \
+			+ Vector3.UP * (alto_base + 0.55 + 0.3 * float(i))
+		_losa("Plataforma", pos, Vector3(2.8, 0.5, 2.8), color_plataforma, giro)
+
+	# El origen se registra en el EJE del cruce, entre las dos ramas, no sobre
+	# ninguna de ellas: así `rama` −1/+1 elige una u otra y `rama` 0 sigue siendo
+	# el centro, que es donde caen las bocas de entrada y salida.
+	tramos.append({
+		"origen": _origen + Vector3.UP * _altura,
+		"direccion": _direccion,
+		"largo": largo, "ancho": ancho, "subida": 0.0,
+		"separacion": separacion, "entrada": entrada, "ramas": ramas,
+	})
+	_origen += _direccion * largo
+
+
 ## Tres plataformas bajas alternando lados. Enseñan a saltar sin castigar:
 ## caerse no mata, solo devuelve al suelo del pasillo.
 func _plataformas(largo: float, ancho: float) -> void:
@@ -246,6 +349,7 @@ func _arena(paso: Dictionary, salida_dir: Vector3) -> void:
 
 	if nombre != "":
 		centros_arena[nombre] = centro
+		radios_arena[nombre] = radio
 		_colocar_arena(nombre, centro, radio)
 
 	_origen = centro + salida_dir * radio
@@ -273,21 +377,27 @@ func _colocar_arena(nombre: String, centro: Vector3, radio: float) -> void:
 
 # --- Piezas --------------------------------------------------------------------
 
+## Una caja del blockout: suelo, muro, camino o plataforma.
+##
+## La malla NO se crea aquí. Se apunta la pose en el lote de su color y se
+## vuelca al final en un `MultiMeshInstance3D` por color: ochenta cajas sueltas
+## son ochenta draw calls, y el nivel entero tiene un presupuesto de 150
+## ([`01-ARQUITECTURA.md`](../../docs/01-ARQUITECTURA.md) §8). Agrupadas son
+## cuatro.
+##
+## La colisión sí sigue siendo un cuerpo por pieza: un `MultiMesh` no colisiona,
+## y de todas formas los `StaticBody3D` sin malla no cuestan dibujado.
 func _losa(nombre: String, centro: Vector3, tam: Vector3, color: Color,
 		giro: float, inclinacion: float = 0.0, con_colision: bool = true) -> void:
-	var malla := BoxMesh.new()
-	malla.size = tam
-
-	var visual := MeshInstance3D.new()
-	visual.mesh = malla
-	visual.material_override = _material(color)
+	var pose := Transform3D(
+		Basis.from_euler(Vector3(inclinacion, giro, 0.0)) * Basis.from_scale(tam),
+		centro)
+	var lote: Array = _lotes.get(color, [])
+	lote.append(pose)
+	_lotes[color] = lote
+	_piezas += 1
 
 	if not con_colision:
-		visual.name = nombre
-		visual.position = centro
-		visual.rotation = Vector3(inclinacion, giro, 0.0)
-		add_child(visual)
-		_piezas += 1
 		return
 
 	var cuerpo := StaticBody3D.new()
@@ -296,7 +406,6 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, color: Color,
 	cuerpo.rotation = Vector3(inclinacion, giro, 0.0)
 	cuerpo.collision_layer = 1
 	cuerpo.collision_mask = 0
-	cuerpo.add_child(visual)
 
 	var forma := CollisionShape3D.new()
 	var caja := BoxShape3D.new()
@@ -305,7 +414,34 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, color: Color,
 	cuerpo.add_child(forma)
 
 	add_child(cuerpo)
-	_piezas += 1
+
+
+## Crea los `MultiMeshInstance3D` de las cajas, uno por color. Devuelve cuántos.
+func _volcar_lotes() -> int:
+	# Cubo unitario: cada instancia lleva su tamaño real en la escala de su
+	# transformada, así que una sola malla sirve para suelos, muros y caminos.
+	var cubo := BoxMesh.new()
+	cubo.size = Vector3.ONE
+
+	var hechos := 0
+	for color: Color in _lotes:
+		var poses: Array = _lotes[color]
+		if poses.is_empty():
+			continue
+		var multi := MultiMesh.new()
+		multi.transform_format = MultiMesh.TRANSFORM_3D
+		multi.mesh = cubo
+		multi.instance_count = poses.size()
+		for i in poses.size():
+			multi.set_instance_transform(i, poses[i])
+
+		var nodo := MultiMeshInstance3D.new()
+		nodo.name = "Cajas_%s" % color.to_html(false)
+		nodo.multimesh = multi
+		nodo.material_override = _material(color)
+		add_child(nodo)
+		hechos += 1
+	return hechos
 
 
 func _disco(nombre: String, centro: Vector3, radio: float, color: Color) -> void:
@@ -369,16 +505,22 @@ func _anillo(centro: Vector3, radio: float, aberturas: Array) -> void:
 ## `t` es lo avanzado por el pasillo (0 a 1), `lado` el desvío lateral en
 ## fracción del semiancho (0 = centro del camino, ±1 = justo en el borde) y
 ## `alto` los metros sobre el suelo del tramo.
-func punto_en_tramo(indice: int, t: float, lado: float, alto: float) -> Vector3:
+##
+## `rama` solo pinta en los cruces: −1 es la rama larga (la de las plataformas),
+## +1 la directa y 0 el eje, por donde pasan las bocas de entrada y salida.
+func punto_en_tramo(indice: int, t: float, lado: float, alto: float,
+		rama: float = 0.0) -> Vector3:
 	if indice < 0 or indice >= tramos.size():
 		return Vector3.ZERO
 	var tramo: Dictionary = tramos[indice]
 	var direccion: Vector3 = tramo["direccion"]
 	var costado := direccion.cross(Vector3.UP).normalized()
 	var subida: float = tramo["subida"] * t
+	var desvio: float = lado * tramo["ancho"] * 0.5 \
+		+ rama * tramo.get("separacion", 0.0) * 0.5
 	return tramo["origen"] \
 		+ direccion * (tramo["largo"] * t) \
-		+ costado * (lado * tramo["ancho"] * 0.5) \
+		+ costado * desvio \
 		+ Vector3.UP * (grosor_suelo * 0.5 + subida + alto)
 
 
@@ -400,7 +542,8 @@ func sembrar_faroles(escena: PackedScene, destino: Node) -> int:
 		# quien depure ni quien las referencie desde fuera.
 		farol.name = ficha["id"].capitalize()
 		var sitio := punto_en_tramo(
-			ficha["tramo"], ficha["t"], ficha["lado"], ficha["alto"])
+			ficha["tramo"], ficha["t"], ficha["lado"], ficha["alto"],
+			ficha.get("rama", 0.0))
 		farol.global_position = sitio
 		if "id" in farol:
 			farol.set("id", ficha["id"])
@@ -427,11 +570,63 @@ func sembrar_estrellas(escena: PackedScene, destino: Node) -> int:
 		destino.add_child(estrella)
 		estrella.name = "Estrella%d" % (puestas + 1)
 		estrella.global_position = punto_en_tramo(
-			ficha["tramo"], ficha["t"], ficha["lado"], ficha["alto"])
+			ficha["tramo"], ficha["t"], ficha["lado"], ficha["alto"],
+			ficha.get("rama", 0.0))
 		if ficha.get("secreta", false) and "es_secreta" in estrella:
 			estrella.set("es_secreta", true)
 		puestas += 1
 	return puestas
+
+
+## Los tramos abiertos en carriles: cada rama de un cruce pasa a ser un tramo
+## normal e independiente.
+##
+## Existe para el decorador. Sembrando por `tramos` a secas, un cruce recibiría
+## una sola hilera de árboles por el eje, justo por el hueco donde no hay suelo.
+func carriles() -> Array[Dictionary]:
+	var lista: Array[Dictionary] = []
+	for tramo in tramos:
+		var separacion: float = tramo.get("separacion", 0.0)
+		if separacion <= 0.0:
+			lista.append(tramo)
+			continue
+		var direccion: Vector3 = tramo["direccion"]
+		var costado: Vector3 = direccion.cross(Vector3.UP).normalized()
+		for signo: float in [-1.0, 1.0]:
+			var carril := tramo.duplicate()
+			# El carril cubre SOLO la franja de las ramas, no las bocas: estas
+			# son una losa ancha que va de lado a lado, y sembrarlas con las
+			# medidas de una rama planta los árboles en mitad del paso.
+			carril["origen"] = tramo["origen"] \
+				+ direccion * float(tramo["entrada"]) \
+				+ costado * signo * separacion * 0.5
+			carril["largo"] = tramo["ramas"]
+			carril.erase("separacion")
+			lista.append(carril)
+	return lista
+
+
+## Centro y radio de todo lo construido, en el plano. El decorador lo usa para
+## saber a qué distancia poner el fondo lejano sin que se meta en el nivel.
+func extension() -> Dictionary:
+	var puntos: Array[Vector3] = []
+	for tramo in tramos:
+		puntos.append(tramo["origen"])
+		puntos.append(tramo["origen"] + tramo["direccion"] * tramo["largo"])
+	for centro in centros_arena.values():
+		puntos.append(centro)
+	if puntos.is_empty():
+		return {"centro": Vector3.ZERO, "radio": 40.0}
+
+	var minimo := puntos[0]
+	var maximo := puntos[0]
+	for punto in puntos:
+		minimo = minimo.min(punto)
+		maximo = maximo.max(punto)
+	var centro := (minimo + maximo) * 0.5
+	centro.y = 0.0
+	var radio := maxf((maximo - minimo).length() * 0.5, 20.0)
+	return {"centro": centro, "radio": radio}
 
 
 func _material(color: Color) -> StandardMaterial3D:

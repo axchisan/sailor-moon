@@ -310,6 +310,33 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     tal como bajaron de Mixamo en `Models/rigged_originales/` (fuera de git).
     Antes de tocar uno, se restaura desde ahí. *(El FBX original de Uranus se
     perdió por no tener esto todavía.)*
+29. **Los tramos del recorrido se registran por su EJE, no por su superficie.**
+    `tramos[i]["origen"]` cae a media losa de profundidad (`grosor_suelo / 2`).
+    Sembrando props ahí directamente, todo el parque aparece medio metro
+    enterrado: los árboles se quedan detrás de los muros y las vallas parecen
+    estacas cortadas. `punto_en_tramo()` ya suma ese medio metro; cualquier otro
+    código que coloque cosas sobre un tramo tiene que sumarlo también.
+30. **Un `hundir`/desvío en fracción del semiancho no vale entre tramos de
+    distinto ancho.** Un árbol a 1,5 semianchos cae a 5,25 m en el cruce (ancho
+    7) y a 6,75 m en un pasillo (ancho 9): en uno invade el camino y en el otro
+    se esconde tras el muro. Lo que va **fuera** del muro se mide en metros
+    desde el eje del muro (`fuera`), no en fracción.
+31. **Dos superficies casi coplanares a 2 cm no bastan.** El disco de hierba
+    puesto 0,02 m por debajo de las losas rayaba el suelo a diez metros: el
+    z-buffer no distingue las dos a esa distancia. Con 0,28 m desaparece. El
+    mismo síntoma con bandas —pero en las sombras— es *shadow acne*, y se cura
+    con `shadow_normal_bias` y bajando `directional_shadow_max_distance`.
+32. **La pieza dice en qué eje está modelada; el rumbo del camino no.** La
+    cortina de `puerta_magica.gd` y la valla del kit se construyen a lo largo de
+    su **X local**, y `atan2(−d.x, −d.z)` orienta el −Z. Para la puerta eso ya
+    la deja atravesada (sin sumar 90°) y para la valla hay que sumarlos. Sumar
+    o no sumar «los 90° de siempre» sin mirar la pieza da una barrera pegada al
+    muro que no corta nada, o una fila de vallas cruzadas como aspas.
+33. **El blockout también cuenta para el presupuesto de draw calls.** 84 cajas
+    como `MeshInstance3D` sueltos son 84 draw calls, más de la mitad de los 150
+    del §8. Agrupadas en un `MultiMeshInstance3D` por color son 4, y los
+    `StaticBody3D` se quedan solo con la colisión, que no cuesta dibujado. El
+    Nivel 1 pasó de 163 a 57.
 
 ---
 
