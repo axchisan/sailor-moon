@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/core/character_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_venus_rigged.fbx" id="2_modelo"]
+
+[resource]
+script = ExtResource("1_script")
+id = "sailor_venus"
+display_name = "Sailor Venus"
+model = ExtResource("2_modelo")
+height = 1.62
+chain_roots = Array[String](["Hair_L_1", "Hair_C_1", "Hair_R_1"])
+chain_length = 5
+stiffness = 1.2
+drag = 0.4
+gravity_power = 1.05
+max_angle = 70
+shade_color = Color(0.8, 0.62, 0.48, 1)
+vfx_color = Color(1.0, 0.78, 0.3, 1)

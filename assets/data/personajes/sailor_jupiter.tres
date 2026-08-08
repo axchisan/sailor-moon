@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/core/character_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_jupiter_rigged.fbx" id="2_modelo"]
+
+[resource]
+script = ExtResource("1_script")
+id = "sailor_jupiter"
+display_name = "Sailor Jupiter"
+model = ExtResource("2_modelo")
+height = 1.68
+chain_roots = Array[String](["Hair_C_1"])
+chain_length = 4
+stiffness = 1.5
+drag = 0.48
+gravity_power = 0.9
+max_angle = 65
+shade_color = Color(0.55, 0.7, 0.55, 1)
+vfx_color = Color(0.6, 1.0, 0.55, 1)

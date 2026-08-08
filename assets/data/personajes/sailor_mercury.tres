@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/core/character_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_mercury_rigged.fbx" id="2_modelo"]
+
+[resource]
+script = ExtResource("1_script")
+id = "sailor_mercury"
+display_name = "Sailor Mercury"
+model = ExtResource("2_modelo")
+height = 1.58
+chain_roots = Array[String]([])
+chain_length = 5
+stiffness = 1.4
+drag = 0.45
+gravity_power = 0.9
+max_angle = 75
+shade_color = Color(0.52, 0.66, 0.82, 1)
+vfx_color = Color(0.55, 0.8, 1.0, 1)
