@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3]
+[gd_scene load_steps=24 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/prototypes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/peluchin.tscn" id="2_peluchin"]
@@ -17,6 +17,7 @@
 [ext_resource type="Script" path="res://src/gameplay/companero.gd" id="15_companero"]
 [ext_resource type="PackedScene" path="res://scenes/props/farol.tscn" id="16_farol"]
 [ext_resource type="Script" path="res://src/gameplay/puerta_magica.gd" id="17_puerta"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/luna.glb" id="18_luna"]
 
 [sub_resource type="ShaderMaterial" id="SkyMat_1"]
 shader = ExtResource("9_cielo")
@@ -149,6 +150,7 @@ alto = 3.8
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 0.6, 2.0)
 script = ExtResource("15_companero")
 id = "luna"
+modelo = ExtResource("18_luna")
 lado = -1.0
 
 [node name="GameUI" parent="." instance=ExtResource("5_ui")]
