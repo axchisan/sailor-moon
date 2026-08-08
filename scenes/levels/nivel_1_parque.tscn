@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/prototypes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/peluchin.tscn" id="2_peluchin"]
@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://src/gameplay/encuentro.gd" id="12_encuentro"]
 [ext_resource type="Resource" path="res://assets/data/dialogos/n1_mercury.tres" id="13_dlg_mercury"]
 [ext_resource type="Resource" path="res://assets/data/personajes/sailor_mercury.tres" id="14_mercury"]
+[ext_resource type="Script" path="res://src/gameplay/companero.gd" id="15_companero"]
 
 [sub_resource type="ShaderMaterial" id="SkyMat_1"]
 shader = ExtResource("9_cielo")
@@ -134,6 +135,12 @@ shape = SubResource("Shape_encuentro")
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 4)
+
+[node name="Luna" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 0.6, 2.0)
+script = ExtResource("15_companero")
+id = "luna"
+lado = -1.0
 
 [node name="GameUI" parent="." instance=ExtResource("5_ui")]
 
