@@ -32,7 +32,7 @@ DTO, signals ≈ event bus).
 |---|---|
 | **Fase 0 — Cimientos** | ✅ **Cerrada.** APK corriendo en el móvil real |
 | **Fase 1 — Combate** | ✅ **Cerrada.** Los tres enemigos terminados: Peluchín, Cofrecito y Hadita |
-| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Serena jugable con animaciones, pelo y cel shading. Reparto de 11 personajes procesado y rigueado. **Falta el escenario del Nivel 1** |
+| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Serena jugable. Reparto de 11 personajes procesado, rigueado y montado con física de pelo. **Falta el escenario del Nivel 1** |
 | Fases 3–5 | ⬜ Sin empezar |
 
 ### Lo que funciona hoy
@@ -290,6 +290,19 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     el `.glb` sin riguear.** Las botas de Uranus traen picos y muescas de
     fábrica; intentar limarlos solo erosiona el borde. Media hora perdida por no
     hacer la comprobación de un minuto.
+24. **Los modelos traen un canal alpha que no usan, y Godot les activa
+    `transparency = 2` (alpha scissor).** Recorta píxeles del pelo y abre
+    agujeros. Blender no lo enseña porque su material va en modo opaco. Lo
+    corrige `tools/importar_personaje.gd`, enganchado con `import_script/path`
+    en el `.import` de cada FBX.
+25. **Para marcar geometría y comprobarla en un render, usa VERDE, no rojo.**
+    Media Sailor va de rojo: con marca roja es imposible saber qué está marcado
+    y qué era así de fábrica. Una hora perdida creyendo que la falda de Mars
+    estaba mal seleccionada cuando solo era su color.
+26. **Comparar contra el original, no contra el recuerdo.** Hay copia de los FBX
+    tal como bajaron de Mixamo en `Models/rigged_originales/` (fuera de git).
+    Antes de tocar uno, se restaura desde ahí. *(El FBX original de Uranus se
+    perdió por no tener esto todavía.)*
 
 ---
 

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/core/character_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/tuxedo_mask_rigged.fbx" id="2_modelo"]
+
+[resource]
+script = ExtResource("1_script")
+id = "tuxedo_mask"
+display_name = "Tuxedo Mask"
+model = ExtResource("2_modelo")
+height = 1.8
+chain_roots = Array[String](["Cape_L_1", "Cape_CL_1", "Cape_CR_1", "Cape_R_1"])
+chain_length = 4
+stiffness = 1.8
+drag = 0.55
+gravity_power = 1.2
+max_angle = 40
+shade_color = Color(0.4, 0.38, 0.46, 1)
+vfx_color = Color(0.9, 0.2, 0.32, 1)

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/core/character_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/sailor_pluto_rigged.fbx" id="2_modelo"]
+
+[resource]
+script = ExtResource("1_script")
+id = "sailor_pluto"
+display_name = "Sailor Pluto"
+model = ExtResource("2_modelo")
+height = 1.75
+chain_roots = Array[String](["Hair_L_1", "Hair_C_1", "Hair_R_1"])
+chain_length = 5
+stiffness = 1.25
+drag = 0.44
+gravity_power = 1.0
+max_angle = 70
+shade_color = Color(0.5, 0.58, 0.55, 1)
+vfx_color = Color(0.55, 0.35, 0.7, 1)
