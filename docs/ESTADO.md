@@ -32,7 +32,7 @@ DTO, signals ≈ event bus).
 |---|---|
 | **Fase 0 — Cimientos** | ✅ **Cerrada.** APK corriendo en el móvil real |
 | **Fase 1 — Combate** | ✅ **Cerrada.** Los tres enemigos terminados: Peluchín, Cofrecito y Hadita |
-| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Serena jugable con animaciones, pelo y cel shading. Reparto de 11 modelos listo. **Falta el escenario del Nivel 1** |
+| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Serena jugable con animaciones, pelo y cel shading. Reparto de 11 personajes procesado y rigueado. **Falta el escenario del Nivel 1** |
 | Fases 3–5 | ⬜ Sin empezar |
 
 ### Lo que funciona hoy
@@ -286,6 +286,10 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     herramienta nueva, lo primero que hay que probar es **descargar un archivo**.
 22. **hi3d.ai no deja configurar polígonos ni texturas.** Todo llega a ~2.000.000
     de triángulos con texturas 4K, así que el paso por Blender es obligatorio.
+23. **Antes de perseguir un defecto en un modelo rigueado, mira si ya estaba en
+    el `.glb` sin riguear.** Las botas de Uranus traen picos y muescas de
+    fábrica; intentar limarlos solo erosiona el borde. Media hora perdida por no
+    hacer la comprobación de un minuto.
 
 ---
 
