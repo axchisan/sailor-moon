@@ -21,6 +21,16 @@ class_name LineaDialogo
 @export var emocion: String = ""
 @export var audio: AudioStream
 
+@export_group("Actuación")
+## Animación que se lanza al empezar la línea: `transform`, `victory`, `hurt`…
+## Son los estados de la librería compartida (ver `character_animator.gd`).
+##
+## Sin esto la conversación son dos personas plantadas mirándose. Con la línea
+## de la transformación de Ami, por ejemplo, se ve el gesto en vez de leerlo.
+@export var animacion: String = ""
+## Quién la hace: `personaje` (con quien se habla) o `jugador`.
+@export_enum("personaje", "jugador") var actua: String = "personaje"
+
 @export_group("Ritmo")
 ## Segundos que espera al terminar de escribirse antes de dejar avanzar.
 ## Un respiro corto evita que se salten las frases sin leerlas.

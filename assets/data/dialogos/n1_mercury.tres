@@ -48,6 +48,8 @@ velocidad = 42.0
 
 [sub_resource type="Resource" id="L03"]
 script = ExtResource("2_linea")
+animacion = "hurt"
+actua = "personaje"
 hablante = "mercury"
 texto = "¿Ho-hola? ¿Hay alguien ahí?"
 emocion = "[breathy]"
@@ -129,6 +131,8 @@ velocidad = 42.0
 
 [sub_resource type="Resource" id="L12"]
 script = ExtResource("2_linea")
+animacion = "transform"
+actua = "personaje"
 hablante = "mercury"
 texto = "¡Por el poder estelar del planeta Mercurio… transformación!"
 emocion = "[excited]"
@@ -147,6 +151,8 @@ velocidad = 42.0
 
 [sub_resource type="Resource" id="L14"]
 script = ExtResource("2_linea")
+animacion = "victory"
+actua = "jugador"
 hablante = "serena"
 texto = "¡Sailor Mercury! ¡Ahora sí que estamos completas!"
 emocion = "[excited]"
