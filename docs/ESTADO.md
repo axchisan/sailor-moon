@@ -231,6 +231,10 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
 15. **GDScript no es Python:** no hay listas por comprensión y `round()` solo
    acepta un argumento (para decimales, `snappedf(x, 0.1)`). Un error de sintaxis
    dentro de `game_eval` deja el juego atrapado en el depurador y bloquea el MCP.
+16. **Godot renombra los huesos de Mixamo: `mixamorig:Hips` → `mixamorig_Hips`.**
+   Los dos puntos pasan a guion bajo al importar. Buscar por el nombre original
+   devuelve −1 y parece que el modelo no está rigueado cuando sí lo está.
+   *(Lo comprueba `tools/validar_rigueados.gd`.)*
 
 ### Blender (MCP)
 
@@ -250,7 +254,13 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
 17. **Para deformar una malla, NO selecciones por islas.** Usa pesos continuos por
     posición. *(Rotar los brazos por islas rasgó los codos: el brazo atraviesa
     varias islas y la frontera es justo por donde se abre el corte.)*
-18. **Para SEPARAR objetos pegados, agrupa islas sobre el GLB ya procesado, no
+18. **El importador de glTF deja `rotation_mode = 'QUATERNION'`.** Asignar
+    `ob.rotation_euler` no hace absolutamente nada y `transform_apply` aplica una
+    rotación de cero **sin avisar**. Para girar geometría de forma fiable:
+    `ob.data.transform(Matrix.Rotation(ang, 4, 'Z'))`. *(Costó tres intentos
+    creer que la rotación no se aplicaba: `dimensions` salía idéntico porque
+    además está cacheado — hay que medir sobre los vértices.)*
+19. **Para SEPARAR objetos pegados, agrupa islas sobre el GLB ya procesado, no
     sobre el original.** Exportar a glTF duplica vértices en las costuras de UV y
     eso parte la malla en islas separables (199 en el procesado frente a 5 en el
     original). Luego se anota la caja del añadido en metros y **se reprocesa el

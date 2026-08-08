@@ -1,25 +1,40 @@
 # Reparto de personajes
 
-> **2026-08-07.** Once personajes procesados y verificados. Serena es la única
-> rigueada; el resto está listo para subir a Mixamo.
+> **2026-08-07.** Once personajes procesados. Nueve rigueados en Mixamo y
+> verificados con `tools/validar_rigueados.gd`; faltan Pluto y Uranus.
 
 ## 1. Estado del reparto
 
 | Personaje | Altura | Triángulos | Modelo | Rig | En juego |
 |---|---|---|---|---|---|
-| **Chibi Moon** | 1,10 m | 25.000 | ✅ | ⬜ | ⬜ |
-| **Sailor Saturno** | 1,35 m | 25.000 | ✅ | ⬜ | ⬜ |
-| **Serena** (Sailor Moon) | 1,55 m | 25.000 | ✅ | ✅ Mixamo + pelo | ✅ **Jugable** |
-| **Sailor Mercury** | 1,58 m | 25.000 | ✅ | ⬜ | ⬜ |
-| **Sailor Mars** | 1,60 m | 25.000 | ✅ | ⬜ | ⬜ |
-| **Sailor Venus** | 1,62 m | 25.000 | ✅ ⚠️ | ⬜ | ⬜ |
-| **Sailor Neptuno** | 1,62 m | 25.000 | ✅ | ⬜ | ⬜ |
-| **Sailor Jupiter** | 1,68 m | 25.000 | ✅ ⚠️ | ⬜ | ⬜ |
-| **Sailor Uranus** | 1,70 m | 25.000 | ✅ | ⬜ | ⬜ |
-| **Sailor Pluto** | 1,75 m | 25.000 | ✅ | ⬜ | ⬜ |
-| **Tuxedo Mask** | 1,80 m | 25.000 | ✅ | ⬜ | ⬜ |
+| **Chibi Moon** | 1,10 m | 25.000 | ✅ | ✅ | ⬜ |
+| **Sailor Saturno** | 1,35 m | 25.000 | ✅ | ✅ | ⬜ |
+| **Serena** (Sailor Moon) | 1,55 m | 25.000 | ✅ | ✅ + pelo | ✅ **Jugable** |
+| **Sailor Mercury** | 1,58 m | 25.000 | ✅ | ✅ | ⬜ |
+| **Sailor Mars** | 1,60 m | 25.000 | ✅ | ✅ | ⬜ |
+| **Sailor Venus** | 1,62 m | 25.000 | ✅ ⚠️ | ✅ | ⬜ |
+| **Sailor Neptuno** | 1,62 m | 25.000 | ✅ | ✅ | ⬜ |
+| **Sailor Jupiter** | 1,68 m | 25.000 | ✅ ⚠️ | ✅ | ⬜ |
+| **Sailor Uranus** | 1,70 m | 25.000 | ✅ ⚠️ | ⬜ **pendiente** | ⬜ |
+| **Sailor Pluto** | 1,75 m | 25.000 | ✅ | ⬜ **pendiente** | ⬜ |
+| **Tuxedo Mask** | 1,80 m | 25.000 | ✅ | ✅ + bastón fijado | ⬜ |
 
 ⚠️ = llevaban geometría de más pegada, ya separada (§2).
+
+### Comprobación automática del rigueo
+
+```
+Godot --headless --path . --script tools/validar_rigueados.gd
+```
+
+Recorre todos los `*_rigged.fbx` y avisa de las tres cosas que rompen un
+personaje: que no tenga esqueleto, que le falte algún hueso del núcleo
+humanoide, o que `Hips` venga girado (síntoma de haberlo bajado de Mixamo en
+glTF en vez de en FBX — el personaje sale tumbado).
+
+**El número de dedos NO importa.** Mixamo deja elegir cuántas falanges genera y
+en el reparto hay de todo (40, 16 y 8 huesos de dedos). Godot ignora sin
+quejarse las pistas de animación de un hueso que no existe.
 
 Las alturas están puestas a escala real y ordenadas a propósito: de 1,10 m
 (Chibi Moon, una niña) a 1,80 m (Tuxedo Mask). Puestos en fila se lee como un
@@ -38,11 +53,14 @@ malla** del personaje. No se ve como un objeto aparte: es la misma malla.
 |---|---|---|
 | **Sailor Venus** | Un coral marino a sus pies | 4.702 tris (≈19 % de su presupuesto) |
 | **Sailor Jupiter** | Un arbusto tipo bonsái a sus pies | 9.752 tris (≈39 % de su presupuesto) |
+| **Sailor Uranus** | Una espada en la mano | 3.000 tris |
 
 **No se borraron: se separaron**, y viven en `assets/models/props/` como
-`coral_marino.glb` y `arbusto_bonsai.glb`. Sirven de decorado para los
-escenarios ([`07-ESCENARIOS.md`](07-ESCENARIOS.md)) — el bonsái encaja en un
-jardín y el coral en un nivel marino.
+`coral_marino.glb`, `arbusto_bonsai.glb` y `espada_uranus.glb`. Sirven de
+decorado para los escenarios ([`07-ESCENARIOS.md`](07-ESCENARIOS.md)) — el
+bonsái encaja en un jardín y el coral en un nivel marino. La espada tiene el
+origen puesto en el puño, así que se puede colgar de un `BoneAttachment3D` si
+algún día se le quiere devolver.
 
 Al quitárselos, Venus y Jupiter **recuperaron su presupuesto entero**: los
 25.000 triángulos son ahora todos personaje. Antes, 4 de cada 10 triángulos de
@@ -69,18 +87,51 @@ A diferencia de Serena —que llegó con los brazos casi pegados y hubo que
 abrírselos a mano en Blender— **el resto viene ya en T-pose**, que es
 exactamente lo que quiere el auto-rigger de Mixamo. No hay que tocarles la pose.
 
+**Excepción: Sailor Uranus venía girada 45°.** En T-pose, pero de tres cuartos
+en vez de mirando al frente, y así Mixamo no consigue riguearla. Se detecta sin
+mirarla: si la envergadura y la profundidad se parecen (1,10 y 1,16 en su caso,
+frente a 1,45 y 0,45 de las demás), es que está girada. El ángulo exacto sale
+del eje principal de la nube de vértices a la altura de los hombros —para ella,
+44,8°—, y se corrige rotando la malla ese ángulo en Z.
+
+> **Trampa:** el ángulo dice cuánto girar, pero **no si el resultado queda de
+> frente o de espaldas**. Eso hay que mirarlo con un render; los intentos de
+> deducirlo por la punta de los pies dan resultados equivocados.
+
+## 3 bis. Objetos en la mano y rigueo
+
+Un objeto sujeto en la mano y soldado a la malla del personaje **rompe el
+rigueo**, y de dos formas distintas:
+
+**1. Mixamo no encuentra las articulaciones.** Le pasó a Sailor Pluto con su
+báculo: hubo que regenerarla sin él. La espada de Uranus se le quitó en Blender
+por el mismo motivo.
+
+**2. Si sí riguea, el objeto queda repartido entre varios huesos.** Es lo que
+pasó con el bastón de Tuxedo Mask: Mixamo pesó su punta de abajo al **índice** y
+la de arriba al **pulgar**. En cuanto la animación mueve los dedos, el bastón se
+dobla y se encoge como si fuera de goma.
+
+El arreglo es asignar **todo el objeto a un solo hueso, con peso 1,0**:
+`mixamorig:LeftHand` para el bastón, `mixamorig:RightHand` para la rosa. Así se
+comporta como lo que es: un objeto rígido sujeto por la mano. Ya está aplicado
+sobre `tuxedo_mask_rigged.fbx`.
+
+> **Trampa al seleccionar el objeto:** el primer filtro fue «x más allá del
+> brazo», y se llevó por delante **la parte baja de la capa**, que se ensancha
+> hasta esa misma X pero mucho más abajo. Hay que acotar también en altura
+> (`z > 0,95` para el bastón). Si la capa acaba pesada a la mano, el personaje
+> arrastra media capa cada vez que mueve el brazo.
+
 ## 4. Lo que hay que hacer con cada uno
 
 ### Paso 1 — Riguear en Mixamo
 
-Los FBX ya están listos en `Models/mixamo/`:
+Quedan dos por subir, y los dos FBX ya están corregidos en `Models/mixamo/`:
 
 ```
-chibi_moon_para_mixamo.fbx       sailor_neptuno_para_mixamo.fbx
-sailor_jupiter_para_mixamo.fbx   sailor_pluto_para_mixamo.fbx
-sailor_mars_para_mixamo.fbx      sailor_saturno_para_mixamo.fbx
-sailor_mercury_para_mixamo.fbx   sailor_uranus_para_mixamo.fbx
-sailor_venus_para_mixamo.fbx     tuxedo_mask_para_mixamo.fbx
+sailor_pluto_para_mixamo.fbx     (regenerada sin báculo)
+sailor_uranus_para_mixamo.fbx    (enderezada 45° y sin espada)
 ```
 
 Se sube cada uno, se marcan barbilla, muñecas, codos, rodillas e ingle, y se
@@ -135,9 +186,9 @@ como un ala.
 
 ### Paso 4 — Objetos en la mano
 
-- **Sailor Uranus** lleva una espada, **Sailor Pluto** su báculo y **Tuxedo
-  Mask** un bastón y una rosa. Al estar pegados a la malla, siguen a la mano sin
-  trabajo extra. No hay que hacer nada.
+Ya resuelto para los tres casos: ver §3 bis. Uranus va sin espada, Pluto se
+regeneró sin báculo, y el bastón y la rosa de Tuxedo Mask están fijados a un
+solo hueso cada uno.
 
 ## 5. Presupuesto: cuidado con cuántos hay a la vez
 

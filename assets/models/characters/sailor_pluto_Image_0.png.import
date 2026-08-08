@@ -3,22 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://q7ckdvmskfjb"
-path="res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.ctex"
+path.s3tc="res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.s3tc.ctex"
+path.etc2="res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "caa2908753699ec4e9af162491de6508"
+"md5": "f1612e5c7b21ed7a9f58b41bf7181eb1"
 }
 
 [deps]
 
 source_file="res://assets/models/characters/sailor_pluto_Image_0.png"
-dest_files=["res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.ctex"]
+dest_files=["res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.s3tc.ctex", "res://.godot/imported/sailor_pluto_Image_0.png-1ccb3d9c8d7e292bb67555a5044ecb22.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
