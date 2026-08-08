@@ -23,6 +23,15 @@ signal encuentro_terminado(id: String)
 ## A partir de esta distancia deja de seguirla con la mirada.
 @export var distancia_atencion: float = 12.0
 
+@export_group("Cuerpo")
+## Le da bulto: sin esto se la atraviesa como si fuera un holograma, que es de
+## las cosas que más rompen la escena. Va en un `StaticBody3D` aparte del área
+## que dispara la conversación, porque son dos cosas distintas: una para y la
+## otra escucha.
+@export var solido: bool = true
+@export var radio_cuerpo: float = 0.32
+@export var alto_cuerpo: float = 1.6
+
 @export_group("Aviso")
 ## Signo flotante que indica que aquí se puede hablar. Sin él, a los 8 años se
 ## pasa de largo sin enterarse de que había alguien.
@@ -41,6 +50,8 @@ func _ready() -> void:
 	body_entered.connect(_al_entrar)
 	if personaje != null:
 		_montar_personaje()
+	if solido:
+		_montar_cuerpo()
 	if mostrar_aviso:
 		_montar_aviso()
 	# Hace falta aunque no haya aviso: es lo que la hace girarse.
@@ -79,6 +90,27 @@ func _montar_personaje() -> void:
 	# Con animador: es lo que le permite actuar durante la conversación.
 	_visual.con_animador = true
 	add_child(_visual)
+
+
+## Cápsula sólida a la altura del personaje, para que se le note el cuerpo.
+##
+## Cuelga de este nodo y no del visual porque el visual gira siguiendo a la
+## jugadora con la mirada: una cápsula girando con él daría empujones raros al
+## acercarse por un lado.
+func _montar_cuerpo() -> void:
+	var cuerpo := StaticBody3D.new()
+	cuerpo.name = "Cuerpo"
+	cuerpo.collision_layer = 1
+	cuerpo.collision_mask = 0
+
+	var forma := CollisionShape3D.new()
+	var capsula := CapsuleShape3D.new()
+	capsula.radius = radio_cuerpo
+	capsula.height = alto_cuerpo
+	forma.shape = capsula
+	forma.position.y = alto_cuerpo * 0.5
+	cuerpo.add_child(forma)
+	add_child(cuerpo)
 
 
 func _montar_aviso() -> void:

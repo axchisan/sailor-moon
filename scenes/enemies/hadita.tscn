@@ -30,7 +30,7 @@ height = 0.9
 
 [node name="Hadita" type="CharacterBody3D"]
 collision_layer = 4
-collision_mask = 5
+collision_mask = 7
 script = ExtResource("1_enemy")
 display_name = "Hadita"
 max_health = 2

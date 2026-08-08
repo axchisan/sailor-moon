@@ -53,6 +53,23 @@ const RECORRIDO: Array[Dictionary] = [
 @export var color_plataforma: Color = Color(0.55, 0.48, 0.40)
 
 @export_group("Medidas")
+## Cuánto se mete cada losa de suelo dentro de la siguiente.
+##
+## Sin esto, un pasillo acaba EXACTAMENTE donde empieza el disco de la arena, y
+## entre las dos queda una rendija de milímetros por la que se cae del mundo.
+## No es un error de cálculo: dos superficies tangentes en coma flotante no
+## cierran, y en el Nivel 1 eso dejaba 67 agujeros repartidos por todas las
+## juntas. Medio metro de solape los cierra todos y no se ve, porque el suelo
+## que sobra queda enterrado bajo el de al lado.
+@export var solape: float = 0.6
+## Cuánto sobresale la losa de la arena más allá de su anillo.
+##
+## El solape recto no basta contra un borde curvo: un pasillo de 9 m de ancho
+## acaba en una línea, y el disco se le aleja hacia los lados hasta un metro. Los
+## agujeros que quedaban estaban todos en esas dos esquinas. Sobresaliendo, la
+## losa las cubre y de paso el anillo parece apoyado en una plaza en vez de
+## flotar sobre el canto.
+@export var margen_arena: float = 1.6
 @export var grosor_suelo: float = 1.0
 @export var alto_borde: float = 2.2
 @export var ancho_borde: float = 0.8
@@ -215,11 +232,12 @@ func _pasillo(paso: Dictionary) -> void:
 	var inclinacion := atan2(subida, largo) if subida > 0.0 else 0.0
 	var largo_real := sqrt(largo * largo + subida * subida)
 
-	_losa("Suelo", centro, Vector3(ancho, grosor_suelo, largo_real), color_suelo,
-		giro, inclinacion)
+	_losa("Suelo", centro, Vector3(ancho, grosor_suelo, largo_real + solape * 2.0),
+		color_suelo, giro, inclinacion)
 	# Franja de camino, un pelo por encima para que no pelee con el suelo
 	_losa("Camino", centro + Vector3.UP * (grosor_suelo * 0.5 + 0.02),
-		Vector3(ancho_camino, 0.08, largo_real), color_camino, giro, inclinacion, false)
+		Vector3(ancho_camino, 0.08, largo_real + solape * 2.0), color_camino,
+		giro, inclinacion, false)
 
 	var lado := _direccion.cross(Vector3.UP).normalized()
 	for signo in [-1.0, 1.0]:
@@ -268,10 +286,11 @@ func _cruce(paso: Dictionary) -> void:
 		var eje: float = boca[0]
 		var fondo: float = boca[1]
 		_losa("SueloCruce", _origen + _direccion * eje + Vector3.UP * _altura,
-			Vector3(ancho_boca, grosor_suelo, fondo), color_suelo, giro)
+			Vector3(ancho_boca, grosor_suelo, fondo + solape * 2.0), color_suelo, giro)
 		_losa("CaminoCruce", _origen + _direccion * eje
 			+ Vector3.UP * (_altura + grosor_suelo * 0.5 + 0.02),
-			Vector3(ancho_boca * 0.8, 0.08, fondo), color_camino, giro, 0.0, false)
+			Vector3(ancho_boca * 0.8, 0.08, fondo + solape * 2.0), color_camino,
+			giro, 0.0, false)
 		# Los costados de la boca dan al vacío: sin muro se cae por ellos justo
 		# en el punto donde hay que pararse a mirar por dónde tirar.
 		for borde: float in [-1.0, 1.0]:
@@ -285,10 +304,11 @@ func _cruce(paso: Dictionary) -> void:
 	for signo: float in [1.0, -1.0]:
 		var centro_rama: Vector3 = _origen + _direccion * (entrada + ramas * 0.5) \
 			+ lado * signo * (separacion * 0.5) + Vector3.UP * _altura
-		_losa("SueloRama", centro_rama, Vector3(ancho, grosor_suelo, ramas),
-			color_suelo, giro)
+		_losa("SueloRama", centro_rama,
+			Vector3(ancho, grosor_suelo, ramas + solape * 2.0), color_suelo, giro)
 		_losa("CaminoRama", centro_rama + Vector3.UP * (grosor_suelo * 0.5 + 0.02),
-			Vector3(ancho_camino, 0.08, ramas), color_camino, giro, 0.0, false)
+			Vector3(ancho_camino, 0.08, ramas + solape * 2.0), color_camino,
+			giro, 0.0, false)
 		# Bordes: solo el exterior y el interior de cada rama, para que el hueco
 		# del medio se lea como un vacío y no como un tercer camino.
 		for borde: float in [-1.0, 1.0]:
@@ -296,6 +316,19 @@ func _cruce(paso: Dictionary) -> void:
 				centro_rama + lado * borde * (ancho * 0.5 + ancho_borde * 0.5)
 					+ Vector3.UP * (alto_borde * 0.5 + grosor_suelo * 0.5),
 				Vector3(ancho_borde, alto_borde, ramas), color_borde, giro)
+
+	# Tapones a la entrada y a la salida del hueco central. Sin ellos se cruza la
+	# boca en línea recta y se cae al vacío entre las dos ramas — que es
+	# exactamente lo que hace cualquiera la primera vez, porque venía corriendo.
+	# El hueco tiene que verse; caerse en él, no.
+	var hueco := separacion - ancho
+	if hueco > 0.5:
+		for extremo: float in [entrada, entrada + ramas]:
+			_losa("BordeHueco",
+				_origen + _direccion * extremo
+					+ Vector3.UP * (_altura + alto_borde * 0.5 + grosor_suelo * 0.5),
+				Vector3(hueco + ancho_borde, alto_borde, ancho_borde),
+				color_borde, giro)
 
 	# La rama de la izquierda lleva plataformas: es la que cuesta y la que paga.
 	var base_izq := _origen + _direccion * entrada - lado * (separacion * 0.5)
@@ -337,7 +370,7 @@ func _arena(paso: Dictionary, salida_dir: Vector3) -> void:
 	var centro := _origen + _direccion * radio + Vector3.UP * _altura
 	var nombre: String = paso.get("nodo", "")
 
-	_disco("SueloArena", centro, radio, color_arena)
+	_disco("SueloArena", centro, radio + margen_arena, color_arena)
 
 	# Anillo con dos huecos: por donde se entra y por donde se sale. El ángulo
 	# es el POLAR del anillo (posición `(cos θ, 0, sin θ)`), no una rotación:
@@ -553,9 +586,25 @@ func sembrar_faroles(escena: PackedScene, destino: Node) -> int:
 	return puestos
 
 
-func _peana(cima: Vector3, altura: float) -> void:
-	_losa("Peana", cima - Vector3.UP * (altura * 0.5),
-		Vector3(2.2, altura, 2.2), color_plataforma, 0.0)
+## Bloque que sostiene un farol colgado en alto.
+##
+## Se apoya en el SUELO REAL, no a `altura` por debajo del farol: en el pasillo
+## que sube al guardián el terreno de al lado está más bajo que el camino, y
+## restando a ojo la peana quedaba en el aire con el farol encima. Era el farol
+## flotante.
+func _peana(cima: Vector3, sobre_el_camino: float) -> void:
+	var espacio := get_world_3d().direct_space_state
+	var base := cima.y - sobre_el_camino
+	if espacio != null:
+		var consulta := PhysicsRayQueryParameters3D.create(
+			cima + Vector3.UP * 1.0, cima + Vector3.DOWN * 12.0)
+		consulta.collision_mask = 1
+		var choque := espacio.intersect_ray(consulta)
+		if not choque.is_empty():
+			base = choque["position"].y
+	var alto := maxf(cima.y - base, 0.4)
+	_losa("Peana", Vector3(cima.x, base + alto * 0.5, cima.z),
+		Vector3(2.2, alto, 2.2), color_plataforma, 0.0)
 
 
 ## Siembra las Estrellas de Sueño. Devuelve cuántas colocó.

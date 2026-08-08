@@ -1,4 +1,4 @@
-extends Node3D
+extends CharacterBody3D
 class_name Companero
 ## Un gato que acompaña a alguien: Luna con Serena, Artemis con Venus.
 ##
@@ -19,6 +19,15 @@ class_name Companero
 ## Serena. Una cola animada a mano siempre va a destiempo del movimiento; una
 ## con física reacciona sola a los giros y a los frenazos, que es lo que hace
 ## una cola de gato de verdad.
+##
+## ## Es un cuerpo, no un adorno
+##
+## Es `CharacterBody3D` y no `Node3D` por dos motivos que resultaron ser el
+## mismo: se le atravesaba como a un fantasma, y **se hundía en las cuestas**.
+## Moviéndose solo en el plano y sin consultar el suelo, en el pasillo empinado
+## que sube al guardián se metía dentro del terreno. Con cuerpo, gravedad y
+## `move_and_slide` se pega al suelo, sube las rampas y además se le nota el
+## bulto.
 ##
 ## ## Sin modelo
 ##
@@ -57,6 +66,13 @@ class_name Companero
 ## giran como un dibujo animado.
 @export_range(1.0, 5.0) var zancada_maxima: float = 2.4
 
+@export_group("Cuerpo")
+@export var radio_cuerpo: float = 0.17
+@export var alto_cuerpo: float = 0.34
+## Lo que tira hacia abajo. Un gato no salta, así que con poco basta: solo hace
+## falta que no se despegue del suelo al bajar una rampa.
+@export var gravedad: float = 14.0
+
 @export_group("Cola")
 ## La mueve la física, no la animación.
 @export var cola_viva: bool = true
@@ -71,9 +87,34 @@ var _andando: bool = false
 
 
 func _ready() -> void:
+	_montar_cuerpo()
 	_montar_visual()
 	if _animador != null:
 		_animador.play("idle")
+
+
+## Cápsula tumbada, del tamaño del gato, y las capas que le tocan.
+##
+## Va en `interactable` y no en `world`: si fuera mundo, los enemigos la
+## tomarían por un obstáculo del escenario y se quedarían atascados detrás.
+func _montar_cuerpo() -> void:
+	collision_layer = 128  # interactable
+	collision_mask = 1     # solo el escenario: no empuja ni la empujan
+	# Un gato no trepa nada, pero tampoco puede tropezar con el bordillo del
+	# camino. Medio metro de escalón resuelve las dos cosas.
+	floor_max_angle = deg_to_rad(52.0)
+	floor_snap_length = 0.5
+
+	var forma := CollisionShape3D.new()
+	forma.name = "Forma"
+	var capsula := CapsuleShape3D.new()
+	capsula.radius = radio_cuerpo
+	capsula.height = alto_cuerpo + radio_cuerpo * 2.0
+	forma.shape = capsula
+	# Tumbada: un gato es más largo que alto.
+	forma.rotation.x = PI * 0.5
+	forma.position.y = radio_cuerpo
+	add_child(forma)
 
 
 func _physics_process(delta: float) -> void:
@@ -97,14 +138,23 @@ func _physics_process(delta: float) -> void:
 	var andaba := _andando
 	_andando = distancia > distancia_comoda
 	var avance := 0.0
+	var paso := Vector3.ZERO
 	if _andando:
 		var rapido: float = velocidad_carrera if distancia > distancia_carrera else velocidad
 		# Cerca del destino afloja, para no quedarse temblando encima del punto.
 		var freno: float = clampf((distancia - distancia_comoda * 0.5) / 1.5, 0.0, 1.0)
 		avance = rapido * freno
-		global_position += hacia.normalized() * avance * delta
+		paso = hacia.normalized() * avance
 		var mirando := atan2(-hacia.x, -hacia.z)
 		rotation.y = lerp_angle(rotation.y, mirando, minf(delta * giro, 1.0))
+
+	# El desplazamiento pasa por la física en vez de escribir la posición a
+	# mano: es lo que le hace subir las rampas en vez de meterse dentro de
+	# ellas, y lo que le impide colarse por las paredes.
+	velocity.x = paso.x
+	velocity.z = paso.z
+	velocity.y = 0.0 if is_on_floor() else velocity.y - gravedad * delta
+	move_and_slide()
 
 	if animar:
 		_animar(andaba, avance)

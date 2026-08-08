@@ -158,7 +158,7 @@ script = ExtResource("17_puerta")
 ancho = 9.5
 alto = 3.8
 
-[node name="Luna" type="Node3D" parent="."]
+[node name="Luna" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 0.6, 2.0)
 script = ExtResource("15_companero")
 id = "luna"

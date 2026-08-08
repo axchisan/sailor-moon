@@ -105,6 +105,29 @@ const CORONA_ARENA: Array[Dictionary] = [
 		"escala": [0.7, 1.4]},
 ]
 
+## Qué props tienen cuerpo y con qué forma.
+##
+## La regla no es «todo sólido»: es **sólido lo que en la vida real pararía a
+## una niña de ocho años**. Un tronco para; una rama de flores no, y frenarse
+## con un arbusto es de las cosas que más molestan de un juego.
+##
+## Por eso la copa del cerezo no aparece aquí y el tronco sí: la forma cubre
+## solo el palo, y por las flores se pasa.
+##
+## `centro_y` es la altura del centro de la forma medida desde la base de la
+## pieza, antes de escalar.
+const CUERPO := {
+	"arbol_cerezo": {"forma": "cilindro", "radio": 0.24, "alto": 2.1, "centro_y": 1.05},
+	"cerezo_gigante": {"forma": "cilindro", "radio": 0.75, "alto": 5.0, "centro_y": 2.5},
+	"roca": {"forma": "esfera", "radio": 0.40, "centro_y": 0.26},
+	"banco_parque": {"forma": "caja", "tam": Vector3(1.75, 0.95, 0.62), "centro_y": 0.48},
+	"papelera": {"forma": "cilindro", "radio": 0.30, "alto": 0.78, "centro_y": 0.39},
+	"farol_piedra": {"forma": "cilindro", "radio": 0.33, "alto": 1.80, "centro_y": 0.90},
+	"valla_madera": {"forma": "caja", "tam": Vector3(3.0, 1.15, 0.18), "centro_y": 0.57},
+	"torii": {"forma": "caja", "tam": Vector3(0.55, 4.6, 0.55), "centro_y": 2.3},
+	# `arbusto` no está a propósito: son hojas, se pisan y se pasa.
+}
+
 ## El fondo. Nada de esto se pisa nunca: vive lejos, sin colisión y sin sombra.
 ##
 ## `radio` se cuenta desde el borde de lo construido, así que sigue quedando
@@ -286,16 +309,45 @@ func _plantar(receta: Dictionary, sitio: Vector3, rumbo: float,
 		giro = _rng.randf_range(0.0, TAU)
 
 	var pose := Transform3D(Basis.from_euler(Vector3(0.0, giro, 0.0)) * escala,
-		sitio - Vector3.UP * receta.get("hundir", 0.0) * escala)
+		_posar(sitio) - Vector3.UP * receta.get("hundir", 0.0) * escala)
 
 	var destino: Dictionary = _acumulado.get(pieza, {})
 	if destino.is_empty():
-		destino = {"lejano": lejano, "poses": {}}
+		destino = {"lejano": lejano, "poses": {}, "base": []}
 		_acumulado[pieza] = destino
+	# La pose de la pieza entera, sin la transformada interna de cada trozo de
+	# malla: es la que necesita la colisión, que va contra el objeto completo y
+	# no contra el tronco y la copa por separado.
+	(destino["base"] as Array).append(pose)
 	for indice in partes.size():
 		var lista: Array = destino["poses"].get(indice, [])
 		lista.append(pose * partes[indice]["local"])
 		destino["poses"][indice] = lista
+
+
+## Baja el punto hasta el suelo que haya realmente debajo.
+##
+## Hace falta porque la altura calculada desde el tramo solo vale ENCIMA del
+## tramo. En el pasillo que sube al guardián, un árbol plantado fuera del muro
+## se calcula a la altura del camino —hasta 2,5 m— mientras que el terreno de
+## al lado es el disco de hierba, plano. Resultado: árboles, rocas y un farol
+## flotando en el aire a media cuesta.
+##
+## Con un rayo se acabó el problema para siempre, y además vale para cualquier
+## escenario futuro con desniveles sin tener que pensar en ellos. Se lanza antes
+## de crear los cuerpos de los props, así que solo puede chocar con el blockout
+## y con la hierba, nunca con otro árbol.
+func _posar(sitio: Vector3) -> Vector3:
+	var espacio := get_world_3d().direct_space_state
+	if espacio == null:
+		return sitio
+	var consulta := PhysicsRayQueryParameters3D.create(
+		sitio + Vector3.UP * 4.0, sitio + Vector3.DOWN * 8.0)
+	consulta.collision_mask = 1
+	var choque := espacio.intersect_ray(consulta)
+	if choque.is_empty():
+		return sitio
+	return Vector3(sitio.x, choque["position"].y, sitio.z)
 
 
 ## Crea los MultiMesh de verdad, uno por trozo de malla. Devuelve cuántas
@@ -328,14 +380,67 @@ func _volcar() -> int:
 				nodo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 				nodo.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 			add_child(nodo)
+		if not lejano:
+			_dar_cuerpo(pieza, ficha["base"])
 		total += _copias(ficha)
 	return total
 
 
+## Un `StaticBody3D` por tipo de pieza, con una forma primitiva por copia.
+##
+## No se puede sacar la colisión de la malla: van en `MultiMesh`, que no
+## colisiona. Y tampoco haría falta — una cápsula por tronco para igual de bien
+## que la geometría exacta de la corteza y cuesta una milésima.
+##
+## Un solo cuerpo con muchas formas, en vez de un cuerpo por árbol: al motor le
+## da igual cuántas formas cuelguen, pero cada cuerpo suelto es un nodo más que
+## procesar.
+func _dar_cuerpo(pieza: String, poses: Array) -> void:
+	if not CUERPO.has(pieza) or poses.is_empty():
+		return
+	var receta: Dictionary = CUERPO[pieza]
+	var forma := _forma(receta)
+	if forma == null:
+		return
+
+	var cuerpo := StaticBody3D.new()
+	cuerpo.name = "Cuerpo_%s" % pieza
+	cuerpo.collision_layer = 1
+	cuerpo.collision_mask = 0
+	# Sube la forma desde la base de la pieza hasta su centro. Va dentro de la
+	# pose para que la escala de cada copia también le afecte: un cerezo al 1,3
+	# tiene el tronco más alto.
+	var alzar := Transform3D(Basis(), Vector3(0.0, receta["centro_y"], 0.0))
+	for pose: Transform3D in poses:
+		var nodo := CollisionShape3D.new()
+		# La misma `Shape` para todas: es un recurso compartido, y la escala de
+		# la copia la pone el transform del nodo.
+		nodo.shape = forma
+		nodo.transform = pose * alzar
+		cuerpo.add_child(nodo)
+	add_child(cuerpo)
+
+
+static func _forma(receta: Dictionary) -> Shape3D:
+	match receta.get("forma", ""):
+		"cilindro":
+			var cilindro := CylinderShape3D.new()
+			cilindro.radius = receta["radio"]
+			cilindro.height = receta["alto"]
+			return cilindro
+		"esfera":
+			var esfera := SphereShape3D.new()
+			esfera.radius = receta["radio"]
+			return esfera
+		"caja":
+			var caja := BoxShape3D.new()
+			caja.size = receta["tam"]
+			return caja
+	return null
+
+
 static func _copias(ficha: Dictionary) -> int:
-	for indice in ficha["poses"]:
-		return (ficha["poses"][indice] as Array).size()
-	return 0
+	return (ficha["base"] as Array).size()
 
 
 # --- Piezas del kit -------------------------------------------------------------
@@ -379,7 +484,16 @@ static func _recoger(nodo: Node, acumulada: Transform3D, salida: Array) -> void:
 
 
 ## Disco de hierba por debajo de todo, para que los árboles de fuera del borde
-## no queden plantados en el vacío. Sin colisión: nadie llega ahí.
+## no queden plantados en el vacío.
+##
+## **Sí tiene colisión**, y es lo más importante que hace. Sin él, todo lo que
+## no fuera una losa del blockout era vacío: cualquier rendija entre dos piezas
+## te tiraba del mundo. Con el faldón debajo, lo peor que pasa al colarse por
+## una junta es bajar un escalón de un palmo y volver a subir.
+##
+## Que se pueda andar por la hierba es un efecto secundario buscado: el nivel
+## deja de ser un pasillo con paredes invisibles. Los límites de verdad se ponen
+## con accidentes del terreno, no con el borde del mundo.
 func _faldon(centro: Vector3, radio: float) -> void:
 	var malla := CylinderMesh.new()
 	malla.top_radius = radio
@@ -395,6 +509,19 @@ func _faldon(centro: Vector3, radio: float) -> void:
 	visual.name = "Faldon"
 	visual.mesh = malla
 	visual.material_override = material
-	visual.position = centro + Vector3.DOWN * HUNDIDO_FALDON
 	visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(visual)
+
+	var cuerpo := StaticBody3D.new()
+	cuerpo.name = "Faldon"
+	cuerpo.position = centro + Vector3.DOWN * HUNDIDO_FALDON
+	cuerpo.collision_layer = 1
+	cuerpo.collision_mask = 0
+	cuerpo.add_child(visual)
+
+	var forma := CollisionShape3D.new()
+	var cilindro := CylinderShape3D.new()
+	cilindro.radius = radio
+	cilindro.height = 1.0
+	forma.shape = cilindro
+	cuerpo.add_child(forma)
+	add_child(cuerpo)
