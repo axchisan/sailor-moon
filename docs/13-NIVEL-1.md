@@ -104,7 +104,7 @@ No se alarga metiendo más oleadas: se alarga dando **cosas distintas que hacer*
 | Parte | Estado |
 |---|---|
 | 1. Estrellas de Sueño | ✅ hecho |
-| 2. Encuentro con Mercury | ⬜ |
+| 2. Encuentro con Mercury | ✅ hecho (falta la voz) |
 | 3. Faroles | ⬜ |
 | 4. Cruce | ⬜ |
 | 5. Decoración | ⬜ |

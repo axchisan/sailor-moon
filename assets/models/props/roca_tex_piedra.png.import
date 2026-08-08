@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b6ck7k7sqvngi"
-path="res://.godot/imported/roca_tex_piedra.png-4aa6e5f12a91efc601472d8f4bbd2d2f.ctex"
+path.s3tc="res://.godot/imported/roca_tex_piedra.png-4aa6e5f12a91efc601472d8f4bbd2d2f.s3tc.ctex"
+path.etc2="res://.godot/imported/roca_tex_piedra.png-4aa6e5f12a91efc601472d8f4bbd2d2f.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "a05b59f5737834a3ddfd2caa643ac7fa"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/roca_tex_piedra.png"
-dest_files=["res://.godot/imported/roca_tex_piedra.png-4aa6e5f12a91efc601472d8f4bbd2d2f.ctex"]
+dest_files=["res://.godot/imported/roca_tex_piedra.png-4aa6e5f12a91efc601472d8f4bbd2d2f.s3tc.ctex", "res://.godot/imported/roca_tex_piedra.png-4aa6e5f12a91efc601472d8f4bbd2d2f.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
