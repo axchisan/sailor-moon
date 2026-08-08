@@ -76,7 +76,8 @@ func _montar_personaje() -> void:
 	_visual = PersonajeVisual.new()
 	_visual.name = "Personaje"
 	_visual.data = personaje
-	_visual.reproducir_idle = true
+	# Con animador: es lo que le permite actuar durante la conversación.
+	_visual.con_animador = true
 	add_child(_visual)
 
 
@@ -128,8 +129,26 @@ func empezar() -> void:
 		_aviso.visible = false
 
 	panel.terminado.connect(_al_terminar, CONNECT_ONE_SHOT)
+	if not panel.linea_mostrada.is_connected(_al_mostrar_linea):
+		panel.linea_mostrada.connect(_al_mostrar_linea)
 	if not panel.mostrar(dialogo):
 		_al_terminar("")
+
+
+## Lanza el gesto que lleve la línea. Es lo que separa una conversación de dos
+## estatuas hablando: en la transformación de Ami se ve el brazo alzado en vez
+## de leer que se transforma.
+func _al_mostrar_linea(indice: int) -> void:
+	if dialogo == null or indice < 0 or indice >= dialogo.lineas.size():
+		return
+	var linea: LineaDialogo = dialogo.lineas[indice]
+	if linea.animacion.is_empty():
+		return
+	if linea.actua == "jugador":
+		if _jugador != null and _jugador.has_method("play"):
+			_jugador.call("play", linea.animacion)
+	elif _visual != null:
+		_visual.reproducir(linea.animacion)
 
 
 func _al_terminar(_id_dialogo: String) -> void:

@@ -17,7 +17,7 @@
 [ext_resource type="Script" path="res://src/gameplay/companero.gd" id="15_companero"]
 [ext_resource type="PackedScene" path="res://scenes/props/farol.tscn" id="16_farol"]
 [ext_resource type="Script" path="res://src/gameplay/puerta_magica.gd" id="17_puerta"]
-[ext_resource type="PackedScene" path="res://assets/models/characters/artemis.glb" id="18_luna"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/luna.glb" id="18_luna"]
 
 [sub_resource type="ShaderMaterial" id="SkyMat_1"]
 shader = ExtResource("9_cielo")

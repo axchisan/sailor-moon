@@ -215,12 +215,27 @@ func consume_jump() -> void:
 	_coyote_timer = 0.0
 
 
+## El ratón se mira APARTE y solo en escritorio.
+##
+## Godot convierte cada toque de pantalla en un clic izquierdo emulado. Con el
+## clic metido en la acción `attack`, en el móvil **tocar en cualquier parte de
+## la pantalla daba un puñetazo**, incluso lejos de los botones. Por eso el
+## ratón vive en sus propias acciones, que el táctil no puede disparar.
+var _es_escritorio: bool = not OS.has_feature("mobile")
+
+
 func wants_attack() -> bool:
-	return Input.is_action_just_pressed("attack")
+	if Input.is_action_just_pressed("attack"):
+		return true
+	return _es_escritorio and Input.is_action_just_pressed("attack_raton")
 
 
 func wants_special() -> bool:
-	return Input.is_action_just_pressed("special") and GameManager.is_special_ready()
+	if not GameManager.is_special_ready():
+		return false
+	if Input.is_action_just_pressed("special"):
+		return true
+	return _es_escritorio and Input.is_action_just_pressed("special_raton")
 
 
 func just_landed() -> bool:

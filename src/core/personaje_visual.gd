@@ -22,10 +22,15 @@ class_name PersonajeVisual
 ## Reproduce la animación que el FBX trae de Mixamo. Para vitrinas y pruebas;
 ## en combate manda `CharacterAnimator`.
 @export var reproducir_idle: bool = false
+## Monta el árbol de animación con la librería compartida. Hace falta para que
+## el personaje pueda hacer algo más que estarse quieto: saludar, transformarse
+## o alzar el brazo durante una conversación.
+@export var con_animador: bool = false
 
 var _pelo: HairPhysics = null
 var _toon: Node3D = null
 var _modelo: Node3D = null
+var _animador: Node3D = null
 
 
 func _ready() -> void:
@@ -58,12 +63,34 @@ func montar() -> void:
 	# de dentro afuera, para que cada _ready() vea ya a sus hijos
 	_pelo.add_child(_modelo)
 	_toon.add_child(_pelo)
-	add_child(_toon)
 
-	if reproducir_idle:
+	if con_animador:
+		# El animador va POR ENCIMA del cel shading, igual que en `player.tscn`:
+		# busca el esqueleto entre sus hijos, así que tiene que envolverlo todo.
+		_animador = Node3D.new()
+		_animador.name = "Animador"
+		_animador.set_script(load("res://src/player/character_animator.gd"))
+		_animador.add_child(_toon)
+		add_child(_animador)
+		# En reposo desde el primer fotograma. Sin esto el árbol arranca en el
+		# estado que le toque y el personaje aparece en una pose rara, a veces
+		# levitando porque la animación le mueve las caderas.
+		if _animador.has_method("set_locomotion_speed"):
+			_animador.call("set_locomotion_speed", 0.0)
+			_animador.call("travel", "locomocion")
+	else:
+		add_child(_toon)
+
+	if reproducir_idle and not con_animador:
 		var reproductor := _buscar_animplayer(_modelo)
 		if reproductor != null and reproductor.get_animation_list().size() > 0:
 			reproductor.play(reproductor.get_animation_list()[0])
+
+
+## Pide una animación de la librería compartida. Sin animador no hace nada.
+func reproducir(estado: String, duracion: float = 0.0) -> void:
+	if _animador != null and _animador.has_method("travel"):
+		_animador.call("travel", estado, duracion)
 
 
 func get_skeleton() -> Skeleton3D:
