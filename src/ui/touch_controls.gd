@@ -14,6 +14,11 @@ class_name TouchControls
 @export var deadzone: float = 0.18
 ## Fracción de pantalla reservada al joystick. El resto es para la cámara.
 @export var left_zone_ratio: float = 0.5
+## En escritorio los botones sobran y encima tapan medio nivel al probar.
+## Se pueden forzar con `mostrar_siempre` para revisar cómo quedan sin
+## necesidad de exportar el APK.
+@export var ocultar_en_escritorio: bool = true
+@export var mostrar_siempre: bool = false
 
 @onready var joy_base: Control = %JoyBase
 @onready var joy_knob: Control = %JoyKnob
@@ -25,6 +30,14 @@ var _pressed_actions: Array[String] = []
 
 
 func _ready() -> void:
+	if ocultar_en_escritorio and not mostrar_siempre and not OS.has_feature("mobile"):
+		hide()
+		# `hide()` no basta: este nodo escucha por `_input`, que sigue llegando
+		# aunque el Control esté oculto. Sin esto, un portátil con pantalla
+		# táctil seguiría moviendo a la jugadora con un dedo invisible.
+		set_process_input(false)
+		return
+
 	joy_base.visible = false
 	_connect_button(%AttackButton, "attack")
 	_connect_button(%JumpButton, "jump")

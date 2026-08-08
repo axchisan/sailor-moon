@@ -54,6 +54,27 @@ const RECORRIDO: Array[Dictionary] = [
 ## Hueco que se deja en el borde de la arena para entrar y salir, en grados.
 @export var hueco_acceso: float = 46.0
 
+## Dónde va cada Estrella de Sueño, en coordenadas del recorrido y no del
+## mundo: `tramo` es el índice del pasillo, `t` lo avanzado por él (0 a 1),
+## `lado` el desvío lateral (−1 = borde izquierdo, +1 = derecho) y `alto` los
+## metros sobre el suelo.
+##
+## Se declaran así para que sigan donde tienen que estar aunque cambien las
+## medidas del nivel. Con posiciones absolutas, alargar un tramo deja media
+## docena de estrellas flotando en el vacío.
+const ESTRELLAS: Array[Dictionary] = [
+	# En el camino: enseñan qué son, es imposible no cogerlas
+	{"tramo": 0, "t": 0.45, "lado": 0.0, "alto": 1.1},
+	{"tramo": 1, "t": 0.20, "lado": 0.0, "alto": 1.1},
+	{"tramo": 2, "t": 0.55, "lado": 0.0, "alto": 1.3},
+	# A la vista pero fuera del camino: hay que desviarse
+	{"tramo": 0, "t": 0.80, "lado": 0.72, "alto": 1.1},
+	{"tramo": 1, "t": 0.72, "lado": -0.74, "alto": 1.1},
+	# Arriba, sobre las plataformas del tramo B: hay que saltar
+	{"tramo": 1, "t": 0.50, "lado": 0.22, "alto": 2.5, "secreta": true},
+	{"tramo": 1, "t": 0.75, "lado": -0.22, "alto": 3.0, "secreta": true},
+]
+
 var _origen: Vector3 = Vector3.ZERO
 var _direccion: Vector3 = Vector3.FORWARD
 var _altura: float = 0.0
@@ -61,6 +82,8 @@ var _piezas: int = 0
 
 var punto_inicio: Vector3 = Vector3.ZERO
 var centros_arena: Dictionary = {}
+## Un registro por pasillo, en orden, para poder situar cosas encima después.
+var tramos: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -74,6 +97,8 @@ func construir() -> void:
 	_direccion = Vector3.FORWARD
 	_altura = 0.0
 	_piezas = 0
+	tramos.clear()
+	centros_arena.clear()
 	# Un par de metros DENTRO del primer tramo: el recorrido arranca en el
 	# origen y avanza hacia −Z, así que empezar en +Z es empezar en el aire.
 	# La altura es la cara superior de la losa (grosor/2) más un margen.
@@ -136,6 +161,12 @@ func _pasillo(paso: Dictionary) -> void:
 
 	if paso.get("plataformas", false):
 		_plataformas(largo, ancho)
+
+	tramos.append({
+		"origen": _origen + Vector3.UP * _altura,
+		"direccion": _direccion,
+		"largo": largo, "ancho": ancho, "subida": subida,
+	})
 
 	_origen += _direccion * largo
 	_altura += subida
@@ -286,6 +317,44 @@ func _anillo(centro: Vector3, radio: float, aberturas: Array) -> void:
 		# secas los paneles quedan radiales, como los radios de una rueda.
 		_losa("BordeArena", pos, Vector3(ancho_seg, alto_borde, ancho_borde),
 			color_borde, PI * 0.5 - angulo)
+
+
+# --- Sitios del recorrido -------------------------------------------------------
+
+## Un punto sobre un tramo, en sus propias coordenadas.
+##
+## `t` es lo avanzado por el pasillo (0 a 1), `lado` el desvío lateral en
+## fracción del semiancho (0 = centro del camino, ±1 = justo en el borde) y
+## `alto` los metros sobre el suelo del tramo.
+func punto_en_tramo(indice: int, t: float, lado: float, alto: float) -> Vector3:
+	if indice < 0 or indice >= tramos.size():
+		return Vector3.ZERO
+	var tramo: Dictionary = tramos[indice]
+	var direccion: Vector3 = tramo["direccion"]
+	var costado := direccion.cross(Vector3.UP).normalized()
+	var subida: float = tramo["subida"] * t
+	return tramo["origen"] \
+		+ direccion * (tramo["largo"] * t) \
+		+ costado * (lado * tramo["ancho"] * 0.5) \
+		+ Vector3.UP * (grosor_suelo * 0.5 + subida + alto)
+
+
+## Siembra las Estrellas de Sueño. Devuelve cuántas colocó.
+func sembrar_estrellas(escena: PackedScene, destino: Node) -> int:
+	if escena == null:
+		return 0
+	var puestas := 0
+	for ficha in ESTRELLAS:
+		var estrella := escena.instantiate() as Node3D
+		if estrella == null:
+			continue
+		destino.add_child(estrella)
+		estrella.global_position = punto_en_tramo(
+			ficha["tramo"], ficha["t"], ficha["lado"], ficha["alto"])
+		if ficha.get("secreta", false) and "es_secreta" in estrella:
+			estrella.set("es_secreta", true)
+		puestas += 1
+	return puestas
 
 
 func _material(color: Color) -> StandardMaterial3D:

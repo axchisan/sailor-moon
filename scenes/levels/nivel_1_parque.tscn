@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/prototypes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/peluchin.tscn" id="2_peluchin"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://src/level/constructor_nivel.gd" id="7_constructor"]
 [ext_resource type="Script" path="res://src/level/nivel.gd" id="8_nivel"]
 [ext_resource type="Shader" path="res://src/level/cielo_anime.gdshader" id="9_cielo"]
+[ext_resource type="PackedScene" path="res://scenes/pickups/estrella_sueno.tscn" id="10_estrella"]
 
 [sub_resource type="ShaderMaterial" id="SkyMat_1"]
 shader = ExtResource("9_cielo")
@@ -50,6 +51,8 @@ radius = 6.0
 
 [node name="Nivel1Parque" type="Node3D"]
 script = ExtResource("8_nivel")
+escena_estrella = ExtResource("10_estrella")
+estrellas_del_nivel = 7
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Env_1")
