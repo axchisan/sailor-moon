@@ -1,7 +1,7 @@
 # Reparto de personajes
 
-> **2026-08-07.** Once personajes procesados. Nueve rigueados en Mixamo y
-> verificados con `tools/validar_rigueados.gd`; faltan Pluto y Uranus.
+> **2026-08-07.** Reparto **completo**: once personajes procesados, rigueados en
+> Mixamo y verificados con `tools/validar_rigueados.gd`.
 
 ## 1. Estado del reparto
 
@@ -15,8 +15,8 @@
 | **Sailor Venus** | 1,62 m | 25.000 | ✅ ⚠️ | ✅ | ⬜ |
 | **Sailor Neptuno** | 1,62 m | 25.000 | ✅ | ✅ | ⬜ |
 | **Sailor Jupiter** | 1,68 m | 25.000 | ✅ ⚠️ | ✅ | ⬜ |
-| **Sailor Uranus** | 1,70 m | 25.000 | ✅ ⚠️ | ⬜ **pendiente** | ⬜ |
-| **Sailor Pluto** | 1,75 m | 25.000 | ✅ | ⬜ **pendiente** | ⬜ |
+| **Sailor Uranus** | 1,70 m | 25.000 | ✅ ⚠️ | ✅ + botas despegadas | ⬜ |
+| **Sailor Pluto** | 1,75 m | 25.000 | ✅ | ✅ + botas despegadas | ⬜ |
 | **Tuxedo Mask** | 1,80 m | 25.000 | ✅ | ✅ + bastón fijado | ⬜ |
 
 ⚠️ = llevaban geometría de más pegada, ya separada (§2).
@@ -125,17 +125,42 @@ sobre `tuxedo_mask_rigged.fbx`.
 
 ## 4. Lo que hay que hacer con cada uno
 
-### Paso 1 — Riguear en Mixamo
+### Paso 1 — Riguear en Mixamo ✅ hecho
 
-Quedan dos por subir, y los dos FBX ya están corregidos en `Models/mixamo/`:
-
-```
-sailor_pluto_para_mixamo.fbx     (regenerada sin báculo)
-sailor_uranus_para_mixamo.fbx    (enderezada 45° y sin espada)
-```
-
-Se sube cada uno, se marcan barbilla, muñecas, codos, rodillas e ingle, y se
+Los FBX de partida están en `Models/mixamo/` por si hay que rehacer alguno. Se
+sube cada uno, se marcan barbilla, muñecas, codos, rodillas e ingle, y se
 descarga **con skin**. Nada más: **no hace falta bajar ni una animación**.
+
+Lo descargado se guarda como `assets/models/characters/<nombre>_rigged.fbx` y se
+pasa por `tools/validar_rigueados.gd`.
+
+### Paso 1 bis — Las botas se pegan entre sí
+
+Le pasó a **Uranus y a Pluto**: al separarse las piernas aparece una membrana
+que une las dos botas y se estira como un chicle.
+
+Son **dos problemas superpuestos**, y hay que arreglarlos en este orden:
+
+**1. Pesos cruzados.** Mixamo pesa la cara interna de cada bota con la pierna de
+enfrente, porque están a un par de centímetros. Se ve en los números: vértices
+con 0,64 en una pierna y 0,36 en la otra. La solución es quitarle a cada vértice
+el peso de la pierna contraria y renormalizar lo que queda.
+
+**2. Una lámina de malla que sí une las dos botas.** Viene del generador 3D.
+
+> **Por qué el orden importa:** con los pesos sucios la lámina es imposible de
+> identificar — todo vértice de la zona parece pertenecer a las dos piernas.
+> Una vez limpios los pesos, cada vértice pertenece a una sola, y **la lámina es
+> exactamente el conjunto de caras que tocan las dos**. Se borra y se cierra el
+> agujero. En Uranus eran 70 caras, en Pluto 32.
+
+Hay que acotar el arreglo a `z < 0,75`: por encima está la entrepierna, donde la
+mezcla entre las dos piernas es legítima y quitarla rompería la pelvis.
+
+> **Lo que NO hay que perseguir:** el borde superior de las botas de Uranus tiene
+> picos y muescas irregulares. **Eso ya viene en el modelo generado** — se
+> comprueba abriendo el `.glb` sin riguear. No es del rigueo ni del recorte, y
+> tratar de limarlo solo erosiona el borde de la bota.
 
 El archivo descargado se guarda como
 `assets/models/characters/<nombre>_rigged.fbx`, igual que Serena.
