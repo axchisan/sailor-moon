@@ -38,6 +38,81 @@ var _faroles_totales: int = 0
 var _faroles_encendidos: int = 0
 
 
+## Aplica los recortes del móvil. En cualquier otra plataforma no hace nada.
+##
+## `OS.has_feature("mobile")` en vez de comparar con "Android": así vale igual
+## el día que haya una versión para otro cacharro, y en el editor sigue viéndose
+## la calidad completa mientras se trabaja.
+func _ajustar_para_el_movil() -> void:
+	if not OS.has_feature("mobile"):
+		return
+
+	# 1. FXAA fuera. Es el que más costaba de todo lo medido: en el móvil pasó
+	#    de 37-45 fps a 60 en la mayoría de sitios. Es un pase que relee el
+	#    fotograma entero varias veces por píxel, y ahí el ancho de banda es el
+	#    recurso caro. No hay versión barata que imite un antialiasing, pero en
+	#    una pantalla de móvil el píxel tampoco se ve.
+	get_viewport().screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
+
+	var entorno := get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if entorno != null and entorno.environment != null:
+		# 2. La niebla, cambiada por otra cosa que ya se estaba calculando.
+		#
+		#    La del Environment se evalúa en CADA píxel de CADA material, y se
+		#    notaba en todo el mapa. Pero el terreno ya tiene su propia
+		#    perspectiva aérea metida en el shader —el `lejania` que destiñe lo
+		#    lejano a morado—, y eso sale gratis porque ya se calcula.
+		#
+		#    Así que en el móvil se apaga la niebla y se acerca el punto donde
+		#    el terreno empieza a desteñirse, que es donde de verdad se veía el
+		#    efecto: el fondo del valle. Lo que se pierde es la neblina sobre
+		#    los props lejanos, que además ya se apagan solos por distancia.
+		entorno.environment.fog_enabled = false
+		if _terreno_visual_material() != null:
+			var mat := _terreno_visual_material()
+			mat.set_shader_parameter("desde",
+				_terreno.radio_colinas * MOVIL_NIEBLA_DESDE)
+
+	# 3. La sombra, con menos alcance. No se quita: se acorta de 24 a 18 m, que
+	#    sigue cubriendo de sobra lo que se ve de cerca —que es donde una sombra
+	#    aporta— y deja de dibujar el mundo otra vez para lo de más allá.
+	var sol := get_node_or_null("DirectionalLight3D") as DirectionalLight3D
+	if sol != null:
+		sol.directional_shadow_max_distance = MOVIL_SOMBRA_ALCANCE
+
+	print("[Nivel] perfil de móvil: sin FXAA, sin niebla, sombra a %.0f m"
+		% MOVIL_SOMBRA_ALCANCE)
+
+
+## El material del terreno, para poder retocarle la perspectiva aérea.
+func _terreno_visual_material() -> ShaderMaterial:
+	if _terreno == null:
+		return null
+	for hijo in _terreno.get_children():
+		var malla := hijo as MeshInstance3D
+		if malla != null:
+			return malla.material_override as ShaderMaterial
+	return null
+
+
+## Recortes que solo se aplican en el móvil.
+##
+## EN EL PC NO SE TOCA NADA. Ahí sobra potencia y el juego se ve como está
+## pensado; estos ajustes existen porque el mismo escenario en un Android se
+## quedaba en 37-45 fps.
+##
+## La regla es **limitar, no eliminar**: cada recorte o deja el efecto con menos
+## alcance, o lo cambia por otro más barato que hace lo mismo donde se nota. Lo
+## único que se apaga del todo es el FXAA, porque de ese no hay versión barata —
+## y es el que más costaba con diferencia.
+##
+## Todos los números salen de medir en el móvil con el banco de pruebas (F8),
+## no de suponer. La primera vez que se supuso —«el FXAA cuesta una fracción»—
+## se falló justo en el que más costaba.
+const MOVIL_SOMBRA_ALCANCE := 18.0
+const MOVIL_NIEBLA_DESDE := 0.55
+
+
 func _ready() -> void:
 	_constructor = get_node_or_null("Blockout") as ConstructorNivel
 	_jugador = get_tree().get_first_node_in_group("player") as Node3D
@@ -90,6 +165,10 @@ func _ready() -> void:
 		# espera, los rayos que posan los props salen al vacío y todo el parque
 		# vuelve a quedarse flotando.
 		await get_tree().physics_frame
+
+	# Después de construir el terreno: el perfil del móvil le retoca el material,
+	# y hasta aquí ese material no existe.
+	_ajustar_para_el_movil()
 
 	# Decorar va después de construir y antes que nada más: las Estrellas y los
 	# faroles se colocan por coordenadas del recorrido, no por lo que haya

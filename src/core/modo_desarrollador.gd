@@ -61,7 +61,8 @@ const PRUEBAS := [
 	"sin sombras",
 	"sin niebla",
 	"sin decorado",
-	"sin FXAA ni ajuste de color",
+	"sin FXAA",
+	"sin ajuste de color",
 	"a media resolución",
 ]
 
@@ -270,8 +271,9 @@ func _aplicar_prueba() -> void:
 		"sin decorado":
 			if decorado != null:
 				decorado.visible = false
-		"sin FXAA ni ajuste de color":
+		"sin FXAA":
 			vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
+		"sin ajuste de color":
 			if env != null:
 				env.adjustment_enabled = false
 		"a media resolución":
