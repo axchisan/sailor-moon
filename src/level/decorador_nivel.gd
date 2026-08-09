@@ -128,6 +128,33 @@ const CUERPO := {
 	# `arbusto` no está a propósito: son hojas, se pisan y se pasa.
 }
 
+## Lo que se planta al pie de la ladera que cierra el mundo.
+##
+## La ladera sola se lee como el borde de un cráter. Lo que la convierte en
+## «linde del bosque» es lo que crece delante: una arboleda apretada que tapa la
+## cuesta, y montones de rocas que rompen la curva.
+##
+## `dentro` son metros hacia el interior desde el pie de la cuesta — negativo
+## para plantar cuesta arriba, que es lo que hace que el bosque suba por la
+## ladera en vez de acabarse justo donde empieza.
+const LIMITE: Array[Dictionary] = [
+	# Tres filas de arboleda, cada vez más adentro y más pequeña. La de atrás
+	# trepa por la cuesta (`dentro` negativo) para que el bosque no se corte de
+	# golpe justo donde empieza la ladera.
+	{"pieza": "arbol_cerezo", "copias": 54, "dentro": -3.0, "desvio": 2.2,
+		"escala": [1.2, 1.8], "hundir": 0.2},
+	{"pieza": "arbol_cerezo", "copias": 78, "dentro": 2.0, "desvio": 2.6,
+		"escala": [1.2, 1.9], "hundir": 0.2},
+	{"pieza": "arbol_cerezo", "copias": 52, "dentro": 7.5, "desvio": 4.0,
+		"escala": [0.9, 1.5], "hundir": 0.2},
+	# Pedregal al pie: rompe la línea donde el llano se junta con la cuesta,
+	# que es justo donde se nota que la ladera es una superficie plana.
+	{"pieza": "roca", "copias": 66, "dentro": 0.8, "desvio": 2.4,
+		"escala": [1.6, 3.6]},
+	{"pieza": "arbusto", "copias": 56, "dentro": 4.5, "desvio": 3.5,
+		"escala": [1.1, 2.0]},
+]
+
 ## El fondo. Nada de esto se pisa nunca: vive lejos, sin colisión y sin sombra.
 ##
 ## `radio` se cuenta desde el borde de lo construido, así que sigue quedando
@@ -202,6 +229,8 @@ func decorar(constructor: ConstructorNivel) -> void:
 		for nombre: String in constructor.centros_arena:
 			_coronar_arena(constructor.centros_arena[nombre],
 				constructor.radios_arena.get(nombre, 11.0))
+	if constructor.radio_limite > 0.0:
+		_vestir_limite(medida["centro"], constructor.radio_limite)
 	if montar_fondo:
 		_fondo(medida["centro"], medida["radio"])
 
@@ -264,6 +293,24 @@ func _coronar_arena(centro: Vector3, radio: float) -> void:
 			var r := distancia + _rng.randf_range(0.0, receta.get("desvio", 0.0))
 			var sitio := centro + Vector3(cos(angulo), 0.0, sin(angulo)) * r \
 				+ Vector3.UP * _alto_suelo
+			_plantar(receta, sitio, 0.0, Vector3.ZERO)
+
+
+## Arboleda y pedregal alrededor de todo, al pie de la ladera.
+##
+## Va con el mismo ondulado que la ladera del constructor —las mismas dos ondas,
+## los mismos coeficientes— para que el bosque siga a la cuesta en vez de
+## cruzarla. Si algún día se cambia el contorno allí, hay que cambiarlo aquí.
+func _vestir_limite(centro: Vector3, radio: float) -> void:
+	for receta in LIMITE:
+		var copias: int = receta["copias"]
+		for i in copias:
+			var theta := TAU * float(i) / float(copias) + _rng.randf_range(-0.05, 0.05)
+			var ondulado := 1.0 + 0.085 * sin(theta * 3.0 + 0.7) \
+				+ 0.045 * sin(theta * 7.0 + 2.1)
+			var r: float = radio * ondulado - receta["dentro"] \
+				+ _rng.randf_range(-1.0, 1.0) * receta.get("desvio", 0.0)
+			var sitio := centro + Vector3(cos(theta), 0.0, sin(theta)) * r
 			_plantar(receta, sitio, 0.0, Vector3.ZERO)
 
 

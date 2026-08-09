@@ -160,7 +160,22 @@ entero y buena parte de lo que venga.
 
 ---
 
-## Fase C — Que parezca un mundo, no un pasillo
+## Fase C — Que parezca un mundo, no un pasillo ✅ hecha
+
+> **Los setos del parque no se tocaron.** Un seto de jardín es la linde de un
+> parque, no el final del mundo, y está bien que se lea así. Lo que faltaba era
+> que *hubiera mundo más allá del seto*.
+>
+> Ahora hay 34 m de campo abierto alrededor de todo lo construido y, al fondo,
+> una ladera al 60° que no se sube — la jugadora trepa hasta 45°, así que el
+> número no es estético. Se construye en tramos tangentes, como el anillo de las
+> arenas, para que la colisión sea exacta.
+>
+> Un círculo perfecto se leería como el borde de un cráter, así que el contorno
+> lleva dos ondas de distinta frecuencia, y al pie van tres filas de arboleda —
+> una de ellas trepando por la cuesta — más un pedregal que rompe la línea donde
+> el llano se junta con la ladera. La ladera se dejó en 5,5 m: a 9 superaba a los
+> árboles que la tapan y volvía a parecer un muro inclinado.
 
 ### El problema del arranque
 

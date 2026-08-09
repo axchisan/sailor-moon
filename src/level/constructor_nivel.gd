@@ -77,6 +77,20 @@ const RECORRIDO: Array[Dictionary] = [
 ## flotar sobre el canto.
 @export var margen_arena: float = 1.6
 @export var grosor_suelo: float = 1.0
+
+@export_group("Límites del mundo")
+## Cuánto campo abierto hay MÁS ALLÁ del borde de lo construido, antes de la
+## ladera que cierra el mapa.
+##
+## Es lo que hace que el parque deje de ser un pasillo con paredes: los setos
+## siguen ahí, pero ahora tienen algo detrás. Lo primero que hace cualquiera al
+## empezar es saltar hacia el borde a ver qué hay; con esto hay algo.
+@export var radio_mundo: float = 34.0
+## Alto de la cuesta. Cuanto más alta, más se lee como pared: a 9 m superaba a
+## los árboles que la tapan y volvía a parecer un muro, solo que inclinado. A
+## 5,5 los cerezos del límite le sacan la cabeza y lo que se ve es bosque.
+@export var alto_ladera: float = 5.5
+@export var grosor_ladera: float = 1.2
 @export var alto_borde: float = 2.2
 @export var ancho_borde: float = 0.8
 ## Ancho de la franja de color que marca el camino.
@@ -141,6 +155,9 @@ var centros_arena: Dictionary = {}
 var radios_arena: Dictionary = {}
 ## Un registro por pasillo, en orden, para poder situar cosas encima después.
 var tramos: Array[Dictionary] = []
+## Dónde queda el pie de la ladera que cierra el mundo. Lo usa el decorador
+## para plantar la arboleda que la disimula. 0 = todavía no se ha construido.
+var radio_limite: float = 0.0
 
 
 func _ready() -> void:
@@ -156,6 +173,7 @@ func construir() -> void:
 	_piezas = 0
 	_lotes.clear()
 	tramos.clear()
+	radio_limite = 0.0
 	centros_arena.clear()
 	radios_arena.clear()
 	# Un par de metros DENTRO del primer tramo: el recorrido arranca en el
@@ -190,6 +208,9 @@ func construir() -> void:
 					i += 1
 		i += 1
 
+	# El cierre va ANTES de volcar los lotes: sus losas tienen que entrar en el
+	# mismo agrupado que el resto, o serían cuarenta llamadas de dibujado más.
+	_cerrar_mundo()
 	var lotes := _volcar_lotes()
 	_colocar_encuentros()
 	print("[Nivel] blockout construido: %d piezas en %d lotes, %d arenas" % [
@@ -427,9 +448,13 @@ func _colocar_arena(nombre: String, centro: Vector3, radio: float) -> void:
 ## La colisión sí sigue siendo un cuerpo por pieza: un `MultiMesh` no colisiona,
 ## y de todas formas los `StaticBody3D` sin malla no cuestan dibujado.
 func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
-		giro: float, inclinacion: float = 0.0, con_colision: bool = true) -> void:
+		giro: float, inclinacion: float = 0.0, con_colision: bool = true,
+		peralte: float = 0.0) -> void:
+	# `peralte` es el vuelco lateral, sobre el eje que sigue al camino. Lo usan
+	# los taludes: una losa de suelo volcada 58° deja de ser suelo y pasa a ser
+	# ladera, sin necesidad de otra malla ni de otra forma de colisión.
 	var pose := Transform3D(
-		Basis.from_euler(Vector3(inclinacion, giro, 0.0)) * Basis.from_scale(tam),
+		Basis.from_euler(Vector3(inclinacion, giro, peralte)) * Basis.from_scale(tam),
 		centro)
 	var lote: Array = _lotes.get(superficie, [])
 	lote.append(pose)
@@ -442,7 +467,7 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 	var cuerpo := StaticBody3D.new()
 	cuerpo.name = nombre
 	cuerpo.position = centro
-	cuerpo.rotation = Vector3(inclinacion, giro, 0.0)
+	cuerpo.rotation = Vector3(inclinacion, giro, peralte)
 	cuerpo.collision_layer = 1
 	cuerpo.collision_mask = 0
 
@@ -510,6 +535,64 @@ func _disco(nombre: String, centro: Vector3, radio: float, superficie: String) -
 
 	add_child(cuerpo)
 	_piezas += 1
+
+
+## Cierra el mundo con una ladera alrededor de todo, lejos del recorrido.
+##
+## El parque y sus setos NO se tocan: un seto de jardín es la linde de un
+## parque, no el final del mundo, y está bien que se lea así. Lo que faltaba era
+## que **hubiera mundo más allá del seto**. Antes, saltar el borde era asomarse
+## al vacío; ahora hay campo abierto para correr un rato y, mucho más lejos, una
+## cuesta que no se sube.
+##
+## La pendiente es el único número que importa aquí, y no se elige por estética:
+## un `CharacterBody3D` sube hasta 45°, así que a 60° la ladera frena de verdad.
+## Por debajo de 45 sería una rampa por la que se sale del mapa andando.
+##
+## Se construye en segmentos tangentes, como el anillo de las arenas, porque así
+## la colisión es exacta. Un cono de una pieza se vería igual pero su forma de
+## colisión sería un cilindro recto, y se chocaría contra el aire.
+const PENDIENTE_LADERA := 60.0
+const SEGMENTOS_LADERA := 40
+
+
+func _cerrar_mundo() -> void:
+	if radio_mundo <= 0.0:
+		return
+	var medida := extension()
+	var centro: Vector3 = medida["centro"]
+	var radio: float = medida["radio"] + radio_mundo
+	var angulo := deg_to_rad(PENDIENTE_LADERA)
+	var ladera := alto_ladera / sin(angulo)
+	# El ancho se mide en el radio del CENTRO de la losa, no en el del pie: el
+	# centro está más afuera, la circunferencia allí es mayor, y calculándolo en
+	# el pie los tramos se quedan cortos y la ladera sale con rendijas.
+	var radio_centro := radio + ladera * 0.5 * cos(angulo)
+	radio_limite = radio
+	var ancho_seg := TAU * radio_centro / float(SEGMENTOS_LADERA) * 1.12
+
+	for i in SEGMENTOS_LADERA:
+		var theta := TAU * float(i) / float(SEGMENTOS_LADERA)
+		var hacia_fuera := Vector3(cos(theta), 0.0, sin(theta))
+		# Un círculo perfecto se lee como el borde de un cráter, no como el
+		# final de un valle. Dos ondas de distinta frecuencia bastan para que la
+		# silueta parezca terreno: una lenta que hace entrantes y salientes
+		# grandes, y otra rápida que los rompe.
+		var ondulado := 1.0 + 0.085 * sin(theta * 3.0 + 0.7) \
+			+ 0.045 * sin(theta * 7.0 + 2.1)
+		var pos := centro + hacia_fuera * (radio_centro * ondulado) \
+			+ Vector3.UP * (ladera * 0.5 * sin(angulo))
+		# Con el giro φ = 90° − θ, el eje **X** local queda tangente al círculo
+		# y el **Z** apunta radialmente hacia fuera — lo mismo que hacen los
+		# paneles de las arenas. Así que el ancho del tramo va en X, la cuesta en
+		# Z, y el vuelco es sobre X (el parámetro `inclinacion`), no sobre Z.
+		#
+		# Puesto al revés, cada tramo mide lo que la cuesta en la dirección
+		# equivocada y el cierre sale como una fila de paneles sueltos.
+		_losa("Ladera", pos, Vector3(ancho_seg, grosor_ladera, ladera), suelo,
+			PI * 0.5 - theta, -angulo)
+	print("[Nivel] mundo cerrado: ladera de %d tramos a %.0f m del centro" % [
+		SEGMENTOS_LADERA, radio])
 
 
 ## Borde de la arena, en segmentos, saltándose los que caen en los accesos.
