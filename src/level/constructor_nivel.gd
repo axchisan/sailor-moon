@@ -173,6 +173,15 @@ var tramos: Array[Dictionary] = []
 ## reconocible. Filtrar con `begins_with("Suelo")` daba un resultado
 ## impredecible, y el terreno acababa apoyándose en lo que no debía.
 var cuerpos_suelo: Array[StaticBody3D] = []
+## Lo que ESTORBA: muros, taludes y plataformas, como rectángulos orientados
+## `{centro, mitad, giro}` en el plano.
+##
+## El decorador los necesita para no plantar dentro de ellos. Antes se apañaba
+## midiendo desde el eje del tramo —«tantos metros más allá del muro»— y con el
+## desvío al azar la mitad de los farolillos acababa metida en el seto. Aquí
+## está la caja de verdad que se construyó, con su giro, así que la pregunta
+## «¿este punto está dentro de algo?» tiene una respuesta exacta.
+var estorbos: Array[Dictionary] = []
 ## Dónde empiezan las colinas que cierran el mundo. Lo pone el nivel a partir
 ## del terreno; el decorador lo usa para plantar la arboleda de la linde.
 var radio_limite: float = 0.0
@@ -557,6 +566,13 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 	add_child(cuerpo)
 	if nombre.begins_with("Suelo"):
 		cuerpos_suelo.append(cuerpo)
+	elif nombre.begins_with("Borde") or nombre.begins_with("Plataforma") \
+			or nombre.begins_with("Talud"):
+		estorbos.append({
+			"centro": centro,
+			"mitad": Vector2(tam.x * 0.5, tam.z * 0.5),
+			"giro": giro,
+		})
 
 
 ## Crea los `MultiMeshInstance3D` de las cajas, uno por color. Devuelve cuántos.
@@ -639,7 +655,7 @@ func _anillo(centro: Vector3, radio: float, aberturas: Array) -> void:
 		# un ángulo φ, el eje Z local va a (sin φ, 0, cos φ); igualándolo a la
 		# normal del círculo (cos θ, 0, sin θ) sale φ = 90° − θ. Con `−θ` a
 		# secas los paneles quedan radiales, como los radios de una rueda.
-		_losa("BordeArena", pos, Vector3(ancho_seg, alto_borde, ancho_borde),
+		_losa("Borde_arena", pos, Vector3(ancho_seg, alto_borde, ancho_borde),
 			borde, PI * 0.5 - angulo)
 
 

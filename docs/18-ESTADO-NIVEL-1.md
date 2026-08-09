@@ -68,9 +68,37 @@ valla, banco, papelera, farol de piedra, torii, pagoda, montaña.
 peñasco, macizo de flores, tocón, farolillo, nenúfar.
 **Detalle de suelo** (mismo archivo, `generar_detalle()`): mata de hierba,
 piedrecitas, ramitas, hojarasca, mariposa, pajarillo.
+**Kit 3 — vida de parque** (`blender_kit_vida.py`): puesto de dulces, matera,
+maceta, mesa con sombrilla, fuente de piedra, cartel indicador, columpio,
+tobogán, losa de sendero, guirnalda de farolillos, estatua de gato, seto bajo.
 
 Todo en `MultiMesh` — ~1950 props en 32 draw calls. Colisión por forma
 primitiva, solo en lo que pararía a una niña.
+
+### Los rincones
+Nueve conjuntos compuestos a mano (`RINCONES` en `decorador_nivel.gd`), no props
+sueltos: kiosco de dulces con terraza, zona de juegos, plaza de la fuente,
+merendero, altar del gato, vivero, y tres rincones pequeños de paso.
+
+- Cada uno se sitúa por rumbo y distancia, **mira al centro del parque**, y si
+  no cabe gira hasta encontrar sitio
+- Llevan **suelo empedrado** de losas, que es lo que los convierte en plaza en
+  vez de en muebles sobre la hierba
+- Un **sendero de losas** los une con el camino principal, y el arranque se
+  elige de forma que no cruce ningún muro
+
+### El reparto del sitio
+Nada se planta encima de otra cosa. Cada copia reserva un círculo (`HUECO`) en
+una rejilla espacial y la siguiente que caiga ahí se descarta. Los muros y
+plataformas del blockout vienen del constructor (`estorbos`) como rectángulos
+orientados. La consola lo canta en cada carga:
+
+```
+[Nivel] descartados: 0 sin suelo, 552 encima de otro, 68 dentro de un muro
+```
+
+El orden de siembra es el orden de prioridad: estanque → rincones → senderos →
+camino → arenas → campo → detalle → linde.
 
 ### El estanque
 Es el único sitio del nivel donde el terreno y el decorado tienen que cuadrar al
@@ -109,9 +137,19 @@ terreno y el cálculo de por dónde cruza el puente.
 | Detalle del suelo | 520 matas, 190 piedrecitas, 130 ramitas, 160 hojarascas |
 | Animalitos | 22 mariposas y 9 pajarillos en `bichos.gd`, en multimalla |
 
+### Hecho en el bloque de ambientación
+| Qué | Cómo quedó |
+|---|---|
+| Props montados unos sobre otros | Registro de ocupación: 334 solapes eliminados |
+| Props dentro de las paredes | `estorbos` del constructor: 219 → ~68 (los que quedan son copas, no pies) |
+| Hierba atravesando el suelo | El rayo de `_posar()` iba de +4 a −8 m y no llegaba al terreno de las faldas |
+| Baranda del puente sin colisión | `CUERPO` admite varias formas por pieza |
+| Zonas planas desaprovechadas | Nueve rincones compuestos con empedrado y senderos |
+
 ### En curso
 | Qué | Por qué |
 |---|---|
+| **Optimización por zonas** | 54 draw calls y ~2.100 props: toca medir en el móvil |
 | **Mapa de escenarios** | El portal ya abre, pero no lleva a ninguna parte todavía |
 
 ### Del plan maestro

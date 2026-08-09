@@ -409,6 +409,40 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     de agua acabó 1,85 m bajo tierra (invisible, sin ningún error) y el puente
     hundido. El nivel del agua se mide promediando cuatro puntos de la ORILLA, y
     el puente lleva `"posar": false` en su receta.
+44. **Cada siembra iba a ciegas y ninguna sabía de las demás.** Los carriles, el
+    campo, las coronas de arena y la linde repartían dos mil props sobre el
+    mismo terreno sin llevar ninguna cuenta: bancos dentro de peñascos, faroles
+    clavados en un tronco, matorrales saliendo de un banco. Al montar el
+    registro de ocupación salieron **334 props montados unos sobre otros y 219
+    metidos dentro de un muro** — no era un fallo de ninguna siembra, es que
+    faltaba quien repartiera el sitio. Ahora cada copia reserva un círculo
+    (`HUECO` + rejilla `_huecos`) y la siguiente que caiga encima se descarta.
+45. **Contra un muro se mide el PIE de la pieza, no su copa.** El primer intento
+    usaba el hueco entero, y descartó **70 de 70 vallas**: van pegadas al seto
+    justamente a propósito. Un cerezo con el tronco a medio metro del muro está
+    bien plantado aunque las flores pasen por encima. Las recetas declaran
+    `pie`, y solo para eso.
+46. **El rayo de `_posar()` iba de +4 a −8 metros.** En las faldas de las
+    colinas el terreno ya estaba por encima del punto de salida, el rayo no
+    encontraba nada y el prop se plantaba a la altura cero del centro del nivel
+    — o sea, enterrado varios metros. De ahí salía la hierba asomando por dentro
+    del suelo. Ahora va de +90 a −60 y, si no toca nada, **se descarta la copia**
+    en vez de dejarla flotando.
+47. **El orden de siembra decide quién se queda el sitio.** Los rincones
+    compuestos se colocaban al final, y los cerezos de la segunda fila del
+    camino —que van a siete metros del muro— caían dentro de la plaza de la
+    fuente y la llenaban de troncos. Van los PRIMEROS de todo, después del
+    estanque: lo más importante reserva antes.
+48. **Un sendero recto entre dos puntos cruza los muros que haya en medio.** El
+    andén de la plaza de la fuente salía del camino, atravesaba el seto y
+    reaparecía al otro lado. `_punto_del_recorrido_mas_cercano()` ya no coge el
+    punto más cercano a secas: prueba puntos de todo el recorrido y se queda con
+    el más cercano **desde el que se llega sin cruzar nada** (`_hay_paso()`).
+49. **Un radio mayor que la celda de la rejilla no se ve desde lejos.** La
+    rejilla de ocupación mira las nueve celdas vecinas, así que un círculo de
+    once metros registrado en una celda de seis solo lo ven los props que caigan
+    muy cerca. Por eso los rincones NO usan la rejilla: van en su propia lista
+    (`_sitios_rincon` + `_en_un_rincon()`).
 
 ---
 
