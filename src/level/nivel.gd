@@ -12,6 +12,8 @@ class_name Nivel
 @export var arenas: Array[NodePath] = [^"Arena1", ^"Arena2", ^"Guardian"]
 ## Por debajo de esta altura se considera que se ha caído.
 @export var altura_de_rescate: float = -6.0
+## Cuánto se deja subir por las colinas del borde antes de devolver al mapa.
+@export var margen_limite: float = 22.0
 @export var mensajes: bool = true
 
 @export_group("Coleccionables")
@@ -26,6 +28,7 @@ class_name Nivel
 
 var _jugador: Node3D = null
 var _constructor: ConstructorNivel = null
+var _terreno: TerrenoNivel = null
 var _limpias: int = 0
 var _ultimo_suelo: Vector3 = Vector3.ZERO
 var _camara_plano: Camera3D = null
@@ -40,6 +43,18 @@ func _ready() -> void:
 	if _jugador != null and _constructor != null:
 		_jugador.global_position = _constructor.punto_inicio
 		_ultimo_suelo = _constructor.punto_inicio
+
+	# El terreno va PRIMERO de todo lo que se genera: los props se posan con un
+	# rayo sobre el suelo, así que el suelo tiene que existir ya.
+	_terreno = get_node_or_null("Terreno") as TerrenoNivel
+	if _terreno != null:
+		_terreno.construir()
+		if _constructor != null:
+			_constructor.radio_limite = _terreno.radio_colinas
+		# La física necesita un ciclo para enterarse del cuerpo nuevo. Sin esta
+		# espera, los rayos que posan los props salen al vacío y todo el parque
+		# vuelve a quedarse flotando.
+		await get_tree().physics_frame
 
 	# Decorar va después de construir y antes que nada más: las Estrellas y los
 	# faroles se colocan por coordenadas del recorrido, no por lo que haya
@@ -73,9 +88,35 @@ func _physics_process(_delta: float) -> void:
 	if _jugador.global_position.y < altura_de_rescate:
 		rescatar()
 		return
+	if _fuera_del_mundo():
+		rescatar()
+		return
 	var cuerpo := _jugador as CharacterBody3D
 	if cuerpo != null and cuerpo.is_on_floor():
 		_ultimo_suelo = _jugador.global_position
+
+
+## Red de seguridad del límite del mapa.
+##
+## Las colinas frenan, pero un límite que depende solo de la geometría acaba
+## burlándose: basta un collado bajo, un rebote raro contra una roca o un salto
+## desde algo alto. Y salirse del mundo en un juego para una niña de ocho años
+## no es un secretito que descubrir, es un sitio del que no se sabe volver.
+##
+## Se mide en el plano y no en 3D a propósito: importa lo lejos que se está del
+## centro, no la altura — subirse a una colina es legítimo, cruzarla no.
+##
+## Vale igual para los escenarios que vengan: mientras haya un `Terreno`, el
+## radio sale de él y no hay que configurar nada.
+func _fuera_del_mundo() -> bool:
+	if _terreno == null:
+		return false
+	var aqui := _jugador.global_position
+	var centro := _terreno.global_position
+	var distancia := Vector2(aqui.x - centro.x, aqui.z - centro.z).length()
+	# Un margen por encima de donde arrancan las colinas: hay que poder subirse
+	# a ellas y asomarse, que es de las pocas cosas que premian explorar.
+	return distancia > _terreno.radio_colinas + margen_limite
 
 
 func rescatar() -> void:

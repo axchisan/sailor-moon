@@ -118,18 +118,59 @@ func shake(strength: float, duration: float) -> void:
 	shake_requested.emit(strength, duration)
 
 
+## Cuántos estallidos pueden verse a la vez. Con vidas de un segundo escaso, doce
+## sobran incluso en la última arena; si se pasaran, el más viejo se corta y no
+## se nota entre el resto del combate.
+const RESERVA_PARTICULAS := 12
+
+var _particulas: Array[Node3D] = []
+var _siguiente_particula: int = 0
+
+
+## Estallido de partículas en un punto del mundo.
+##
+## Coge el siguiente emisor de la reserva en vez de instanciar uno nuevo. Los
+## tirones al coger una Estrella o al pegar venían de aquí: instanciar la escena
+## y duplicar su material en mitad de la acción obliga a crear recursos de GPU
+## justo en el fotograma donde más falta hace no hacerlo.
 func spawn_impact_particles(world_position: Vector3, color: Color = Color(1.0, 0.65, 0.85),
 		amount: int = 18, scale_factor: float = 1.0) -> void:
 	if not juice_enabled:
 		return
+	_asegurar_reserva()
+	if _particulas.is_empty():
+		return
+	var fx := _particulas[_siguiente_particula]
+	_siguiente_particula = (_siguiente_particula + 1) % _particulas.size()
+	fx.global_position = world_position
+	if fx.has_method("burst"):
+		fx.call("burst", color, amount, scale_factor)
+
+
+## Monta la reserva la primera vez, y otra vez si se ha cambiado de escena.
+##
+## No se hace en `_ready` porque este autoload arranca antes que el nivel: los
+## emisores tienen que colgar de la escena en curso para que se limpien solos al
+## cambiar de nivel.
+func _asegurar_reserva() -> void:
+	if not _particulas.is_empty() and is_instance_valid(_particulas[0]) \
+			and _particulas[0].is_inside_tree():
+		return
+	_particulas.clear()
+	_siguiente_particula = 0
 	var root := _get_fx_root()
 	if root == null:
 		return
-	var fx: Node3D = IMPACT_PARTICLES.instantiate()
-	root.add_child(fx)
-	fx.global_position = world_position
-	if fx.has_method("burst"):
-		fx.burst(color, amount, scale_factor)
+	for i in RESERVA_PARTICULAS:
+		var fx: Node3D = IMPACT_PARTICLES.instantiate()
+		fx.name = "Particulas%d" % i
+		root.add_child(fx)
+		# Lejos y bajo tierra: el precalentado tiene que compilar el shader sin
+		# que se vea un chispazo en mitad del parque al empezar la partida.
+		fx.global_position = Vector3(0.0, -500.0, 0.0)
+		if fx.has_method("precalentar"):
+			fx.call("precalentar")
+		_particulas.append(fx)
 
 
 ## Destello blanco sobre un MeshInstance3D. Requiere material propio por

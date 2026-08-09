@@ -1,33 +1,51 @@
 extends GPUParticles3D
-## Estallido de partículas de un solo uso que se autodestruye.
+## Estallido de partículas **reutilizable**.
 ##
-## Se instancia una por impacto y se libera sola. En un beat 'em up esto se
-## dispara decenas de veces por segundo, así que el `queue_free` automático
-## es obligatorio: sin él, la escena se llena de nodos muertos.
+## Antes se instanciaba uno por impacto y se autodestruía. En un beat 'em up eso
+## se dispara decenas de veces por segundo, y cada disparo hacía tres cosas
+## caras: instanciar la escena, **duplicar el material de proceso** —que obliga
+## a subir un material nuevo a la GPU— y liberar el nodo. Era el tirón que se
+## notaba al coger una Estrella y al pelear.
+##
+## Ahora hay una reserva fija que monta `CombatFeel` al arrancar el nivel. Cada
+## emisor duplica su material **una sola vez**, en `_ready`, y a partir de ahí
+## solo se le cambian los valores. Emitir pasa a ser gratis.
+
+var _ajustes: ParticleProcessMaterial = null
+
 
 func _ready() -> void:
 	one_shot = true
 	emitting = false
+	# El material se duplica aquí y solo aquí: si se duplicara en cada estallido
+	# volvería el problema, y si no se duplicara, todos los emisores de la
+	# reserva compartirían color y se pisarían entre ellos.
+	var original := process_material as ParticleProcessMaterial
+	if original != null:
+		_ajustes = original.duplicate() as ParticleProcessMaterial
+		process_material = _ajustes
 
 
-## Lanza el estallido. Se llama justo después de instanciar.
+## Lanza el estallido en un punto. El emisor se queda en la escena esperando al
+## siguiente.
 func burst(color: Color, count: int = 18, scale_factor: float = 1.0) -> void:
 	amount = maxi(1, count)
-
-	# Se duplica el material para que cada estallido pueda tener su propio
-	# color y tamaño sin pisar al de los demás.
-	var settings := process_material as ParticleProcessMaterial
-	if settings != null:
-		settings = settings.duplicate() as ParticleProcessMaterial
-		settings.color = color
-		settings.scale_min = 0.10 * scale_factor
-		settings.scale_max = 0.28 * scale_factor
-		settings.initial_velocity_min = 2.0 * scale_factor
-		settings.initial_velocity_max = 5.5 * scale_factor
-		process_material = settings
-
+	if _ajustes != null:
+		_ajustes.color = color
+		_ajustes.scale_min = 0.10 * scale_factor
+		_ajustes.scale_max = 0.28 * scale_factor
+		_ajustes.initial_velocity_min = 2.0 * scale_factor
+		_ajustes.initial_velocity_max = 5.5 * scale_factor
+	# Reiniciar antes de emitir: si el emisor venía de un estallido a medias,
+	# `emitting = true` no lo reinicia por sí solo y salen partículas a destiempo.
+	restart()
 	emitting = true
-	# `lifetime` va en tiempo de juego; el temporizador ignora time_scale para
-	# que el hit stop no deje partículas colgadas en escena.
-	await get_tree().create_timer(lifetime + 0.3, true, false, true).timeout
-	queue_free()
+
+
+## Se llama una vez al montar la reserva, para que el motor compile el shader y
+## suba los recursos ANTES del primer golpe. Sin esto, el primer impacto de la
+## partida sigue dando el tirón por mucha reserva que haya.
+func precalentar() -> void:
+	amount = 1
+	restart()
+	emitting = true

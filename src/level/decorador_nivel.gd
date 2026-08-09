@@ -161,16 +161,22 @@ const LIMITE: Array[Dictionary] = [
 ## fuera aunque el nivel crezca. `arco` limita a qué parte del círculo va la
 ## pieza, en grados, para que la pagoda no aparezca cuatro veces alrededor.
 const FONDO: Array[Dictionary] = [
-	{"pieza": "montana_lejana", "copias": 9, "radio": 165.0, "desvio": 45.0,
-		"escala": [1.0, 2.1], "hundir": 3.0},
-	{"pieza": "cerezo_gigante", "copias": 14, "radio": 62.0, "desvio": 16.0,
-		"escala": [0.8, 1.5], "hundir": 0.6},
-	{"pieza": "pagoda_lejana", "copias": 1, "radio": 88.0, "desvio": 0.0,
-		"escala": [1.3, 1.3], "arco": [24.0, 24.0]},
-	{"pieza": "torii", "copias": 1, "radio": 46.0, "desvio": 0.0,
-		"escala": [1.6, 1.6], "arco": [128.0, 128.0]},
-	{"pieza": "torii", "copias": 1, "radio": 52.0, "desvio": 0.0,
-		"escala": [1.4, 1.4], "arco": [-96.0, -96.0]},
+	# Las montañas ya no van aquí: eran conos de seis lados y se les notaba.
+	# Ahora las hace el propio terreno subiendo al fondo, con la misma forma
+	# irregular que las colinas y desteñidas por la perspectiva aérea.
+	{"pieza": "cerezo_gigante", "copias": 16, "radio": 24.0, "desvio": 14.0,
+		"escala": [0.9, 1.6], "hundir": 0.6},
+	# La pagoda se va a media falda, donde su silueta se recorta contra la
+	# cordillera en vez de contra el cielo raso.
+	{"pieza": "pagoda_lejana", "copias": 1, "radio": 46.0, "desvio": 0.0,
+		"escala": [1.5, 1.5], "arco": [24.0, 24.0]},
+	# Los torii bajan al campo abierto. Antes estaban tan lejos que se
+	# encaramaban a una colina y quedaban torcidos y flotando; y un torii no es
+	# un elemento de horizonte, es una puerta por la que se pasa.
+	{"pieza": "torii", "copias": 1, "radio": 14.0, "desvio": 0.0,
+		"escala": [1.7, 1.7], "arco": [128.0, 128.0]},
+	{"pieza": "torii", "copias": 1, "radio": 18.0, "desvio": 0.0,
+		"escala": [1.5, 1.5], "arco": [-96.0, -96.0]},
 ]
 
 @export_group("Interruptores")
@@ -218,8 +224,6 @@ func decorar(constructor: ConstructorNivel) -> void:
 
 	var medida := constructor.extension()
 
-	if faldon > 0.0:
-		_faldon(medida["centro"], medida["radio"] + faldon)
 	if decorar_tramos:
 		for carril in constructor.carriles():
 			_sembrar_carril(carril)
@@ -527,46 +531,3 @@ static func _recoger(nodo: Node, acumulada: Transform3D, salida: Array) -> void:
 			salida.append({"mesh": malla, "local": propia})
 	for hijo in nodo.get_children():
 		_recoger(hijo, propia, salida)
-
-
-## Disco de hierba por debajo de todo, para que los árboles de fuera del borde
-## no queden plantados en el vacío.
-##
-## **Sí tiene colisión**, y es lo más importante que hace. Sin él, todo lo que
-## no fuera una losa del blockout era vacío: cualquier rendija entre dos piezas
-## te tiraba del mundo. Con el faldón debajo, lo peor que pasa al colarse por
-## una junta es bajar un escalón de un palmo y volver a subir.
-##
-## Que se pueda andar por la hierba es un efecto secundario buscado: el nivel
-## deja de ser un pasillo con paredes invisibles. Los límites de verdad se ponen
-## con accidentes del terreno, no con el borde del mundo.
-func _faldon(centro: Vector3, radio: float) -> void:
-	var malla := CylinderMesh.new()
-	malla.top_radius = radio
-	malla.bottom_radius = radio
-	malla.height = 1.0
-	malla.radial_segments = 32
-
-	var visual := MeshInstance3D.new()
-	visual.name = "Faldon"
-	visual.mesh = malla
-	# Hierba de la misma familia que la del camino pero más apagada y de patrón
-	# más grande: separa lo jugable de lo que solo se mira, sin necesidad de una
-	# valla que lo diga.
-	visual.material_override = PaletaTerreno.obtener("hierba_lejos")
-	visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-
-	var cuerpo := StaticBody3D.new()
-	cuerpo.name = "Faldon"
-	cuerpo.position = centro + Vector3.DOWN * HUNDIDO_FALDON
-	cuerpo.collision_layer = 1
-	cuerpo.collision_mask = 0
-	cuerpo.add_child(visual)
-
-	var forma := CollisionShape3D.new()
-	var cilindro := CylinderShape3D.new()
-	cilindro.radius = radio
-	cilindro.height = 1.0
-	forma.shape = cilindro
-	cuerpo.add_child(forma)
-	add_child(cuerpo)

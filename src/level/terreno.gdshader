@@ -50,6 +50,21 @@ uniform float grano : hint_range(0.0, 1.0) = 0.18;
 uniform float vetas : hint_range(0.0, 1.0) = 0.0;
 uniform float aspereza : hint_range(0.0, 1.0) = 0.95;
 
+// Perspectiva aérea: lo lejano se destiñe hacia el color del aire y tira a azul.
+//
+// Es la razón por la que las montañas de verdad se ven moradas, y hace más por
+// la sensación de distancia que cualquier cantidad de geometría. Aquí sustituye
+// a los conos morados que hacían de montañas al fondo: en vez de poner objetos
+// lejanos, se tiñe el propio terreno según lo lejos que esté.
+//
+// Con `lejania` a 0 no hace nada, así que las superficies del parque —que están
+// todas cerca— pueden usar el mismo shader sin enterarse.
+uniform vec3 centro_mundo = vec3(0.0, 0.0, 0.0);
+uniform vec3 color_lejania : source_color = vec3(0.62, 0.60, 0.78);
+uniform float lejania : hint_range(0.0, 1.0) = 0.0;
+uniform float desde : hint_range(10.0, 400.0) = 70.0;
+uniform float hasta : hint_range(20.0, 600.0) = 190.0;
+
 // Ruido de valor clásico. Va en el shader y no en una textura para no gastar
 // memoria ni un archivo por variante: a esta escala se calcula más barato de
 // lo que costaría muestrear.
@@ -118,6 +133,14 @@ void fragment() {
 	if (grano > 0.001) {
 		float fino = ruido(uv * 13.0) - 0.5;
 		color += fino * grano * 0.14;
+	}
+
+	if (lejania > 0.001) {
+		// La distancia se mide en el PLANO: lo que aleja una montaña es lo
+		// lejos que está, no lo alta que sea.
+		float d = length(mundo.xz - centro_mundo.xz);
+		float mezcla = smoothstep(desde, hasta, d) * lejania;
+		color = mix(color, color_lejania, mezcla);
 	}
 
 	ALBEDO = color;

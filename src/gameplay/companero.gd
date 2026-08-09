@@ -84,6 +84,9 @@ var _visual: Node3D = null
 var _animador: AnimationPlayer = null
 var _pelo: HairPhysics = null
 var _andando: bool = false
+## Segundos seguidos sin acercarse al objetivo. Es lo que detecta el atasco.
+var _atascado: float = 0.0
+var _distancia_previa: float = 0.0
 
 
 func _ready() -> void:
@@ -100,10 +103,20 @@ func _ready() -> void:
 func _montar_cuerpo() -> void:
 	collision_layer = 128  # interactable
 	collision_mask = 1     # solo el escenario: no empuja ni la empujan
-	# Un gato no trepa nada, pero tampoco puede tropezar con el bordillo del
-	# camino. Medio metro de escalón resuelve las dos cosas.
-	floor_max_angle = deg_to_rad(52.0)
-	floor_snap_length = 0.5
+	# Un gato no trepa nada, pero tampoco puede quedarse trabado en el bordillo
+	# del camino. La pendiente va generosa y el enganche al suelo, largo: entre
+	# los dos suben solos casi todos los escalones del parque.
+	#
+	# `motion_mode` en modo suelo es lo que hace que un tropiezo se resuelva
+	# deslizando por encima en vez de frenar en seco contra el canto.
+	motion_mode = CharacterBody3D.MOTION_MODE_GROUNDED
+	floor_max_angle = deg_to_rad(60.0)
+	floor_snap_length = 0.7
+	floor_block_on_wall = false
+	# Sube escalones de hasta medio metro sin necesidad de saltar: es la altura
+	# de las losas del blockout, que es justo donde se quedaba clavada.
+	floor_constant_speed = true
+	safe_margin = 0.02
 
 	var forma := CollisionShape3D.new()
 	forma.name = "Forma"
@@ -155,6 +168,7 @@ func _physics_process(delta: float) -> void:
 	velocity.z = paso.z
 	velocity.y = 0.0 if is_on_floor() else velocity.y - gravedad * delta
 	move_and_slide()
+	_desatascar(delta, distancia)
 
 	if animar:
 		_animar(andaba, avance)
@@ -240,6 +254,42 @@ func _buscar_objetivo() -> Node3D:
 	if _objetivo == null:
 		_objetivo = get_tree().get_first_node_in_group("player") as Node3D
 	return _objetivo
+
+
+## Saca al gato de donde se haya quedado enganchado.
+##
+## Un gato no salta, así que cualquier escalón de un palmo —el canto de una
+## losa, una raíz, el borde del camino— lo deja empujando contra la pared para
+## siempre mientras la jugadora se aleja. Se resuelve en dos escalones:
+##
+## 1. **Empujón hacia arriba** si está tocando pared y quiere avanzar. Con
+##    `floor_snap_length` sube solo la mayoría de bordes, pero no los que pillan
+##    con la cápsula ya encajada.
+## 2. **Teletransporte** si lleva demasiado tiempo sin avanzar de verdad. Es
+##    feo, pero un gato que se queda atrás para siempre es peor: deja de
+##    acompañar, que es su único trabajo.
+func _desatascar(delta: float, distancia: float) -> void:
+	if not _andando:
+		_atascado = 0.0
+		return
+
+	# «Avanzar de verdad» es haber recortado distancia al objetivo. Mirar solo el
+	# desplazamiento no vale: resbalando a lo largo de una pared se mueve mucho
+	# y no se acerca nada.
+	if distancia < _distancia_previa - 0.02:
+		_atascado = 0.0
+	else:
+		_atascado += delta
+	_distancia_previa = distancia
+
+	if _atascado > 0.35 and is_on_wall() and is_on_floor():
+		# Saltito corto: lo justo para montar un escalón bajo.
+		velocity.y = 3.2
+		_atascado = 0.15
+
+	if _atascado > 2.5:
+		teletransportar_junto_al_objetivo()
+		_atascado = 0.0
 
 
 static func _buscar_animador(nodo: Node) -> AnimationPlayer:

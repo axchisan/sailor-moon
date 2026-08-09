@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3]
+[gd_scene load_steps=27 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/prototypes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/peluchin.tscn" id="2_peluchin"]
@@ -20,6 +20,7 @@
 [ext_resource type="PackedScene" path="res://assets/models/characters/luna.glb" id="18_luna"]
 [ext_resource type="Script" path="res://src/level/decorador_nivel.gd" id="19_decorador"]
 [ext_resource type="Script" path="res://src/core/modo_desarrollador.gd" id="20_dev"]
+[ext_resource type="Script" path="res://src/level/terreno_nivel.gd" id="21_terreno"]
 
 [sub_resource type="ShaderMaterial" id="SkyMat_1"]
 shader = ExtResource("9_cielo")
@@ -86,6 +87,10 @@ shadow_normal_bias = 2.5
 directional_shadow_max_distance = 55.0
 directional_shadow_split_1 = 0.12
 directional_shadow_split_2 = 0.32
+
+[node name="Terreno" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0, -35)
+script = ExtResource("21_terreno")
 
 [node name="Blockout" type="Node3D" parent="."]
 script = ExtResource("7_constructor")
