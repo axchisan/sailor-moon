@@ -60,6 +60,11 @@ class_name TerrenoNivel
 ## Tamaño de las ondulaciones, en metros.
 @export var escala_campo: float = 26.0
 @export var escala_colinas: float = 62.0
+## Cuántos metros se retuerce el contorno de cada franja. Es lo que convierte
+## los anillos concéntricos en geografía: 0 deja una diana, 30 da valles que se
+## meten entre los cerros.
+@export var deformacion: float = 26.0
+@export var escala_forma: float = 78.0
 @export var semilla: int = 7781
 
 @export_group("Apoyo del escenario")
@@ -83,6 +88,7 @@ var _alturas: PackedFloat32Array = PackedFloat32Array()
 var _lado: int = 0
 var _ruido: FastNoiseLite = null
 var _ruido_fino: FastNoiseLite = null
+var _ruido_forma: FastNoiseLite = null
 
 
 func construir() -> void:
@@ -123,11 +129,42 @@ func _preparar_ruido() -> void:
 	_ruido_fino.frequency = 1.0 / maxf(escala_campo, 1.0)
 	_ruido_fino.fractal_octaves = 2
 
+	# El que retuerce el contorno de las franjas. Va a escala grande y con una
+	# sola octava: se busca una silueta de mapa, no rugosidad.
+	_ruido_forma = FastNoiseLite.new()
+	_ruido_forma.seed = semilla + 4517
+	_ruido_forma.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	_ruido_forma.frequency = 1.0 / maxf(escala_forma, 1.0)
+	_ruido_forma.fractal_octaves = 1
+
+
+## Distancia al centro, pero **retorcida por ruido**.
+##
+## Todas las franjas del terreno —llano, faldas, colinas, cordillera— se deciden
+## por distancia, y con la distancia real salen anillos perfectos: el mapa se ve
+## como una diana y no como un sitio. Deformando la distancia, los mismos
+## anillos pasan a tener entrantes y salientes, y aparecen valles que se meten
+## entre los cerros y lomas que se adelantan al campo.
+##
+## Es más barato y más controlable que sumar relieve suelto: **una sola línea
+## cambia la forma del mapa entero** sin tocar ninguna de las reglas de altura.
+##
+## La deformación se apaga dentro del llano y crece al alejarse. Si actuara
+## desde el centro, un saliente podría meter una colina dentro del parque, que
+## es exactamente lo que no puede pasar.
+func _distancia_deformada(x: float, z: float) -> float:
+	var recta := sqrt(x * x + z * z)
+	if recta <= radio_llano * 0.75:
+		return recta
+	var entrada := clampf((recta - radio_llano * 0.75) / (radio_llano * 0.45), 0.0, 1.0)
+	var forma := _ruido_forma.get_noise_2d(x, z) * deformacion * entrada
+	return maxf(recta + forma, 0.0)
+
 
 ## Altura del terreno en un punto. Es la única fuente de verdad: la usan la
 ## malla, la colisión y cualquiera que necesite posar algo encima.
 func altura_en(x: float, z: float) -> float:
-	var distancia := sqrt(x * x + z * z)
+	var distancia := _distancia_deformada(x, z)
 	if distancia <= radio_llano:
 		return 0.0
 
@@ -182,6 +219,19 @@ func _apoyar_el_escenario() -> void:
 	if espacio == null:
 		return
 
+	# SOLO el suelo. Esto es lo importante de toda la función.
+	#
+	# Sin filtrar, el rayo choca con lo primero que encuentra, y eso son los
+	# MUROS: dos metros y medio de seto que el terreno tomaba por «escenario
+	# alto» y subía a apoyar. Con el suavizado extendiendo cada subida a su
+	# alrededor, el resultado fue un parque relleno de montañas por dentro.
+	#
+	# El terreno solo tiene que seguir aquello sobre lo que se anda.
+	var excluir: Array[RID] = []
+	for cuerpo in _cuerpos_del_escenario():
+		if not cuerpo.name.begins_with("Suelo"):
+			excluir.append(cuerpo.get_rid())
+
 	var apoyo := PackedFloat32Array()
 	apoyo.resize(_lado * _lado)
 	var encontrados := 0
@@ -195,6 +245,7 @@ func _apoyar_el_escenario() -> void:
 			var hasta := Vector3(x, global_position.y - 20.0, z)
 			var consulta := PhysicsRayQueryParameters3D.create(desde, hasta)
 			consulta.collision_mask = 1
+			consulta.exclude = excluir
 			var choque := espacio.intersect_ray(consulta)
 			if choque.is_empty():
 				continue
@@ -222,6 +273,21 @@ func _apoyar_el_escenario() -> void:
 				apoyo[k] = maxf(_alturas[k], maxf(apoyo[k], media))
 	_alturas = apoyo
 	print("[Terreno] %d vértices apoyados en el escenario" % encontrados)
+
+
+## Los cuerpos que forman el escenario construido, para poder filtrarlos.
+func _cuerpos_del_escenario() -> Array[StaticBody3D]:
+	var lista: Array[StaticBody3D] = []
+	var padre := get_parent()
+	if padre == null:
+		return lista
+	var blockout := padre.get_node_or_null("Blockout")
+	if blockout == null:
+		return lista
+	for hijo in blockout.get_children():
+		if hijo is StaticBody3D:
+			lista.append(hijo)
+	return lista
 
 
 func _montar_malla() -> void:

@@ -205,6 +205,63 @@ pintado y los props.
 
 ---
 
+## Fase C bis — Objetivos, mapa y desbloqueo de escenarios
+
+> Pendiente de implementar. El diseño queda aquí para no improvisarlo.
+
+### El problema
+
+El Nivel 1 se acaba matando lo que hay y hablando con Mercury. Eso no da para
+un acto: hace falta que el parque **pida ser recorrido**, y que pasar al
+siguiente escenario sea algo que se gana, no algo que pasa.
+
+### El Acto 1 se cierra con una lista, no con un jefe
+
+El teleport al Nivel 2 aparece cuando están hechas **todas** estas cosas:
+
+| Objetivo | Por qué está |
+|---|---|
+| Las 3 arenas limpias | Es el hilo principal |
+| Los 3 faroles encendidos | Obliga a mirar arriba y a los lados |
+| Hablar con Mercury | Es la historia |
+| **7 Estrellas de Sueño** | Obliga a salir del camino |
+| **Los 4 rincones del parque** | Obliga a recorrer el campo abierto |
+| El guardián derrotado | El cierre |
+
+Las dos en negrita son las nuevas, y las que hacen que el espacio del parque
+sirva de algo. Sin ellas, el campo abierto es decorado.
+
+**Regla:** ningún objetivo puede fallarse para siempre. Todo se puede volver a
+intentar, y lo recogido no se pierde al morir.
+
+### El teleport
+
+Un círculo de luz en el torii de la entrada — el sitio por el que se entró al
+parque, que es el sitio por el que se sale. Apagado hasta que la lista está
+completa; entonces se enciende y Luna lo dice en voz alta.
+
+### El mapa
+
+Pantalla aparte, con los escenarios como puntos sobre una ilustración de Tokio:
+
+- **Completado** — a todo color, se puede volver
+- **Abierto** — brillando, es a donde toca ir
+- **Cerrado** — silueta gris, sin nombre
+
+Que los cerrados **se vean** es lo que hace que el mapa funcione: enseña cuánto
+queda por delante. Y volver a un nivel ya hecho tiene que servir para algo —
+las Estrellas que falten siguen ahí.
+
+### Qué hace falta del terreno
+
+Para que ese mapa se lea como un sitio y no como una lista de burbujas, cada
+escenario tiene que tener **forma propia**: el parque es un valle, el templo
+está en un cerro, el puerto es una costa. El terreno ya lo permite — la
+deformación del contorno se controla con dos números — pero hay que decidir la
+silueta de cada nivel al construirlo, no después.
+
+---
+
 ## Fase D — Rendimiento
 
 Hay tirones en zonas concretas. Antes de optimizar a ciegas, **medir**:
