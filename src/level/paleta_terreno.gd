@@ -25,6 +25,14 @@ class_name PaletaTerreno
 
 const SHADER := preload("res://src/level/terreno.gdshader")
 
+## El patrón de todas las superficies, horneado a una textura.
+##
+## Es UNA sola para el juego entero: lo que distingue la hierba de la madera son
+## los colores y la escala, no el ruido. Antes se calculaba en el shader y
+## costaba veintiocho evaluaciones de hash por píxel — ver la cabecera de
+## `terreno.gdshader`. Se regenera con `tools/generar_textura_ruido.gd`.
+const RUIDO := preload("res://assets/textures/ruido_superficie.png")
+
 ## Las recetas. Añadir una superficie nueva es añadir una entrada aquí.
 const RECETAS := {
 	# --- Naturales -----------------------------------------------------------
@@ -94,18 +102,29 @@ static func obtener(nombre: String) -> ShaderMaterial:
 			return _cache[nombre]
 
 	var receta: Dictionary = RECETAS[nombre]
+	var material := _crear(receta, receta["base"], receta["mancha"], receta["luz"])
+	_cache[nombre] = material
+	return material
+
+
+## Monta el material a partir de una receta y tres colores. Lo comparten
+## `obtener()` y `tenida()`, que solo se diferencian en de dónde salen los
+## colores: teniéndolo en un sitio, añadir un parámetro al shader es tocar una
+## línea y no dos que se desincronizan.
+static func _crear(receta: Dictionary, base: Color, mancha: Color,
+		luz: Color) -> ShaderMaterial:
 	var material := ShaderMaterial.new()
 	material.shader = SHADER
-	material.set_shader_parameter("color_base", receta["base"])
-	material.set_shader_parameter("color_mancha", receta["mancha"])
-	material.set_shader_parameter("color_luz", receta["luz"])
+	material.set_shader_parameter("ruido_tex", RUIDO)
+	material.set_shader_parameter("color_base", base)
+	material.set_shader_parameter("color_mancha", mancha)
+	material.set_shader_parameter("color_luz", luz)
 	material.set_shader_parameter("escala", receta.get("escala", 3.0))
 	material.set_shader_parameter("tonos", receta.get("tonos", 3))
 	material.set_shader_parameter("fuerza", receta.get("fuerza", 0.55))
 	material.set_shader_parameter("grano", receta.get("grano", 0.18))
 	material.set_shader_parameter("vetas", receta.get("vetas", 0.0))
 	material.set_shader_parameter("aspereza", receta.get("aspereza", 0.95))
-	_cache[nombre] = material
 	return material
 
 
@@ -120,16 +139,6 @@ static func tenida(nombre: String, base: Color, mancha: Color,
 	if _cache.has(clave):
 		return _cache[clave]
 	var receta: Dictionary = RECETAS.get(nombre, RECETAS["hierba"])
-	var material := ShaderMaterial.new()
-	material.shader = SHADER
-	material.set_shader_parameter("color_base", base)
-	material.set_shader_parameter("color_mancha", mancha)
-	material.set_shader_parameter("color_luz", luz)
-	material.set_shader_parameter("escala", receta.get("escala", 3.0))
-	material.set_shader_parameter("tonos", receta.get("tonos", 3))
-	material.set_shader_parameter("fuerza", receta.get("fuerza", 0.55))
-	material.set_shader_parameter("grano", receta.get("grano", 0.18))
-	material.set_shader_parameter("vetas", receta.get("vetas", 0.0))
-	material.set_shader_parameter("aspereza", receta.get("aspereza", 0.95))
+	var material := _crear(receta, base, mancha, luz)
 	_cache[clave] = material
 	return material

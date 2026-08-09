@@ -126,7 +126,6 @@ pause={
 , Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"button_index":6,"pressure":0.0,"pressed":false,"script":null)
 ]
 }
-
 attack_raton={
 "deadzone": 0.5,
 "events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":1,"canceled":false,"pressed":false,"double_click":false,"script":null)
@@ -137,6 +136,7 @@ special_raton={
 "events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":2,"canceled":false,"pressed":false,"double_click":false,"script":null)
 ]
 }
+
 [input_devices]
 
 pointing/emulate_touch_from_mouse=true
@@ -161,29 +161,18 @@ pointing/emulate_touch_from_mouse=true
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
 textures/vram_compression/import_etc2_astc=true
-; MSAA fuera, FXAA dentro. El multisample de 2x cuesta ancho de banda en cada
-; fotograma, y en un móvil el ancho de banda es LO caro. FXAA es un filtro de
-; pantalla que vale una fracción, y con cel shading —masas planas de color y
-; contornos duros— la diferencia se ve poco.
-anti_aliasing/quality/msaa_3d=0
-anti_aliasing/quality/screen_space_aa=1
-; Sombras: mapa de 2048 y filtro duro. 4096 con filtro suave es calidad de PC.
 lights_and_shadows/directional_shadow/size=2048
-lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
-lights_and_shadows/positional_shadow/atlas_size=1024
+; El filtro DURO dejaba el borde de las sombras en diente de sierra: cada
+; sombra grande sobre el terreno se veía recortada en zigzag siguiendo los
+; texels del mapa. No es «borde duro de cel shading», es aliasing — el estilo
+; pide un contorno limpio, y una sierra no lo es.
+;
+; Un filtro suave de nivel bajo lo quita y cuesta poco: el mapa de sombras se
+; muestrea unas pocas veces más, y el pase de sombra ya se sabe lo que vale
+; (63.000 triángulos y 19 llamadas de dibujado, medidos con F8).
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=2
 lights_and_shadows/positional_shadow/soft_shadow_filter_quality=0
-; Oclusión: lo que queda TAPADO por un muro no se dibuja.
-;
-; Godot lo hace por software — rasteriza una escena diminuta en la CPU con los
-; `OccluderInstance3D` de la escena y descarta lo que quede detrás. Cuesta un
-; poco de CPU y ahorra mucha GPU, que es justo el cambio que interesa en un
-; móvil. Los occluders los pone `constructor_nivel.gd` en cada muro y talud.
-; SIN escalado de resolución. Se probó a 0,8 y la imagen se ve emborronada:
-; el filtro que estira el resultado deja los contornos del cel shading —que son
-; justo lo que define este estilo— con un halo blando que canta muchísimo. En un
-; juego de masas planas de color, bajar resolución se nota MÁS que en uno
-; fotográfico, no menos.
-;
-; El rendimiento se saca de dibujar menos mundo, no de dibujarlo peor.
-occlusion_culling/use_occlusion_culling=true
 occlusion_culling/occlusion_rays_per_thread=256
+anti_aliasing/quality/screen_space_aa=1
+occlusion_culling/use_occlusion_culling=true
+lights_and_shadows/positional_shadow/atlas_size=1024

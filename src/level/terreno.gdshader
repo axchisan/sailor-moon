@@ -29,10 +29,22 @@ render_mode diffuse_lambert, specular_disabled, cull_back;
 // metro de hierba mide igual en el suelo del pasillo que en el disco de hierba,
 // aunque las mallas tengan tamaños completamente distintos.
 //
-// Se elige el eje dominante de la normal en vez de mezclar tres muestras
-// (triplanar de verdad). Cuesta un tercio y en geometría de cajas —que es toda
-// la del blockout— no se nota la diferencia: solo asomaría en superficies
-// curvas y muy inclinadas.
+// EL PATRÓN VA HORNEADO EN UNA TEXTURA, Y ESA ES LA DIFERENCIA
+//
+// Antes se calculaba aquí mismo: dos octavas de ruido por muestra, tres
+// muestras por la proyección triplanar, más el grano y las vetas. Veintiocho
+// evaluaciones de hash por píxel, unas trescientas operaciones, en la
+// superficie que ocupa media pantalla. Ese era el motivo real de que el juego
+// no pasara de 40 fps, y no aparecía por ningún lado en el contador: no es
+// geometría, es lo que cuesta pintar cada píxel.
+//
+// Lo importante es que **el patrón siempre es el mismo**. Entre la hierba y la
+// madera cambian los colores y la escala, no el ruido. Así que se calcula una
+// sola vez fuera del juego (`tools/generar_textura_ruido.gd`) y aquí se leen
+// tres texels, que es justo para lo que una GPU tiene unidades dedicadas.
+//
+// De propina, los mapas MIP de la textura quitan el hormigueo que el ruido
+// procedural hacía en la distancia: se ve mejor, no peor.
 
 uniform vec3 color_base : source_color = vec3(0.42, 0.55, 0.38);
 uniform vec3 color_mancha : source_color = vec3(0.34, 0.47, 0.31);
@@ -65,46 +77,43 @@ uniform float lejania : hint_range(0.0, 1.0) = 0.0;
 uniform float desde : hint_range(10.0, 400.0) = 70.0;
 uniform float hasta : hint_range(20.0, 600.0) = 190.0;
 
-// Ruido de valor clásico. Va en el shader y no en una textura para no gastar
-// memoria ni un archivo por variante.
+// EL CAMINO SE PINTA AQUÍ, NO SE CONSTRUYE
 //
-// EL HASH NO USA `sin()`, Y ES LA DIFERENCIA ENTRE QUE VAYA Y QUE NO
+// Antes el camino era una caja de 16 cm puesta encima de la losa del suelo, que
+// a su vez era otra caja de un metro apoyada sobre el terreno. Dos escalones,
+// dos cantos verticales a la vista y una pelea de z-fighting en cada junta: era
+// el motivo de que el parque se leyera como bloques cuadrados encima del mapa.
 //
-// La versión de libro es `fract(sin(dot(p, k)) * 43758.5453)`. Se lee muy bien
-// y en un PC da igual, pero aquí cada píxel del terreno pide **ocho** hashes
-// por muestra de ruido, y hay tres muestras por la proyección triplanar más una
-// del grano: más de treinta senos por píxel, en una superficie que ocupa la
-// pantalla entera. En una GPU de móvil el seno es una operación transcendental,
-// que va a una fracción del ritmo de una multiplicación — de ahí venía el tirón
-// constante, el que se notaba «en todo el mapa» y no en una zona concreta.
+// Ahora el terreno es una superficie continua y el camino es un COLOR sobre
+// ella. La máscara dice cuánto hay de cada superficie en cada punto, y como es
+// una textura, su resolución no depende de lo gruesa que sea la malla del
+// terreno: el borde del camino sale nítido aunque una celda mida tres metros.
 //
-// Este hash da un ruido equivalente con multiplicaciones y `fract`, que es lo
-// que una GPU hace deprisa. El patrón sale distinto —otras manchas— pero del
-// mismo tipo, y a la escala a la que se ve no se distingue.
-float picotazo(vec2 p) {
-	vec3 p3 = fract(vec3(p.x, p.y, p.x) * 0.1031);
-	p3 += dot(p3, vec3(p3.y, p3.z, p3.x) + 33.33);
-	return fract((p3.x + p3.y) * p3.z);
-}
+// Con `mezcla_activa` a 0 el shader se comporta exactamente como antes, así que
+// las piezas sueltas —muros, plataformas, props— siguen usándolo sin enterarse.
+uniform sampler2D mascara : hint_default_black, filter_linear, repeat_disable;
+uniform float mezcla_activa : hint_range(0.0, 1.0) = 0.0;
+// Esquina y tamaño del trozo de mundo que cubre la máscara, en metros.
+uniform vec2 mascara_origen = vec2(0.0, 0.0);
+uniform vec2 mascara_tam = vec2(1.0, 1.0);
+// La segunda superficie: los mismos tres colores, para el camino.
+uniform vec3 color_base_2 : source_color = vec3(0.76, 0.70, 0.54);
+uniform vec3 color_mancha_2 : source_color = vec3(0.66, 0.59, 0.44);
+uniform vec3 color_luz_2 : source_color = vec3(0.84, 0.79, 0.63);
 
-float ruido(vec2 p) {
-	vec2 celda = floor(p);
-	vec2 dentro = fract(p);
-	// Suavizado cúbico: con interpolación lineal se ven los rombos de la
-	// rejilla, que es el aspecto de «ruido de videojuego de 1998».
-	vec2 t = dentro * dentro * (3.0 - 2.0 * dentro);
-	float a = picotazo(celda);
-	float b = picotazo(celda + vec2(1.0, 0.0));
-	float c = picotazo(celda + vec2(0.0, 1.0));
-	float d = picotazo(celda + vec2(1.0, 1.0));
-	return mix(mix(a, b, t.x), mix(c, d, t.x), t.y);
-}
+// El patrón, horneado. Tres canales que antes eran tres cálculos distintos:
+//
+//   R  manchas   dos octavas, las masas grandes de color
+//   G  grano     ruido fino, rompe la repetición de las manchas
+//   B  vetas     ruido estirado en un eje, para madera y tierra pisada
+//
+// Se genera con `tools/generar_textura_ruido.gd`. Si se regenera, hay que
+// forzar la reimportación (trampa 41 de ESTADO.md).
+uniform sampler2D ruido_tex : hint_default_white, filter_linear_mipmap, repeat_enable;
 
-// Dos octavas bastan. Con más, el patrón se vuelve fotográfico y se pierde
-// justo lo que se busca.
-float manchas(vec2 p) {
-	return ruido(p) * 0.65 + ruido(p * 2.7) * 0.35;
-}
+// Cuántas celdas del patrón lleva dentro una repetición de la textura. Tiene
+// que coincidir con `DOMINIO` del generador, o las manchas cambian de tamaño.
+const float DOMINIO = 4.0;
 
 void fragment() {
 	// En `fragment()`, VERTEX y NORMAL vienen en espacio de VISTA, no de mundo.
@@ -126,26 +135,30 @@ void fragment() {
 	// muros al mover la vista.
 	//
 	// Mezclando los tres planos con pesos, la transición es continua y el
-	// problema desaparece por completo. Cuesta tres muestras de ruido en vez de
-	// una, pero el ruido aquí es aritmética pura, no lectura de textura.
+	// problema desaparece. Antes eso costaba triplicar el ruido, que es de
+	// donde salía el problema de rendimiento; ahora son tres lecturas de
+	// textura y el argumento del ahorro ya no aplica.
 	vec3 peso = pow(n, vec3(4.0));
 	peso /= max(peso.x + peso.y + peso.z, 0.0001);
 
-	float inv = 1.0 / max(escala, 0.01);
+	// El DOMINIO compensa que cada repetición de la textura lleve varias celdas
+	// del patrón dentro: así una mancha sigue midiendo `escala` metros.
+	float inv = 1.0 / max(escala * DOMINIO, 0.01);
 	vec2 uv_y = mundo.xz * inv;
 	vec2 uv_x = mundo.zy * inv;
 	vec2 uv_z = mundo.xy * inv;
 
-	float patron = manchas(uv_y) * peso.y
-		+ manchas(uv_x) * peso.x
-		+ manchas(uv_z) * peso.z;
-	// Para el grano y las vetas basta el plano dominante: son detalle fino y
-	// una costura ahí no se ve.
-	vec2 uv = peso.y >= peso.x && peso.y >= peso.z ? uv_y
-		: (peso.x >= peso.z ? uv_x : uv_z);
+	// Una sola lectura por plano trae los tres patrones a la vez. El grano y
+	// las vetas salían antes del plano dominante para ahorrar; ahora vienen de
+	// la misma mezcla, así que además desaparece la costura que tenían.
+	vec3 ruidos = texture(ruido_tex, uv_y).rgb * peso.y
+		+ texture(ruido_tex, uv_x).rgb * peso.x
+		+ texture(ruido_tex, uv_z).rgb * peso.z;
+
+	float patron = ruidos.r;
 	if (vetas > 0.001) {
 		// Las vetas van a lo largo de un eje y muy estiradas en el otro.
-		patron = mix(patron, ruido(vec2(uv.x * 9.0, uv.y * 0.6)), vetas);
+		patron = mix(patron, ruidos.b, vetas);
 	}
 
 	// El escalonado: aquí es donde deja de parecer una foto.
@@ -155,13 +168,28 @@ void fragment() {
 
 	// Tres colores en vez de dos: el tercero solo asoma en la banda más alta y
 	// hace de luz, que es como se pinta la hierba en un fondo de anime.
-	vec3 color = mix(color_mancha, color_base, smoothstep(0.0, 0.6, escalonado));
-	color = mix(color, color_luz, smoothstep(0.72, 1.0, escalonado));
-	color = mix(color_base, color, fuerza);
+	//
+	// Los colores se eligen ANTES de aplicar el patrón, no se mezclan los dos
+	// resultados al final. Así el camino conserva su propio escalonado en vez de
+	// salir un promedio lavado de los dos, que es lo que hace que una mezcla de
+	// terrenos se lea como barro.
+	vec3 c_base = color_base;
+	vec3 c_mancha = color_mancha;
+	vec3 c_luz = color_luz;
+	if (mezcla_activa > 0.001) {
+		float m = texture(mascara, (mundo.xz - mascara_origen) / mascara_tam).r;
+		m *= mezcla_activa;
+		c_base = mix(c_base, color_base_2, m);
+		c_mancha = mix(c_mancha, color_mancha_2, m);
+		c_luz = mix(c_luz, color_luz_2, m);
+	}
+
+	vec3 color = mix(c_mancha, c_base, smoothstep(0.0, 0.6, escalonado));
+	color = mix(color, c_luz, smoothstep(0.72, 1.0, escalonado));
+	color = mix(c_base, color, fuerza);
 
 	if (grano > 0.001) {
-		float fino = ruido(uv * 13.0) - 0.5;
-		color += fino * grano * 0.14;
+		color += (ruidos.g - 0.5) * grano * 0.14;
 	}
 
 	if (lejania > 0.001) {

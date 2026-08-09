@@ -206,10 +206,24 @@ terreno y el cálculo de por dónde cruza el puente.
 | Parpadeos en el empedrado y en el camino | Z-fighting: la losa quedaba al ras del terreno y el disco de arena a la misma cota que el pasillo |
 | Tirones en todo el mapa | 358.000 → 100.300 triángulos por fotograma (ver Rendimiento) |
 
+### Hecho en el bloque de píxeles y geometría
+| Qué | Cómo quedó |
+|---|---|
+| El parque se veía cuadrado | El suelo del blockout ya no se dibuja: el terreno sube hasta su cara de arriba y lo tapa. Sigue estando como cuerpo, que no cuesta dibujado |
+| El camino era un escalón de 16 cm | Dejó de ser geometría. Se pinta con una máscara de 1024 px sobre el terreno, con el borde difuminado medio metro |
+| El terreno subía en festón | Las zonas de apoyo eran círculos y un pasillo es un rectángulo: por las esquinas asomaba el canto de la losa |
+| Bordes aserrados en las faldas | La transición cabía dentro de una celda. Se promedia con los vecinos, y el llano del terreno se puso a la altura del suelo pisable para que en lo llano no haya nada que levantar |
+| Sombras recortadas en zigzag | No era el terreno: era el filtro de sombra DURO. Se identificó apagando las sombras con F8 |
+| 32 `sin()` por píxel de cielo | La trampa 52 seguía viva en `cielo_anime.gdshader`. Hash sin senos, 3 octavas y una sola pasada de nube |
+| 28 evaluaciones de ruido por píxel de terreno | Patrón horneado a una textura de 3 canales (`tools/generar_textura_ruido.gd`) |
+| No había forma de saber qué costaba | Banco de pruebas: **F8**, o un toque en la esquina superior **derecha** en el móvil |
+
 ### En curso
 | Qué | Por qué |
 |---|---|
-| **Comprobar el rendimiento en el móvil** | En el Mac va a 60 fps siempre; las cifras hay que verlas allí. Panel: F1, o **tres toques en la esquina superior izquierda** |
+| **Medir el rendimiento en el móvil** | Es lo único que falta para cerrar esto. Con F8 se recorren las ocho pruebas sin exportar otro APK |
+| **Rematar los cantos de los setos** | Los muros siguen siendo cajas con las esquinas y los extremos a la vista |
+| **El estanque y el puente, tapados** | Al agrandar la pradera de arranque se movió el centro del parque, y el estanque se sitúa por rumbo y distancia desde ese centro |
 | **Mapa de escenarios** | El portal ya abre, pero no lleva a ninguna parte todavía |
 
 ### Del plan maestro

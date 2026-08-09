@@ -23,6 +23,22 @@ class_name ModoDesarrollador
 ## | `F5` | Salta al siguiente tramo del recorrido |
 ## | `F6` | Ver las formas de colisión |
 ## | `F7` | Mata a todos los enemigos que haya |
+## | `F8` | Siguiente prueba del banco de rendimiento |
+##
+## ## El banco de pruebas (F8, o un toque en la esquina superior DERECHA)
+##
+## Sirve para averiguar **por dónde se va el rendimiento** sin exportar un APK
+## por cada corazonada. Va apagando una cosa cada vez, siempre desde el juego
+## completo, y se anota lo que marcan los fps en cada paso: lo que más suba es
+## lo que más costaba.
+##
+## Se mide en el móvil y de pie en el mismo sitio, sin moverse, porque el número
+## cambia mucho según a dónde mires.
+##
+## La prueba de **media resolución** no es una opción de calidad —está descartada
+## por la trampa 63— sino la pregunta decisiva: si al bajarla los fps se
+## disparan, lo caro es pintar píxeles (shaders, transparencias, sombras); si no
+## se mueven, el cuello está en la CPU y no sirve de nada tocar nada de esto.
 
 ## Interruptor general. En falso, ni escucha teclas ni dibuja nada.
 @export var activo: bool = true
@@ -34,6 +50,24 @@ var _panel: PanelContainer = null
 var _texto: Label = null
 var _tramo: int = 0
 var _refresco: float = 0.0
+
+## Los pasos del banco de pruebas. El 0 es el juego tal cual, y cada uno de los
+## demás apaga UNA sola cosa —no se acumulan— para que la diferencia de fps se
+## pueda atribuir a algo concreto.
+const PRUEBAS := [
+	"— tal cual —",
+	"sin cielo",
+	"sin shader de terreno",
+	"sin sombras",
+	"sin niebla",
+	"sin decorado",
+	"sin FXAA ni ajuste de color",
+	"a media resolución",
+]
+
+var _prueba: int = 0
+## Lo que había antes de tocar nada, para poder devolverlo tal cual.
+var _original: Dictionary = {}
 
 
 func _ready() -> void:
@@ -76,6 +110,18 @@ func _atajo_tactil(evento: InputEvent) -> void:
 	var toque := evento as InputEventScreenTouch
 	if toque == null or not toque.pressed:
 		return
+
+	# Esquina superior DERECHA: siguiente prueba del banco. Va a la derecha a
+	# propósito — el joystick flotante se queda con todo lo que se toque en la
+	# mitad izquierda (`touch_controls.gd`), así que un atajo ahí competiría con
+	# él. Los contadores del HUD que hay en esa esquina no estorban: todo el HUD
+	# va con `MOUSE_FILTER_IGNORE` y deja pasar el toque.
+	var ancho := get_viewport().get_visible_rect().size.x
+	if _panel.visible and toque.position.x > ancho - ESQUINA_DEV.x \
+			and toque.position.y < ESQUINA_DEV.y:
+		_siguiente_prueba()
+		return
+
 	if toque.position.x > ESQUINA_DEV.x or toque.position.y > ESQUINA_DEV.y:
 		return
 	var ahora := Time.get_ticks_msec() / 1000.0
@@ -100,6 +146,7 @@ func _unhandled_input(evento: InputEvent) -> void:
 		KEY_F5: _saltar_de_tramo()
 		KEY_F6: _alternar_colisiones()
 		KEY_F7: _limpiar_enemigos()
+		KEY_F8: _siguiente_prueba()
 		_: return
 	get_viewport().set_input_as_handled()
 
@@ -136,6 +183,109 @@ func _saltar_de_tramo() -> void:
 		(nodo as HairPhysics).reset()
 	for gato in get_tree().current_scene.find_children("*", "Companero", true, false):
 		(gato as Companero).teletransportar_junto_al_objetivo()
+
+
+# --- Banco de pruebas de rendimiento ------------------------------------------
+
+## Los nodos que hay que tocar para las pruebas, buscados una sola vez.
+##
+## Se cachean en `_original` junto con su valor de partida: así restaurar es
+## devolver lo guardado, y no hace falta acordarse de cuál era el valor «bueno»
+## de cada cosa en cada sitio del código.
+func _preparar_banco() -> void:
+	if not _original.is_empty():
+		return
+	var escena := get_tree().current_scene
+	var entorno := escena.get_node_or_null("WorldEnvironment") as WorldEnvironment
+	var sol := escena.get_node_or_null("DirectionalLight3D") as DirectionalLight3D
+	var terreno := escena.get_node_or_null("Terreno")
+	var visual: MeshInstance3D = null
+	if terreno != null:
+		for hijo in terreno.get_children():
+			if hijo is MeshInstance3D:
+				visual = hijo
+				break
+
+	_original = {
+		"entorno": entorno,
+		"env": entorno.environment if entorno != null else null,
+		"fondo": entorno.environment.background_mode if entorno != null else 0,
+		"niebla": entorno.environment.fog_enabled if entorno != null else false,
+		"ajuste": entorno.environment.adjustment_enabled if entorno != null else false,
+		"sol": sol,
+		"sombra": sol.shadow_enabled if sol != null else false,
+		"terreno_visual": visual,
+		"material": visual.material_override if visual != null else null,
+		"decorado": escena.get_node_or_null("Decorado"),
+		"aa": get_viewport().screen_space_aa,
+		"escalado": get_viewport().scaling_3d_scale,
+	}
+
+
+## Deja el juego como estaba y aplica solo la prueba actual.
+func _aplicar_prueba() -> void:
+	_preparar_banco()
+	var env: Environment = _original["env"]
+	var sol: DirectionalLight3D = _original["sol"]
+	var visual: MeshInstance3D = _original["terreno_visual"]
+	var decorado: Node = _original["decorado"]
+	var vp := get_viewport()
+
+	# Primero se devuelve TODO a su sitio. Sin esto las pruebas se acumularían y
+	# el número dejaría de significar nada a partir de la segunda.
+	if env != null:
+		env.background_mode = _original["fondo"]
+		env.fog_enabled = _original["niebla"]
+		env.adjustment_enabled = _original["ajuste"]
+	if sol != null:
+		sol.shadow_enabled = _original["sombra"]
+	if visual != null:
+		visual.material_override = _original["material"]
+	if decorado != null:
+		decorado.visible = true
+	vp.screen_space_aa = _original["aa"]
+	vp.scaling_3d_scale = _original["escalado"]
+
+	match PRUEBAS[_prueba]:
+		"— tal cual —":
+			pass
+		"sin cielo":
+			# Fondo de color plano: el degradado y las nubes dejan de calcularse,
+			# pero se siguen pintando los mismos píxeles.
+			if env != null:
+				env.background_mode = Environment.BG_COLOR
+		"sin shader de terreno":
+			# El terreno sigue ahí con sus triángulos; lo que se va es el coste
+			# de pintarlo. Si sube mucho, el problema es el shader y no la malla.
+			if visual != null:
+				var liso := StandardMaterial3D.new()
+				liso.albedo_color = Color(0.45, 0.6, 0.38)
+				visual.material_override = liso
+		"sin sombras":
+			if sol != null:
+				sol.shadow_enabled = false
+		"sin niebla":
+			if env != null:
+				env.fog_enabled = false
+		"sin decorado":
+			if decorado != null:
+				decorado.visible = false
+		"sin FXAA ni ajuste de color":
+			vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
+			if env != null:
+				env.adjustment_enabled = false
+		"a media resolución":
+			vp.scaling_3d_scale = 0.5
+		_:
+			push_warning("ModoDesarrollador: prueba sin implementar '%s'"
+				% PRUEBAS[_prueba])
+
+
+func _siguiente_prueba() -> void:
+	_prueba = (_prueba + 1) % PRUEBAS.size()
+	_aplicar_prueba()
+	_panel.visible = true
+	EventBus.show_message.emit("Prueba: %s" % PRUEBAS[_prueba], 2.0)
 
 
 func _alternar_colisiones() -> void:
@@ -190,9 +340,13 @@ func _informe() -> String:
 			p.x, p.y, p.z, get_tree().get_nodes_in_group("enemies").size()])
 
 	lineas.append("Invulnerable: %s" % ("SÍ" if _invulnerable else "no"))
+	# La prueba activa, bien visible: mirar unos fps sin saber qué está apagado
+	# es la mejor forma de sacar una conclusión equivocada.
+	lineas.append("PRUEBA %d/%d: %s" % [
+		_prueba, PRUEBAS.size() - 1, PRUEBAS[_prueba]])
 	lineas.append("F1 panel · F2 invuln · F3 vida · F4 especial")
-	lineas.append("F5 tramo · F6 colisiones · F7 matar")
-	lineas.append("(en el móvil: 3 toques en esta esquina)")
+	lineas.append("F5 tramo · F6 colisiones · F7 matar · F8 prueba")
+	lineas.append("(móvil: 3 toques aquí · 1 arriba a la derecha = prueba)")
 	return "\n".join(lineas)
 
 

@@ -15,9 +15,16 @@ render_mode use_debanding;
 // El mismo shader da el parque al atardecer, el santuario de noche o el nivel
 // submarino.
 //
-// COSTE EN MÓVIL: el cielo se calcula una vez y se guarda en la radiancia
-// mientras no cambie. Con `velocidad_nubes` a 0 es prácticamente gratis; con
-// nubes en movimiento conviene dejar el Sky en modo de proceso INCREMENTAL.
+// COSTE EN MÓVIL: ojo, aquí hubo un error de bulto. Lo que se guarda en la
+// radiancia es la ILUMINACIÓN que el cielo aporta a la escena; el cielo de
+// FONDO se dibuja cada fotograma, en todos los píxeles que no tape nada. Y
+// como el parque tiene el horizonte despejado, eso es un tercio de la pantalla.
+//
+// O sea que este shader es de los que más píxeles pinta del juego, y estuvo
+// hasta hoy con el hash de `sin()` que ya se había desterrado del terreno por
+// esto mismo (trampa 52): 4 octavas × 4 hashes × 2 pasadas = **32 senos por
+// píxel**. En una GPU de móvil el seno va a una fracción del ritmo de una
+// multiplicación. Ahora son 12 hashes de multiplicar y sumar, sin un solo seno.
 
 group_uniforms Cielo;
 uniform vec3 color_cenit : source_color = vec3(0.30, 0.52, 0.88);
@@ -47,8 +54,14 @@ group_uniforms Extras;
 uniform float estrellas : hint_range(0.0, 1.0) = 0.0;
 
 
+// Hash SIN `sin()`. El clásico `fract(sin(dot(p, k)) * 43758.5)` se lee muy
+// bien y en un PC da igual, pero aquí se evalúa doce veces por píxel de cielo.
+// Este da un ruido del mismo tipo con multiplicaciones y `fract`, que es lo que
+// una GPU hace deprisa. Es el mismo que usa `terreno.gdshader`.
 float hash(vec2 p) {
-	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+	vec3 p3 = fract(vec3(p.x, p.y, p.x) * 0.1031);
+	p3 += dot(p3, vec3(p3.y, p3.z, p3.x) + 33.33);
+	return fract((p3.x + p3.y) * p3.z);
 }
 
 float ruido(vec2 p) {
@@ -62,16 +75,21 @@ float ruido(vec2 p) {
 	return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
-// Cuatro octavas bastan: son nubes de dibujo animado, no un simulador.
+// TRES octavas, no cuatro. La cuarta aporta un rizado de un par de píxeles que
+// el recorte de `dureza_borde` se come entero: se pagaba y no se veía.
+//
+// El factor de compensación mantiene el mismo rango de salida que con cuatro
+// (0,9375 frente a 0,875), para que `cobertura` siga significando lo mismo y no
+// haya que reajustar el cielo de cada escena.
 float fbm(vec2 p) {
 	float suma = 0.0;
 	float amplitud = 0.5;
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 3; i++) {
 		suma += ruido(p) * amplitud;
 		p *= 2.03;
 		amplitud *= 0.5;
 	}
-	return suma;
+	return suma * 1.0714;
 }
 
 void sky() {
@@ -113,10 +131,16 @@ void sky() {
 		float margen = mix(0.28, 0.012, dureza_borde);
 		float masa = smoothstep(umbral - margen, umbral + margen, densidad);
 
-		// Segunda capa desplazada: hace de sombra propia y da volumen sin
-		// necesidad de iluminar nada.
-		float sombra = smoothstep(umbral - margen, umbral + margen,
-			fbm(plano + vec2(0.35, 0.22)));
+		// Volumen SIN una segunda muestra de ruido. Antes se llamaba a `fbm()`
+		// otra vez con el plano desplazado, lo que duplicaba el coste del cielo
+		// entero para pintar una sombra.
+		//
+		// No hace falta: la densidad que ya tenemos dice cuánta nube hay, y una
+		// nube es más gruesa por dentro que por el borde. Tomando una banda más
+		// alta del mismo valor, el interior sale claro y el contorno queda en
+		// sombra — que es exactamente como se pinta una nube en un fondo de
+		// anime. Sale gratis y de paso queda más limpio.
+		float sombra = smoothstep(umbral + margen, umbral + margen + 0.15, densidad);
 		vec3 tono = mix(color_nube_sombra, color_nube, clamp(sombra, 0.0, 1.0));
 
 		// Se desvanecen al acercarse al horizonte, si no forman una costura.

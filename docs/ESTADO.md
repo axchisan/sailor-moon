@@ -4,8 +4,9 @@
 > retoma tras un tiempo, lee esto primero y luego el documento específico que
 > necesites.
 >
-> **Última actualización:** 2026-08-09 · Nivel 1 decorado, poblado y
-> optimizado. Fases A-D del plan maestro cerradas
+> **Última actualización:** 2026-08-09 · Segunda pasada de rendimiento (esta vez
+> sobre el coste POR PÍXEL, que era el cuello de verdad) y el blockout deja de
+> verse: el terreno absorbe el camino
 
 ---
 
@@ -595,6 +596,81 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     en transición y sale al revés. Medir `cam.global_position.y` contra
     `jugador.global_position.y` tras dejar asentar la física: −32° pone la
     cámara 3,3 m por encima, +32° la pone por debajo.
+66. **Se optimizó la geometría cuando lo caro era pintar píxeles.** Toda la Fase
+    D atacó triángulos y draw calls: de 358.000 a 144.000 y de 156 a 83. Los fps
+    en el móvil casi no se movieron —seguía entre 25 y 41— porque el cuello no
+    estaba ahí. La pista estaba en los propios números: **74.600 triángulos y
+    106 draw calls dando 35 fps** es absurdo, un móvil de 2019 mueve eso de
+    sobra. Y no había correlación entre draw calls y fps, pero sí entre fps y
+    **cuánta pantalla ocupaban el terreno y el cielo**. Antes de optimizar hay
+    que saber si el cuello es geometría (triángulos, llamadas), píxeles
+    (shaders, transparencias) o CPU — son tres problemas distintos y las
+    soluciones de uno no hacen nada por los otros. La prueba que lo decide es
+    **bajar la resolución de render**: si los fps se disparan, es de píxeles.
+67. **La trampa 52 se corrigió en el terreno y se quedó sin corregir en el
+    cielo.** `cielo_anime.gdshader` seguía con `fract(sin(dot(p,k))*43758.5)`,
+    y entre las 4 octavas del `fbm()` y las DOS pasadas (nube y sombra de nube)
+    salían **32 senos por píxel de cielo**. Y el cielo no es un detalle del
+    fondo: se pinta en todos los píxeles que no tape nada, que en un parque con
+    el horizonte despejado es un tercio de la pantalla. Su comentario decía que
+    «se calcula una vez y se guarda en la radiancia» — eso vale para la LUZ que
+    el cielo aporta, no para el fondo, que se dibuja siempre. **Cuando se
+    arregle algo así, hay que buscar el mismo patrón en el resto del proyecto.**
+68. **Un patrón procedural que no cambia nunca no tiene por qué calcularse en
+    cada píxel.** El terreno hacía 2 octavas × 3 planos de proyección triplanar
+    + grano = **28 evaluaciones de hash por píxel**, unas trescientas
+    operaciones, en la superficie que ocupa media pantalla. Y el patrón es
+    siempre el mismo: entre la hierba y la madera cambian los colores y la
+    escala, no el ruido. Horneado a una textura de tres canales
+    (`tools/generar_textura_ruido.gd`) son tres lecturas, que es para lo que una
+    GPU tiene unidades dedicadas. De paso los mapas MIP quitan el hormigueo que
+    el ruido procedural hacía en la distancia: **se ve mejor, no peor**.
+    *(Ojo con el `.import`: los PNG entran con `mipmaps/generate=false` y hay
+    que activarlo a mano, o no hay mips y además se lee más caro.)*
+69. **El blockout no tenía por qué verse.** El suelo era una caja de un metro de
+    grosor apoyada sobre el terreno, y el camino OTRA caja de 16 cm encima. De
+    ahí salían a la vez el canto vertical —la «plataforma cuadrada» que se veía
+    por todo el parque—, un escalón por el que se tropezaba y el z-fighting de
+    las juntas. Ahora las losas siguen existiendo como CUERPO —dan una
+    superficie plana exacta, que una rejilla de tres metros no puede garantizar—
+    pero no se dibujan: el terreno sube hasta su cara de arriba y las tapa, y el
+    camino se pinta con una máscara. Un cuerpo sin malla no cuesta ni un
+    triángulo ni una llamada de dibujado: el nivel pasó de 114 piezas en 4 lotes
+    a 96 en 2, y de ~106-156 draw calls a **74**.
+70. **La resolución de la máscara no depende de la de la malla.** Es lo que hace
+    viable pintar el camino: la rejilla del terreno tiene celdas de más de tres
+    metros y subirla sería multiplicar los triángulos, pero el borde del sendero
+    lo dibuja una textura de 1024 px (25 cm por texel). Detalle fino sobre
+    geometría gruesa.
+71. **Aproximar un rectángulo con círculos deja las esquinas fuera.** Las zonas
+    que levantan el terreno bajo el escenario eran círculos, y un pasillo es un
+    rectángulo: el terreno subía en festón y por las esquinas asomaba el canto
+    de la losa. Ahora son rectángulos orientados, con la misma convención de
+    giro que los `estorbos` del decorador (`hacia.rotated(giro)`) — **conviene
+    que solo haya una convención en todo el proyecto**.
+72. **Una transición más corta que una celda sale en diente de sierra.** Una
+    falda de medio metro al 20 % mide metro y medio y la celda del terreno mide
+    3,2: la cuesta entera cabía dentro de una celda y en vez de un talud salía
+    un borde aserrado siguiendo la rejilla. Dos soluciones, y la barata es la
+    buena: **promediar la altura con la de los vecinos** (`_suavizar_faldas()`)
+    en vez de subir la resolución de toda la malla. Y mejor todavía: poner el
+    llano del terreno **directamente a la altura del suelo pisable**, y así en
+    la parte llana —que es casi todo— no hay nada que levantar ni que dentar.
+73. **Un borde de sombra en zigzag no es «borde duro de cel shading», es
+    aliasing.** `soft_shadow_filter_quality = 0` dejaba las sombras grandes
+    recortadas en sierra sobre el terreno, y se confundía fácilmente con un
+    defecto del relieve — hicieron falta dos intentos de suavizar el terreno
+    para caer en que la culpa era de la luz. Se identificó apagando las sombras
+    con el banco de pruebas (F8): el zigzag desapareció entero. Con el filtro a
+    2 se quita y **no cuesta un solo triángulo más**, solo unas muestras de
+    textura.
+74. **El banco de pruebas paga su coste el primer día.** `F8` —o un toque en la
+    esquina superior derecha en el móvil— va apagando una cosa cada vez (cielo,
+    shader de terreno, sombras, niebla, decorado, post, media resolución) desde
+    el juego completo. Sirve para medir en el móvil con UN APK en vez de
+    exportar uno por corazonada, y para atribuir cada fps a algo concreto. Va en
+    la esquina DERECHA porque el joystick flotante se queda con todo lo que se
+    toque en la mitad izquierda.
 
 ---
 
@@ -644,13 +720,29 @@ más mundo de golpe y sube los draw calls.
 
 ### Estado del Nivel 1, medido
 
-| | Antes de optimizar | Ahora |
+| | 1ª pasada (geometría) | 2ª pasada (píxeles) |
 |---|---|---|
-| Triángulos de pantalla | 97.500 | ~82.000 |
-| Triángulos de sombra | 260.700 | ~62.000 |
-| **Total por fotograma** | **358.200** | **~144.000** |
-| Draw calls (móvil) | 156 | ~83 |
-| fps en el móvil | 28–35 | por medir |
+| Triángulos de pantalla | ~82.000 | ~75.000 |
+| Triángulos de sombra | ~62.000 | ~63.000 |
+| **Total por fotograma** | **~144.000** | **~139.000** |
+| Draw calls | ~106–156 | **74** |
+| fps en el móvil | 25–41 | **por medir** |
+
+La segunda pasada apenas toca las cifras de geometría **y ese es justamente el
+resultado**: la primera pasada ya había dejado los triángulos en su sitio y los
+fps seguían en 25–41, porque el cuello no estaba ahí (trampa 66). Lo que se
+atacó esta vez es el **coste por píxel**:
+
+1. **El cielo hacía 32 `sin()` por píxel** — la trampa 52 sin corregir en
+   `cielo_anime.gdshader`. Es el shader que más pantalla pinta del juego
+2. **El terreno hacía 28 evaluaciones de ruido por píxel** — ahora el patrón va
+   horneado en una textura y son tres lecturas
+3. **74 draw calls en vez de 106–156** — el suelo del blockout dejó de dibujarse
+4. **Sombras sin el zigzag** — filtro suave en vez de duro, y sin coste de
+   geometría
+
+Las cifras de arriba son del Mac (que va a 60 siempre). **La medición que vale
+es la del móvil, con F8**, y está sin hacer.
 
 Las seis técnicas que lo bajaron están en
 [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md) §Rendimiento.

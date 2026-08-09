@@ -205,6 +205,13 @@ var estorbos: Array[Dictionary] = []
 ## Dónde empiezan las colinas que cierran el mundo. Lo pone el nivel a partir
 ## del terreno; el decorador lo usa para plantar la arboleda de la linde.
 var radio_limite: float = 0.0
+## Por dónde va pintado el camino, para que el terreno lo dibuje encima.
+##
+## El camino dejó de ser geometría: era una caja elevada sobre la losa del
+## suelo, y de ahí salían el escalón, el canto a la vista y el z-fighting. Aquí
+## queda solo su FORMA —rectángulos orientados y discos de arena—, que es lo que
+## el terreno necesita para pintarse la máscara.
+var franjas_camino: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -529,6 +536,11 @@ func _arena(paso: Dictionary, salida_dir: Vector3) -> void:
 	# entrar en la primera arena.
 	_disco("SueloArena", centro + Vector3.UP * desnivel, radio + margen_arena,
 		arena)
+	# Y su superficie de tierra la pinta el terreno, igual que la del camino.
+	franjas_camino.append({
+		"centro": centro,
+		"radio": radio + margen_arena,
+	})
 
 	# Anillo con dos huecos: por donde se entra y por donde se sale. El ángulo
 	# es el POLAR del anillo (posición `(cos θ, 0, sin θ)`), no una rotación:
@@ -581,16 +593,37 @@ func _colocar_arena(nombre: String, centro: Vector3, radio: float) -> void:
 func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 		giro: float, inclinacion: float = 0.0, con_colision: bool = true,
 		peralte: float = 0.0) -> void:
+	# El CAMINO ya no se construye: se pinta sobre el terreno.
+	#
+	# Era una caja de dieciséis centímetros encima de la losa del suelo, y de ahí
+	# salían tres problemas a la vez: un escalón por el que se tropezaba, un
+	# canto a la vista que hacía que el sendero pareciera una cinta de cartón
+	# puesta sobre la hierba, y dos caras casi coplanares peleándose por el
+	# z-buffer. Se apunta dónde va y de eso se encarga la máscara del terreno.
+	if nombre.begins_with("Camino"):
+		franjas_camino.append({
+			"centro": centro,
+			"mitad": Vector2(tam.x * 0.5, tam.z * 0.5),
+			"giro": giro,
+		})
+		return
+
 	# `peralte` es el vuelco lateral, sobre el eje que sigue al camino. Lo usan
 	# los taludes: una losa de suelo volcada 58° deja de ser suelo y pasa a ser
 	# ladera, sin necesidad de otra malla ni de otra forma de colisión.
-	var pose := Transform3D(
-		Basis.from_euler(Vector3(inclinacion, giro, peralte)) * Basis.from_scale(tam),
-		centro)
-	var lote: Array = _lotes.get(superficie, [])
-	lote.append(pose)
-	_lotes[superficie] = lote
-	_piezas += 1
+	#
+	# El SUELO tampoco se dibuja ya. Sigue existiendo como cuerpo —da una
+	# superficie plana exacta, que la rejilla del terreno no puede garantizar—
+	# pero lo que se ve es el terreno, que ahora sube hasta su cara de arriba.
+	# Un cuerpo sin malla no cuesta ni un triángulo ni una llamada de dibujado.
+	if not nombre.begins_with("Suelo"):
+		var pose := Transform3D(
+			Basis.from_euler(Vector3(inclinacion, giro, peralte)) * Basis.from_scale(tam),
+			centro)
+		var lote: Array = _lotes.get(superficie, [])
+		lote.append(pose)
+		_lotes[superficie] = lote
+		_piezas += 1
 
 	if not con_colision:
 		return
@@ -662,22 +695,26 @@ func _volcar_lotes() -> int:
 
 
 func _disco(nombre: String, centro: Vector3, radio: float, superficie: String) -> void:
-	var malla := CylinderMesh.new()
-	malla.top_radius = radio
-	malla.bottom_radius = radio
-	malla.height = grosor_suelo
-	malla.radial_segments = 24
-
-	var visual := MeshInstance3D.new()
-	visual.mesh = malla
-	visual.material_override = PaletaTerreno.obtener(superficie)
-
 	var cuerpo := StaticBody3D.new()
 	cuerpo.name = nombre
 	cuerpo.position = centro
 	cuerpo.collision_layer = 1
 	cuerpo.collision_mask = 0
-	cuerpo.add_child(visual)
+
+	# El suelo de una arena tampoco se dibuja: es el terreno el que sube hasta
+	# él y el que pinta su tierra. Lo que queda es el cuerpo, que da una
+	# superficie perfectamente plana para pelear encima.
+	if not nombre.begins_with("Suelo"):
+		var malla := CylinderMesh.new()
+		malla.top_radius = radio
+		malla.bottom_radius = radio
+		malla.height = grosor_suelo
+		malla.radial_segments = 24
+
+		var visual := MeshInstance3D.new()
+		visual.mesh = malla
+		visual.material_override = PaletaTerreno.obtener(superficie)
+		cuerpo.add_child(visual)
 
 	var forma := CollisionShape3D.new()
 	var cilindro := CylinderShape3D.new()
@@ -841,45 +878,65 @@ func carriles() -> Array[Dictionary]:
 	return lista
 
 
-## Las partes del escenario que NO están a ras de suelo.
+## Por dónde tiene que subir el terreno para quedar a ras del escenario.
 ##
-## Cada zona es un círculo en el plano con una altura: `{centro, radio, altura}`.
-## El terreno las usa para levantarse por debajo y que un camino en cuesta no
-## quede flotando.
+## Cada zona es una forma en el plano con una altura. Las hay de dos clases:
+## `{centro, mitad, giro, altura}` es un rectángulo orientado —los tramos— y
+## `{centro, radio, altura}` un círculo —las arenas—.
+##
+## **La altura es la de la superficie por la que se anda**, no la del apoyo. Es
+## el cambio que hace que el suelo del blockout ya no haga falta dibujarlo: el
+## terreno llega justo a su cara de arriba, lo tapa, y lo que se ve es una
+## superficie continua en vez de una losa apoyada encima del mapa.
+##
+## Antes solo entraban aquí las partes ELEVADAS, porque el resto ya se apoyaba
+## en el terreno plano. Ahora entran todas, incluidas las de altura cero: su
+## superficie está medio metro por encima del cero y el terreno tiene que
+## alcanzarla igual.
 ##
 ## Se calculan de la geometría que este nodo acaba de construir, y no midiendo
 ## el mundo con rayos como se intentó primero. Aquello daba el valor correcto en
 ## el vértice equivocado —el final del primer pasillo subía a la altura de la
 ## arena del guardián, a setenta metros de allí— y localizar el cruce costaba
 ## más que quitar el problema de en medio. Aquí no hay rejilla, ni índices, ni
-## física: solo los sitios que este código ya sabe que están altos.
+## física: solo los sitios que este código ya sabe dónde están.
 func zonas_elevadas() -> Array[Dictionary]:
 	var zonas: Array[Dictionary] = []
 	for indice in tramos.size():
 		var tramo: Dictionary = tramos[indice]
-		var arranca: float = tramo["origen"].y
-		var sube: float = tramo["subida"]
-		if arranca <= 0.05 and sube <= 0.05:
-			continue
 		# Un tramo en cuesta se trocea: cada trozo aporta su propia altura, y
 		# entre todos dibujan la rampa.
+		#
+		# Cada trozo es un RECTÁNGULO, no un círculo. Con círculos el terreno
+		# subía en festón —redondeado por los lados y sin llegar a las esquinas—
+		# y por ahí asomaba el canto de la losa: ese era el «bloque cuadrado
+		# puesto encima del mapa». Un tramo es un rectángulo, así que la zona que
+		# lo sostiene tiene que serlo también.
 		var trozos := maxi(int(tramo["largo"] / 3.0), 1)
+		var largo_trozo: float = tramo["largo"] / float(trozos)
+		var direccion: Vector3 = tramo["direccion"]
+		var giro := atan2(-direccion.x, -direccion.z)
 		for i in trozos + 1:
 			var t := float(i) / float(trozos)
 			var punto := punto_en_tramo(indice, t, 0.0, 0.0)
 			zonas.append({
 				"centro": punto,
-				"radio": tramo["ancho"] * 0.5 + ancho_borde,
-				"altura": punto.y - grosor_suelo * 0.5,
+				# A lo ancho llega hasta pasado el muro; a lo largo, medio trozo
+				# por lado más un solape, para que entre trozo y trozo no quede
+				# una muesca sin levantar.
+				"mitad": Vector2(tramo["ancho"] * 0.5 + ancho_borde,
+					largo_trozo * 0.6),
+				"giro": giro,
+				"altura": punto.y,
 			})
 	for nombre: String in centros_arena:
 		var centro: Vector3 = centros_arena[nombre]
-		if centro.y <= 0.05:
-			continue
 		zonas.append({
 			"centro": centro,
 			"radio": float(radios_arena.get(nombre, 11.0)) + margen_arena,
-			"altura": centro.y,
+			# La superficie del disco de la arena: su eje va un `desnivel` por
+			# encima del pasillo, y de ahí media losa hasta la cara de arriba.
+			"altura": centro.y + desnivel + grosor_suelo * 0.5,
 		})
 	return zonas
 

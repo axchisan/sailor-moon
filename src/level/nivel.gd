@@ -61,11 +61,24 @@ func _ready() -> void:
 		# campo quedó en cuesta, y los rincones —que buscan sitio llano— se
 		# amontonaron todos en la mitad que aún lo era. Calculándolo aquí, el
 		# llano sigue al parque por mucho que cambie el recorrido.
+		#
+		# Y SE SUBE HASTA LA ALTURA DE LO QUE SE PISA.
+		#
+		# El llano del terreno nace a cero, pero la superficie por la que se anda
+		# es la cara de arriba de las losas, media losa más alta. Con el terreno
+		# a cero había que levantarlo bajo cada tramo, y esa faldita de medio
+		# metro no cabe en una celda de más de tres: salía un borde aserrado
+		# siguiendo la rejilla por todo el parque.
+		#
+		# Poniendo el llano DIRECTAMENTE a la altura del suelo pisable, en la
+		# parte llana —que es casi todo— no hay nada que levantar y no hay
+		# escalón que dentar. Solo se trabaja donde el escenario sube de verdad:
+		# la cuesta del guardián y el peldaño de las arenas.
 		if _constructor != null:
 			var medida := _constructor.extension()
 			var centro_parque: Vector3 = medida["centro"]
 			_terreno.global_position = Vector3(
-				centro_parque.x, _terreno.global_position.y, centro_parque.z)
+				centro_parque.x, _constructor.grosor_suelo * 0.5, centro_parque.z)
 		# Las hondonadas se piden ANTES de construir: después ya está la malla
 		# hecha y cavar sobre ella dejaría la colisión desincronizada.
 		if decorador != null and _constructor != null and decorador.radio_estanque > 0.0:

@@ -96,12 +96,25 @@ class_name TerrenoNivel
 ## encontrar que de evitar. Sin rejilla auxiliar ni física de por medio, esa
 ## clase de error no puede darse.
 @export var seguir_al_escenario: bool = true
-## Cuánto queda el terreno por debajo de la losa que apoya. Lo justo para no
-## asomar por encima del suelo pisable.
-@export var hundido_bajo_losa: float = 0.55
+## Cuánto queda el terreno por debajo de la superficie que apoya.
+##
+## Ahora es CERO, y ese es justamente el cambio. Antes valía 55 cm, así que el
+## terreno moría por debajo de la losa y dejaba el metro entero de su canto a la
+## vista: eso era la «plataforma cuadrada» que se veía por todo el parque. Con
+## el terreno a ras de la cara de arriba, la losa queda tapada del todo y ya no
+## hace falta ni dibujarla.
+##
+## Se deja como parámetro por si alguna superficie futura quiere asomar a
+## propósito —un embarcadero de madera, un andén—, pero para el suelo va a cero.
+@export var hundido_bajo_losa: float = 0.0
 ## Pendiente de la falda que baja desde una zona elevada hasta el terreno. Marca
 ## cuánto se aleja la loma: cuanto más tendida, más lejos llega.
-@export var pendiente_falda: float = 34.0
+##
+## Bajada de 34° a 20°: con el terreno subiendo hasta el borde mismo del camino,
+## 34° dejaban un ribete abrupto que se leía otra vez como un escalón. A 20° la
+## transición es un talud que se sube andando y que el ojo lee como parte del
+## relieve.
+@export var pendiente_falda: float = 20.0
 
 @export_group("Aspecto")
 @export var superficie: String = "hierba_lejos"
@@ -291,6 +304,11 @@ func _apoyar_el_escenario() -> void:
 	# Cuánto baja la falda por cada metro que se aleja del borde de la zona.
 	var caida := tan(deg_to_rad(pendiente_falda))
 	var levantados := 0
+	# Qué vértices han quedado EN LA FALDA: levantados, pero fuera de la zona
+	# que los levanta. Son los únicos que se suavizan después.
+	var en_falda := PackedByteArray()
+	en_falda.resize(_alturas.size())
+
 	for j in _lado:
 		for i in _lado:
 			var k := j * _lado + i
@@ -301,21 +319,171 @@ func _apoyar_el_escenario() -> void:
 			var z := global_position.z - alcance + float(j) * paso
 
 			var mejor := SIN_APOYO
+			var dentro := false
 			for zona: Dictionary in zonas:
-				var centro: Vector3 = zona["centro"]
-				var d := Vector2(x - centro.x, z - centro.z).length()
 				var altura: float = zona["altura"] - global_position.y - hundido_bajo_losa
-				# Fuera del círculo, la falda baja con la distancia. Así la loma
+				# Fuera de la zona, la falda baja con la distancia. Así la loma
 				# sale sola, sin pasadas de suavizado ni rejillas auxiliares.
-				var fuera: float = maxf(d - float(zona["radio"]), 0.0)
+				var fuera := _fuera_de_la_zona(x, z, zona)
 				altura -= fuera * caida
 				if altura > mejor:
 					mejor = altura
+					dentro = fuera <= 0.01
 			if mejor > _alturas[k]:
 				_alturas[k] = mejor
 				levantados += 1
+				en_falda[k] = 0 if dentro else 1
+
+	_suavizar_faldas(en_falda)
 	print("[Terreno] %d zonas elevadas, %d vértices levantados" % [
 		zonas.size(), levantados])
+
+
+## Redondea el borde de las faldas para que no se vea la rejilla.
+##
+## Una falda de medio metro con 20° de pendiente mide metro y medio, y la celda
+## del terreno mide más de tres: la transición entera cabe dentro de una celda,
+## así que en vez de una cuesta salía un diente de sierra siguiendo la rejilla —
+## se veía como un borde aserrado alrededor de cada parte elevada.
+##
+## Subir la resolución de la malla lo arreglaría, pero cuesta triángulos en los
+## 260 metros del mapa para resolver algo que pasa solo en unos pocos bordes.
+## Promediar la altura con la de los vecinos sale gratis y hace lo mismo.
+##
+## Solo toca los vértices de la FALDA: los de dentro de la zona tienen que
+## quedarse exactamente a la altura del suelo pisable —si se ondulan, la
+## jugadora anda sobre bultos y se le ven los pies dentro del terreno— y los de
+## fuera son el relieve natural, que ya está como tiene que estar.
+func _suavizar_faldas(en_falda: PackedByteArray, pasadas: int = 2) -> void:
+	for _p in pasadas:
+		var copia := _alturas.duplicate()
+		for j in range(1, _lado - 1):
+			for i in range(1, _lado - 1):
+				var k := j * _lado + i
+				if en_falda[k] == 0:
+					continue
+				_alturas[k] = (copia[k]
+					+ copia[k - 1] + copia[k + 1]
+					+ copia[k - _lado] + copia[k + _lado]) * 0.2
+
+
+# --- La máscara del camino ----------------------------------------------------
+
+## Lado en píxeles de la máscara del camino.
+##
+## Cubre los mismos metros que el terreno, así que a 1024 sale un texel cada
+## 25 cm. Y aquí está la gracia del asunto: la resolución de la máscara **no
+## depende de la de la malla**. La rejilla del terreno tiene celdas de más de
+## tres metros —y subirla sería multiplicar los triángulos— pero el borde del
+## sendero se dibuja con el detalle de la textura, no con el de la geometría.
+const LADO_MASCARA := 1024
+## Cuántos metros tarda el camino en fundirse con la hierba en su borde.
+##
+## Un corte limpio delata que es una textura pegada encima. Medio metro de
+## desvanecido y el sendero parece pisado, que es de lo que se trata.
+const DIFUMINADO := 0.5
+
+## La superficie del camino, para los colores de la mezcla.
+@export var superficie_camino: String = "tierra_camino"
+
+
+## Pinta por dónde va el camino y se lo pasa al shader del terreno.
+##
+## Se rasteriza sobre la caja envolvente de cada franja y no sobre la imagen
+## entera: barrer el millón de píxeles contra las veinte franjas serían veinte
+## millones de comprobaciones en GDScript, y así son unas sesenta mil.
+func _pintar_el_camino(material: ShaderMaterial) -> void:
+	var franjas := _franjas_de_camino()
+	if franjas.is_empty():
+		material.set_shader_parameter("mezcla_activa", 0.0)
+		return
+
+	var lado_mundo := alcance * 2.0
+	var origen := Vector2(global_position.x - alcance, global_position.z - alcance)
+	var por_metro := float(LADO_MASCARA) / lado_mundo
+
+	var img := Image.create(LADO_MASCARA, LADO_MASCARA, false, Image.FORMAT_R8)
+	img.fill(Color(0.0, 0.0, 0.0))
+
+	for franja: Dictionary in franjas:
+		var centro: Vector3 = franja["centro"]
+		# Cuánto abarca esta franja, con el difuminado incluido.
+		var extra: float = DIFUMINADO
+		var alcance_franja: float
+		if franja.has("mitad"):
+			var mitad: Vector2 = franja["mitad"]
+			alcance_franja = mitad.length() + extra
+		else:
+			alcance_franja = float(franja["radio"]) + extra
+
+		var min_x := int(floor(((centro.x - alcance_franja) - origen.x) * por_metro))
+		var max_x := int(ceil(((centro.x + alcance_franja) - origen.x) * por_metro))
+		var min_y := int(floor(((centro.z - alcance_franja) - origen.y) * por_metro))
+		var max_y := int(ceil(((centro.z + alcance_franja) - origen.y) * por_metro))
+		min_x = maxi(min_x, 0)
+		min_y = maxi(min_y, 0)
+		max_x = mini(max_x, LADO_MASCARA - 1)
+		max_y = mini(max_y, LADO_MASCARA - 1)
+
+		for py in range(min_y, max_y + 1):
+			var mz := origen.y + (float(py) + 0.5) / por_metro
+			for px in range(min_x, max_x + 1):
+				var mx := origen.x + (float(px) + 0.5) / por_metro
+				var fuera := _fuera_de_la_zona(mx, mz, franja)
+				if fuera > DIFUMINADO:
+					continue
+				var valor := 1.0 - fuera / DIFUMINADO
+				# Se queda el más alto: donde un pasillo se solapa con una arena
+				# no debe salir una costura más clara.
+				if valor > img.get_pixel(px, py).r:
+					img.set_pixel(px, py, Color(valor, 0.0, 0.0))
+
+	var receta: Dictionary = PaletaTerreno.RECETAS.get(superficie_camino, {})
+	material.set_shader_parameter("mascara", ImageTexture.create_from_image(img))
+	material.set_shader_parameter("mezcla_activa", 1.0)
+	material.set_shader_parameter("mascara_origen", origen)
+	material.set_shader_parameter("mascara_tam", Vector2(lado_mundo, lado_mundo))
+	if not receta.is_empty():
+		material.set_shader_parameter("color_base_2", receta["base"])
+		material.set_shader_parameter("color_mancha_2", receta["mancha"])
+		material.set_shader_parameter("color_luz_2", receta["luz"])
+	print("[Terreno] camino pintado: %d franjas en una máscara de %d px"
+		% [franjas.size(), LADO_MASCARA])
+
+
+func _franjas_de_camino() -> Array[Dictionary]:
+	var vacio: Array[Dictionary] = []
+	var padre := get_parent()
+	if padre == null:
+		return vacio
+	var blockout := padre.get_node_or_null("Blockout") as ConstructorNivel
+	if blockout == null:
+		return vacio
+	return blockout.franjas_camino
+
+
+## Cuántos metros hay de este punto al borde de la zona. Cero si está dentro.
+##
+## Las zonas de los tramos son RECTÁNGULOS orientados y las de las arenas
+## círculos, y la diferencia importa: aproximando un pasillo con círculos, el
+## terreno subía en festón y no llegaba a las esquinas, que es justo por donde
+## asomaba el canto de la losa.
+##
+## Para el rectángulo se deshace su giro y se compara con el rectángulo recto,
+## que es una resta. Es la misma convención que usa el decorador con los
+## `estorbos` del constructor — conviene que solo haya una en todo el proyecto.
+func _fuera_de_la_zona(x: float, z: float, zona: Dictionary) -> float:
+	var centro: Vector3 = zona["centro"]
+	var hacia := Vector2(x - centro.x, z - centro.z)
+	if not zona.has("mitad"):
+		return maxf(hacia.length() - float(zona.get("radio", 0.0)), 0.0)
+	var local := hacia.rotated(float(zona["giro"]))
+	var mitad: Vector2 = zona["mitad"]
+	# Lo que sobresale por cada eje; dentro del rectángulo los dos son cero.
+	var sobra := Vector2(
+		maxf(absf(local.x) - mitad.x, 0.0),
+		maxf(absf(local.y) - mitad.y, 0.0))
+	return sobra.length()
 
 
 ## Hondonadas pedidas desde fuera: el vaso del estanque, y lo que venga.
@@ -423,6 +591,7 @@ func _montar_malla() -> void:
 	material.set_shader_parameter("desde", radio_colinas * 0.75)
 	material.set_shader_parameter("hasta", alcance * 0.85)
 	material.set_shader_parameter("color_lejania", color_lejania)
+	_pintar_el_camino(material)
 	visual.material_override = material
 	# No proyecta sombra: es una superficie enorme y su sombra propia no aporta
 	# nada, pero se come el mapa de sombras entero.
