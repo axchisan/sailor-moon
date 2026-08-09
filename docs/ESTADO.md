@@ -184,6 +184,14 @@ export PATH="/opt/homebrew/bin:$PATH"
 
 ---
 
+## 5 bis. Dónde mirar el estado del Nivel 1
+
+[`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md) tiene la foto al día: cómo se
+monta un nivel y en qué orden, el recorrido paso a paso, qué props existen, qué
+está hecho y qué falta. Es el documento que se actualiza al cerrar cada bloque.
+
+---
+
 ## 6. ⚠️ Trampas ya pisadas — no volver a caer
 
 Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.

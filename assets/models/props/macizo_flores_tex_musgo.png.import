@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bpxqiiokmhoxb"
-path="res://.godot/imported/macizo_flores_tex_musgo.png-0c1e8bb4a75e414686770ec8cabfecfb.ctex"
+path.s3tc="res://.godot/imported/macizo_flores_tex_musgo.png-0c1e8bb4a75e414686770ec8cabfecfb.s3tc.ctex"
+path.etc2="res://.godot/imported/macizo_flores_tex_musgo.png-0c1e8bb4a75e414686770ec8cabfecfb.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "c205faa68c5598b3423bff4a383350d3"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/props/macizo_flores_tex_musgo.png"
-dest_files=["res://.godot/imported/macizo_flores_tex_musgo.png-0c1e8bb4a75e414686770ec8cabfecfb.ctex"]
+dest_files=["res://.godot/imported/macizo_flores_tex_musgo.png-0c1e8bb4a75e414686770ec8cabfecfb.s3tc.ctex", "res://.godot/imported/macizo_flores_tex_musgo.png-0c1e8bb4a75e414686770ec8cabfecfb.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
