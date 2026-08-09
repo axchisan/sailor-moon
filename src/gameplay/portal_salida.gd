@@ -2,23 +2,31 @@ extends Area3D
 class_name PortalSalida
 ## La puerta al siguiente escenario. Apagada hasta cumplir todos los objetivos.
 ##
-## Va en el torii de la entrada a propósito: **por donde se entra es por donde
-## se sale**, y eso hace que el parque tenga una puerta en vez de un borde. Es
-## además el sitio que la jugadora ya conoce, así que cuando se enciende sabe
-## adónde volver sin que nadie se lo explique.
+## Es una **ruina de piedra** con dos pilares, dintel en arco y un cristal
+## flotando en medio ([`blender_kit_expansion.py`](../../tools/blender_kit_expansion.py)).
+## El primer intento fue un aro de luz montado por código y no decía nada:
+## podía ser un charco. Una puerta de piedra vieja se lee sola como algo que
+## estaba ahí antes que el parque, que es la sensación que pide el sitio por el
+## que se sale hacia otro mundo.
 ##
-## Apagado no es invisible: se ve el aro dormido desde el primer minuto. Que se
-## vea desde el principio es lo que convierte la lista de objetivos en un
-## camino hacia algo, en vez de en una sorpresa al final.
+## Vive en un **claro apartado, al final del paseo de vuelta** — antes estaba
+## pegado al punto de aparición, y una puerta al siguiente mundo a dos pasos de
+## donde apareces le quita todo el peso. Hay que ir hasta ella.
+##
+## Apagada no es invisible: la piedra está desde el primer minuto y el cristal
+## dormido. Verla antes de poder usarla es lo que convierte la lista de
+## objetivos en un camino hacia algo.
 
 signal usado(destino: String)
 
+const MODELO: PackedScene = preload("res://assets/models/props/portal_antiguo.glb")
+
 @export var destino: String = ""
-@export var radio: float = 2.6
+@export var radio: float = 2.2
 @export var color_dormido: Color = Color(0.45, 0.42, 0.58)
 @export var color_activo: Color = Color(1.0, 0.72, 0.95)
 ## Mensaje al encenderse. Vacío = no dice nada.
-@export var aviso: String = "¡El camino se ha abierto! Vuelve a la entrada del parque"
+@export var aviso: String = "¡La puerta antigua ha despertado! Está al final del parque"
 
 var _activo: bool = false
 var _aro: MeshInstance3D = null
@@ -49,7 +57,10 @@ func _process(delta: float) -> void:
 	_tiempo += delta
 	if _aro == null:
 		return
-	_aro.rotate_y(delta * (1.4 if _activo else 0.25))
+	# Solo late el cristal. La piedra no se mueve: es una ruina, no una noria.
+	if _aro != null:
+		var latido := 1.0 + sin(_tiempo * (3.0 if _activo else 1.1)) * (0.08 if _activo else 0.03)
+		_aro.scale = Vector3.ONE * latido
 	if _activo and _luz != null:
 		_luz.light_energy = 3.0 + sin(_tiempo * 3.2) * 0.9
 
@@ -79,34 +90,38 @@ func _al_entrar(cuerpo: Node3D) -> void:
 	usado.emit(destino)
 
 
+## Monta la ruina y se queda con el material del cristal, que es lo único que
+## se enciende. El resto de la piedra no cambia: una ruina que se ilumina entera
+## parece un juguete, y lo que tiene que despertar es lo que hay dentro.
 func _montar_aro() -> void:
-	_aro = MeshInstance3D.new()
-	_aro.name = "Aro"
-	var toro := TorusMesh.new()
-	toro.inner_radius = radio * 0.72
-	toro.outer_radius = radio
-	toro.rings = 20
-	toro.ring_segments = 8
-	_aro.mesh = toro
-	# Tumbado: es un charco de luz en el suelo por el que se pasa, no una puerta
-	# vertical que tape la vista del parque durante toda la partida.
-	_aro.rotation.x = 0.0
-	_aro.position.y = 0.25
+	var pieza: Node3D = MODELO.instantiate()
+	pieza.name = "Ruina"
+	add_child(pieza)
 
-	_material = StandardMaterial3D.new()
-	_material.albedo_color = color_dormido
-	_material.emission_enabled = true
-	_material.emission = color_dormido
-	_material.emission_energy_multiplier = 0.7
-	_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_aro.material_override = _material
-	_aro.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(_aro)
+	# El cristal es la malla más pequeña y más alta de las tres; buscarla por
+	# tamaño evita depender del orden en que el exportador las dejó.
+	var mejor: MeshInstance3D = null
+	var mejor_alto := -1.0
+	for nodo in pieza.find_children("*", "MeshInstance3D", true, false):
+		var malla := nodo as MeshInstance3D
+		var caja := malla.get_aabb()
+		var alto := caja.position.y + caja.size.y
+		if caja.size.length() < 3.0 and alto > mejor_alto:
+			mejor = malla
+			mejor_alto = alto
+	if mejor != null:
+		_material = StandardMaterial3D.new()
+		_material.albedo_color = color_dormido
+		_material.emission_enabled = true
+		_material.emission = color_dormido
+		_material.emission_energy_multiplier = 0.6
+		mejor.material_override = _material
+		_aro = mejor
 
 	_luz = OmniLight3D.new()
 	_luz.light_color = color_dormido
-	_luz.light_energy = 0.5
-	_luz.omni_range = 7.0
+	_luz.light_energy = 0.4
+	_luz.omni_range = 8.0
 	_luz.shadow_enabled = false
-	_luz.position.y = 1.2
+	_luz.position.y = 2.3
 	add_child(_luz)

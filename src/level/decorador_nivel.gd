@@ -92,6 +92,39 @@ const SIEMBRA: Array[Dictionary] = [
 	# Faroles de piedra: los decorativos, no los tres que hay que encender
 	{"pieza": "farol_piedra", "cada": 11.0, "lado": 0.88, "desvio": 0.0,
 		"escala": [0.9, 1.1], "alterna": true, "fase": 0.61},
+	# --- Kit de expansión ---
+	# Farolillos de papel jalonando el camino: de noche marcarán la senda, y de
+	# día ya dicen «por aquí se va a algún sitio».
+	{"pieza": "farolillo", "cada": 16.0, "fuera": 0.4, "desvio": 0.0,
+		"escala": [1.0, 1.2], "alterna": false, "ambos_lados": true, "fase": 0.11},
+	# Tocones y flores rompiendo el borde del camino
+	{"pieza": "tocon", "cada": 19.0, "lado": 0.80, "desvio": 0.8,
+		"escala": [0.9, 1.3], "alterna": true, "fase": 0.44},
+	{"pieza": "macizo_flores", "cada": 5.0, "lado": 0.78, "desvio": 0.9,
+		"escala": [0.8, 1.5], "alterna": true, "fase": 0.17},
+]
+
+## Lo que se siembra por el CAMPO ABIERTO, entre el parque y las colinas.
+##
+## Antes ahí no había nada: hierba y ya. Con cuatro rincones que visitar, ese
+## espacio se recorre de verdad, y recorrer un descampado es aburrido por muy
+## bonito que sea el horizonte.
+##
+## `desde` y `hasta` son metros desde el centro de lo construido: la franja
+## donde puede caer cada cosa.
+const CAMPO: Array[Dictionary] = [
+	{"pieza": "roca_grande", "copias": 26, "desde": 50.0, "hasta": 82.0,
+		"escala": [0.9, 1.9]},
+	{"pieza": "macizo_flores", "copias": 120, "desde": 46.0, "hasta": 84.0,
+		"escala": [0.9, 1.7]},
+	{"pieza": "arbol_cerezo", "copias": 34, "desde": 52.0, "hasta": 80.0,
+		"escala": [0.9, 1.4], "hundir": 0.15},
+	{"pieza": "tocon", "copias": 22, "desde": 48.0, "hasta": 80.0,
+		"escala": [0.9, 1.4]},
+	{"pieza": "arbusto", "copias": 60, "desde": 46.0, "hasta": 84.0,
+		"escala": [1.0, 1.8]},
+	{"pieza": "farolillo", "copias": 18, "desde": 50.0, "hasta": 72.0,
+		"escala": [1.0, 1.3]},
 ]
 
 ## Lo que rodea a cada arena. Un anillo cerrado de cerezos: encierra la pelea
@@ -125,6 +158,10 @@ const CUERPO := {
 	"farol_piedra": {"forma": "cilindro", "radio": 0.33, "alto": 1.80, "centro_y": 0.90},
 	"valla_madera": {"forma": "caja", "tam": Vector3(3.0, 1.15, 0.18), "centro_y": 0.57},
 	"torii": {"forma": "caja", "tam": Vector3(0.55, 4.6, 0.55), "centro_y": 2.3},
+	"roca_grande": {"forma": "esfera", "radio": 1.25, "centro_y": 0.80},
+	"tocon": {"forma": "cilindro", "radio": 0.52, "alto": 0.66, "centro_y": 0.33},
+	"farolillo": {"forma": "cilindro", "radio": 0.10, "alto": 2.1, "centro_y": 1.05},
+	# `macizo_flores` y `nenufar` no llevan: son plantas bajas, se pisan.
 	# `arbusto` no está a propósito: son hojas, se pisan y se pasa.
 }
 
@@ -231,6 +268,7 @@ func decorar(constructor: ConstructorNivel) -> void:
 			_coronar_arena(constructor.centros_arena[nombre],
 				constructor.radios_arena.get(nombre, 11.0))
 	_puerta_de_entrada(constructor)
+	_poblar_campo(medida["centro"], medida["radio"])
 	if constructor.radio_limite > 0.0:
 		_vestir_limite(medida["centro"], constructor.radio_limite)
 	if montar_fondo:
@@ -321,6 +359,25 @@ func _puerta_de_entrada(constructor: ConstructorNivel) -> void:
 	var rumbo := atan2(-direccion.x, -direccion.z)
 	var receta := {"pieza": "torii", "escala": [2.0, 2.0], "alinear": true}
 	_plantar(receta, _posar(sitio), rumbo, Vector3.ZERO)
+
+
+## Reparte cosas por el campo abierto, entre el parque y las colinas.
+##
+## En anillos con desvío al azar y no en rejilla: una cuadrícula se nota
+## enseguida por muy grande que sea, y lo que se busca es que parezca que
+## crecieron ahí.
+func _poblar_campo(centro: Vector3, radio_nivel: float) -> void:
+	for receta in CAMPO:
+		var copias: int = receta["copias"]
+		for i in copias:
+			# El ángulo avanza con un número irracional de vueltas para que las
+			# copias no se alineen entre recetas: sembrando todo con el mismo
+			# reparto regular, las rocas acaban cada una junto a un árbol.
+			var theta := TAU * fmod(float(i) * 0.618034, 1.0) \
+				+ _rng.randf_range(-0.25, 0.25)
+			var r: float = _rng.randf_range(receta["desde"], receta["hasta"])
+			var sitio := centro + Vector3(cos(theta), 0.0, sin(theta)) * r
+			_plantar(receta, sitio, 0.0, Vector3.ZERO)
 
 
 ## Arboleda y pedregal alrededor de todo, al pie de la ladera.

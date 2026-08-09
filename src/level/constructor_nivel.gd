@@ -41,6 +41,16 @@ const RECORRIDO: Array[Dictionary] = [
 	{"tipo": "giro", "grados": 90.0},
 	{"tipo": "pasillo", "largo": 15.0, "ancho": 9.0, "subida": 2.5},
 	{"tipo": "arena", "radio": 13.0, "nodo": "Guardian"},
+	# A partir de aquí el parque se alarga más allá del guardián. No hay más
+	# peleas: es el paseo de vuelta, ancho y tranquilo, que lleva al claro del
+	# portal. Después de un jefe hace falta bajar el pulso antes de cambiar de
+	# escenario — si el nivel acaba en el mismo golpe que el jefe, la victoria no
+	# se saborea.
+	{"tipo": "giro", "grados": -90.0},
+	{"tipo": "pasillo", "largo": 22.0, "ancho": 11.0},
+	{"tipo": "giro", "grados": -90.0},
+	{"tipo": "pasillo", "largo": 26.0, "ancho": 12.0, "subida": -2.5},
+	{"tipo": "arena", "radio": 12.0, "nodo": "ClaroPortal"},
 ]
 
 @export_group("Aspecto")
@@ -84,6 +94,12 @@ const RECORRIDO: Array[Dictionary] = [
 @export var ancho_camino: float = 3.2
 ## Hueco que se deja en el borde de la arena para entrar y salir, en grados.
 @export var hueco_acceso: float = 46.0
+## Qué tramo cierra la `PuertaGuardian`.
+##
+## Va explícito y no como «el último»: al alargar el parque con el paseo de
+## vuelta, el último tramo pasó a ser el que lleva al portal, y la barrera del
+## jefe apareció cerrando la salida del nivel en vez de la entrada del jefe.
+@export var tramo_de_la_puerta: int = 2
 
 ## Dónde va cada Estrella de Sueño, en coordenadas del recorrido y no del
 ## mundo: `tramo` es el índice del pasillo, `t` lo avanzado por él (0 a 1),
@@ -231,10 +247,10 @@ func _colocar_encuentros() -> void:
 	# orienta el −Z hacia el avance, que deja la X justo atravesada. Añadiendo
 	# 90° queda paralela al pasillo, pegada a un muro y sin cortar nada.
 	var barrera := get_parent().get_node_or_null("PuertaGuardian") as Node3D
-	if barrera != null and not tramos.is_empty():
-		var ultimo: int = tramos.size() - 1
-		barrera.global_position = punto_en_tramo(ultimo, 0.99, 0.0, 0.0)
-		var direccion: Vector3 = tramos[ultimo]["direccion"]
+	if barrera != null and tramo_de_la_puerta < tramos.size():
+		var cual: int = tramo_de_la_puerta
+		barrera.global_position = punto_en_tramo(cual, 0.99, 0.0, 0.0)
+		var direccion: Vector3 = tramos[cual]["direccion"]
 		barrera.rotation.y = atan2(-direccion.x, -direccion.z)
 
 

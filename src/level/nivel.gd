@@ -133,10 +133,18 @@ func _montar_objetivos() -> void:
 	if _portal != null:
 		_objetivos.todos_cumplidos.connect(_portal.activar)
 		_portal.usado.connect(_al_usar_portal)
-		# El portal va en el torii, que el decorador coloca detrás del arranque.
-		if _constructor != null and not _constructor.tramos.is_empty():
-			var direccion: Vector3 = _constructor.tramos[0]["direccion"]
-			_portal.global_position = _constructor.punto_inicio - direccion * 4.5
+		# El portal va en el claro del final, no en el arranque: una puerta al
+		# siguiente mundo a dos pasos de donde apareces no tiene ningún peso.
+		if _constructor != null:
+			var claro: Vector3 = _constructor.centros_arena.get(
+				"ClaroPortal", Vector3.ZERO)
+			if claro != Vector3.ZERO:
+				_portal.global_position = claro
+				# Mirando hacia donde se llega, para entrar de frente.
+				if not _constructor.tramos.is_empty():
+					var ultimo: Vector3 = _constructor.tramos[
+						_constructor.tramos.size() - 1]["direccion"]
+					_portal.rotation.y = atan2(-ultimo.x, -ultimo.z)
 
 
 func _al_usar_portal(destino: String) -> void:
