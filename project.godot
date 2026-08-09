@@ -178,5 +178,12 @@ lights_and_shadows/positional_shadow/soft_shadow_filter_quality=0
 ; `OccluderInstance3D` de la escena y descarta lo que quede detrás. Cuesta un
 ; poco de CPU y ahorra mucha GPU, que es justo el cambio que interesa en un
 ; móvil. Los occluders los pone `constructor_nivel.gd` en cada muro y talud.
+; Se dibuja al 80 % y se estira. Es la palanca de rendimiento más fuerte que
+; hay en un móvil —el coste de píxel baja con el cuadrado, o sea a un 64 %— y en
+; un juego de masas planas de color y contornos duros casi no se nota. En el
+; móvil de pruebas la imagen iba a 1600×720 con 28-35 fps; a 0,8 son 1280×576.
+;
+; Si alguna vez se ve blando, este es el número que hay que subir.
+scaling_3d/scale=0.8
 occlusion_culling/use_occlusion_culling=true
 occlusion_culling/occlusion_rays_per_thread=256

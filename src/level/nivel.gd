@@ -53,6 +53,19 @@ func _ready() -> void:
 
 	_terreno = get_node_or_null("Terreno") as TerrenoNivel
 	if _terreno != null:
+		# EL TERRENO SE CENTRA EN EL PARQUE, no donde lo dejó el editor.
+		#
+		# Su zona llana y sus colinas se miden desde su propio origen, y ese
+		# origen estaba puesto a mano en la escena. Al alargar el recorrido el
+		# parque se desplazó treinta metros y el llano dejó de cubrirlo: medio
+		# campo quedó en cuesta, y los rincones —que buscan sitio llano— se
+		# amontonaron todos en la mitad que aún lo era. Calculándolo aquí, el
+		# llano sigue al parque por mucho que cambie el recorrido.
+		if _constructor != null:
+			var medida := _constructor.extension()
+			var centro_parque: Vector3 = medida["centro"]
+			_terreno.global_position = Vector3(
+				centro_parque.x, _terreno.global_position.y, centro_parque.z)
 		# Las hondonadas se piden ANTES de construir: después ya está la malla
 		# hecha y cavar sobre ella dejaría la colisión desincronizada.
 		if decorador != null and _constructor != null and decorador.radio_estanque > 0.0:

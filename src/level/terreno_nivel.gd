@@ -41,17 +41,27 @@ class_name TerrenoNivel
 ## Metros por celda. Más pequeño = colinas más detalladas y mucha más malla.
 ## 2,5 m es el punto donde una colina se ve redonda y la rejilla sigue siendo
 ## de menos de 20.000 vértices.
-@export var paso: float = 2.5
+## Metros entre vértices del terreno.
+##
+## A 2,5 salían 105×105 celdas = 21.800 triángulos, y el terreno se dibuja
+## SIEMPRE porque ocupa toda la pantalla. A 3,2 son 82×82 = 13.300, y el relieve
+## se ve igual: las colinas son suaves y la zona jugable es plana por diseño.
+## Bajar de aquí sí se notaría en el borde de la hondonada del estanque.
+@export var paso: float = 3.2
 ## Medio lado del terreno cuadrado, en metros.
 @export var alcance: float = 130.0
 
 @export_group("Relieve")
 ## Hasta aquí el terreno es plano y liso: es donde se apoya el escenario.
-@export var radio_llano: float = 46.0
+## El parque creció —la pradera de arranque son cincuenta metros más— y con 46
+## los rincones del campo caían todos fuera del llano: la plaza de la fuente
+## acabó en una ladera con los bancos desperdigados cuesta abajo. El llano tiene
+## que cubrir TODO lo que se construye encima.
+@export var radio_llano: float = 62.0
 ## Desde aquí mandan las colinas que cierran el mapa.
 @export var radio_colinas: float = 86.0
 ## Cuánto ondula el campo abierto entre el parque y las colinas.
-@export var altura_campo: float = 1.8
+@export var altura_campo: float = 1.2
 ## Cuánto levantan las colinas del borde.
 @export var altura_colinas: float = 22.0
 ## Desde aquí arranca la cordillera del fondo, que ya no se pisa nunca.

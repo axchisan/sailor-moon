@@ -90,7 +90,7 @@ shadow_enabled = true
 shadow_bias = 0.06
 shadow_normal_bias = 2.5
 directional_shadow_mode = 0
-directional_shadow_max_distance = 30.0
+directional_shadow_max_distance = 24.0
 
 [node name="Terreno" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0, -35)

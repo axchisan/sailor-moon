@@ -56,13 +56,17 @@ const SIEMBRA: Array[Dictionary] = [
 	# Cerezos justo detrás del muro, en dos hileras. Son el techo del pasillo:
 	# sin ellos el recorrido se lee como una zanja. A 1,6 m la copa asoma por
 	# encima del borde sin meterse en el camino.
-	{"pieza": "arbol_cerezo", "cada": 9.0, "fuera": 1.9, "desvio": 1.0,
+	# Espaciados a doce metros y no a nueve. El cerezo es la pieza más cara del
+	# nivel (596 triángulos) y la que más sombra proyecta; entre las dos hileras
+	# y las coronas de arena salían 238, y quitando una de cada cuatro el
+	# pasillo se sigue leyendo igual de frondoso.
+	{"pieza": "arbol_cerezo", "cada": 12.0, "fuera": 1.9, "desvio": 1.0,
 		"escala": [0.85, 1.25], "alterna": false, "ambos_lados": true,
 		"hundir": 0.15, "pie": 0.35},
 	# Segunda fila más atrás y más alta: da profundidad al bosque y tapa el
 	# canto del faldón. Muy espaciada — con las dos filas juntas el camino
 	# queda enterrado en un túnel rosa y no se ve nada de lo que hay delante.
-	{"pieza": "arbol_cerezo", "cada": 15.0, "fuera": 5.4, "desvio": 2.2,
+	{"pieza": "arbol_cerezo", "cada": 20.0, "fuera": 5.4, "desvio": 2.2,
 		"escala": [1.0, 1.4], "alterna": false, "ambos_lados": true,
 		"hundir": 0.15, "fase": 0.37, "pie": 0.35},
 	# Arbustos pegados al borde por dentro, rompiendo la línea recta y tapando
@@ -118,7 +122,7 @@ const CAMPO: Array[Dictionary] = [
 		"escala": [0.9, 1.9]},
 	{"pieza": "macizo_flores", "copias": 120, "desde": 46.0, "hasta": 84.0,
 		"escala": [0.9, 1.7]},
-	{"pieza": "arbol_cerezo", "copias": 34, "desde": 52.0, "hasta": 80.0,
+	{"pieza": "arbol_cerezo", "copias": 26, "desde": 52.0, "hasta": 80.0,
 		"escala": [0.9, 1.4], "hundir": 0.15},
 	{"pieza": "tocon", "copias": 22, "desde": 48.0, "hasta": 80.0,
 		"escala": [0.9, 1.4]},
@@ -153,11 +157,11 @@ const DETALLE: Array[Dictionary] = [
 	{"pieza": "mata_hierba", "copias": 620, "desde": 6.0, "hasta": 84.0,
 		"escala": [0.7, 1.6], "reserva": false, "pie": 0.1},
 	{"pieza": "piedrecitas", "copias": 210, "desde": 6.0, "hasta": 84.0,
-		"escala": [0.7, 1.5], "reserva": false, "pie": 0.1},
+		"escala": [0.7, 1.5], "reserva": false, "pie": 0.1, "seguir_suelo": true},
 	{"pieza": "ramitas", "copias": 150, "desde": 8.0, "hasta": 80.0,
-		"escala": [0.8, 1.4], "reserva": false, "pie": 0.1},
+		"escala": [0.8, 1.4], "reserva": false, "pie": 0.1, "seguir_suelo": true},
 	{"pieza": "hojarasca", "copias": 180, "desde": 6.0, "hasta": 78.0,
-		"escala": [0.8, 1.7], "reserva": false, "pie": 0.1},
+		"escala": [0.8, 1.7], "reserva": false, "pie": 0.1, "seguir_suelo": true},
 ]
 
 
@@ -183,14 +187,15 @@ const DETALLE: Array[Dictionary] = [
 ##
 ## `en` es Vector2(izquierda-derecha, delante-detrás) en metros dentro del
 ## rincón, con +y hacia el fondo. `giro` son grados sobre la orientación del
-## conjunto. `radio` es cuánto espacio se le reserva: dentro de él no se siembra
+## conjunto, y `mirar: "centro"` calcula ese giro solo para que la pieza mire al
+## corazón del rincón — es lo que quiere un banco alrededor de una fuente. `radio` es cuánto espacio se le reserva: dentro de él no se siembra
 ## nada del campo.
 const RINCONES: Array[Dictionary] = [
 	# Puesto de dulces con terraza. El más vistoso: va donde se ve desde el
 	# camino principal, para que se vea y apetezca acercarse.
 	{"nombre": "Kiosco", "empedrado": 6.4, "rumbo": 40.0, "distancia": 56.0, "radio": 10.0,
 		"piezas": [
-			{"pieza": "puesto_dulces", "en": Vector2(0.0, 4.0), "giro": 180.0},
+			{"pieza": "puesto_dulces", "en": Vector2(0.0, 4.0), "mirar": "centro"},
 			{"pieza": "mesa_sombrilla", "en": Vector2(-3.1, -0.4)},
 			{"pieza": "mesa_sombrilla", "en": Vector2(3.0, -1.4)},
 			{"pieza": "matera", "en": Vector2(-4.8, 2.4), "giro": 90.0},
@@ -207,8 +212,8 @@ const RINCONES: Array[Dictionary] = [
 		"piezas": [
 			{"pieza": "columpio", "en": Vector2(-2.6, 1.4), "giro": 12.0},
 			{"pieza": "tobogan", "en": Vector2(3.2, 0.6), "giro": 200.0},
-			{"pieza": "banco_parque", "en": Vector2(0.0, -3.8)},
-			{"pieza": "banco_parque", "en": Vector2(-5.4, -2.4), "giro": 60.0},
+			{"pieza": "banco_parque", "en": Vector2(0.0, -3.8), "mirar": "centro"},
+			{"pieza": "banco_parque", "en": Vector2(-5.4, -2.4), "mirar": "centro"},
 			{"pieza": "papelera", "en": Vector2(4.6, -2.8)},
 			{"pieza": "matera", "en": Vector2(-6.0, 2.6), "giro": 90.0},
 			{"pieza": "matera", "en": Vector2(6.2, 3.0), "giro": 90.0},
@@ -224,10 +229,10 @@ const RINCONES: Array[Dictionary] = [
 	{"nombre": "Fuente", "empedrado": 8.2, "rumbo": 302.0, "distancia": 58.0, "radio": 11.0,
 		"piezas": [
 			{"pieza": "fuente_piedra", "en": Vector2(0.0, 0.0)},
-			{"pieza": "banco_parque", "en": Vector2(0.0, -3.7), "giro": 0.0},
-			{"pieza": "banco_parque", "en": Vector2(0.0, 3.7), "giro": 180.0},
-			{"pieza": "banco_parque", "en": Vector2(-3.7, 0.0), "giro": 90.0},
-			{"pieza": "banco_parque", "en": Vector2(3.7, 0.0), "giro": 270.0},
+			{"pieza": "banco_parque", "en": Vector2(0.0, -3.7), "mirar": "centro"},
+			{"pieza": "banco_parque", "en": Vector2(0.0, 3.7), "mirar": "centro"},
+			{"pieza": "banco_parque", "en": Vector2(-3.7, 0.0), "mirar": "centro"},
+			{"pieza": "banco_parque", "en": Vector2(3.7, 0.0), "mirar": "centro"},
 			{"pieza": "maceta", "en": Vector2(-3.1, -3.1)},
 			{"pieza": "maceta", "en": Vector2(3.1, -3.1)},
 			{"pieza": "maceta", "en": Vector2(-3.1, 3.1)},
@@ -251,9 +256,9 @@ const RINCONES: Array[Dictionary] = [
 	# El altar del gato. Un guiño: en el juego hay dos gatos que hablan, y
 	# encontrarse su estatua en el parque es de las cosas que sí se miran dos
 	# veces a los ocho años.
-	{"nombre": "AltarGato", "empedrado": 4.6, "rumbo": 248.0, "distancia": 66.0, "radio": 8.0,
+	{"nombre": "AltarGato", "empedrado": 4.6, "rumbo": 248.0, "distancia": 56.0, "radio": 8.0,
 		"piezas": [
-			{"pieza": "estatua_gato", "en": Vector2(0.0, 1.6), "giro": 180.0},
+			{"pieza": "estatua_gato", "en": Vector2(0.0, 1.6), "mirar": "centro"},
 			{"pieza": "farol_piedra", "en": Vector2(-2.0, 0.6)},
 			{"pieza": "farol_piedra", "en": Vector2(2.0, 0.6)},
 			{"pieza": "seto_bajo", "en": Vector2(-2.2, 3.4), "giro": 12.0},
@@ -266,7 +271,7 @@ const RINCONES: Array[Dictionary] = [
 		]},
 	# El vivero: materas en fila y macetas por el suelo. Es el rincón que más
 	# «alguien cuida esto» dice, y el más barato de todos.
-	{"nombre": "Vivero", "empedrado": 5.2, "rumbo": 162.0, "distancia": 68.0, "radio": 9.0,
+	{"nombre": "Vivero", "empedrado": 5.2, "rumbo": 162.0, "distancia": 58.0, "radio": 9.0,
 		"piezas": [
 			{"pieza": "matera", "en": Vector2(-3.4, 2.2)},
 			{"pieza": "matera", "en": Vector2(-1.2, 2.4)},
@@ -279,7 +284,7 @@ const RINCONES: Array[Dictionary] = [
 			{"pieza": "maceta", "en": Vector2(0.2, -0.6)},
 			{"pieza": "maceta", "en": Vector2(2.8, -0.2)},
 			{"pieza": "maceta", "en": Vector2(4.6, 0.4)},
-			{"pieza": "cartel_flechas", "en": Vector2(0.0, -3.6), "giro": 180.0},
+			{"pieza": "cartel_flechas", "en": Vector2(0.0, -3.6), "mirar": "centro"},
 			{"pieza": "papelera", "en": Vector2(-5.0, -2.6)},
 		]},
 	# --- Rincones pequeños ---
@@ -296,14 +301,14 @@ const RINCONES: Array[Dictionary] = [
 		]},
 	{"nombre": "Bancal", "empedrado": 3.0, "rumbo": 186.0, "distancia": 46.0,
 		"radio": 6.0, "piezas": [
-			{"pieza": "banco_parque", "en": Vector2(0.0, 1.8), "giro": 180.0},
+			{"pieza": "banco_parque", "en": Vector2(0.0, 1.8), "mirar": "centro"},
 			{"pieza": "maceta", "en": Vector2(-1.7, 1.6)},
 			{"pieza": "maceta", "en": Vector2(1.7, 1.6)},
 			{"pieza": "cartel_flechas", "en": Vector2(0.0, -2.2), "giro": 150.0},
 			{"pieza": "seto_bajo", "en": Vector2(-1.2, 3.2)},
 			{"pieza": "seto_bajo", "en": Vector2(1.2, 3.2)},
 		]},
-	{"nombre": "Corro", "empedrado": 4.2, "rumbo": 326.0, "distancia": 72.0,
+	{"nombre": "Corro", "empedrado": 4.2, "rumbo": 326.0, "distancia": 60.0,
 		"radio": 7.0, "piezas": [
 			{"pieza": "guirnalda", "en": Vector2(0.0, 0.0), "giro": 90.0},
 			{"pieza": "seto_bajo", "en": Vector2(-2.6, 2.8), "giro": 20.0},
@@ -319,7 +324,7 @@ const RINCONES: Array[Dictionary] = [
 ## Lo que rodea a cada arena. Un anillo cerrado de cerezos: encierra la pelea
 ## sin necesidad de más muros, y de paso tapa lo que hay detrás.
 const CORONA_ARENA: Array[Dictionary] = [
-	{"pieza": "arbol_cerezo", "copias": 16, "margen": 3.4, "desvio": 1.6,
+	{"pieza": "arbol_cerezo", "copias": 12, "margen": 3.4, "desvio": 1.6,
 		"escala": [0.9, 1.3], "hundir": 0.15},
 	{"pieza": "arbusto", "copias": 20, "margen": 1.6, "desvio": 0.8,
 		"escala": [0.8, 1.3]},
@@ -568,9 +573,13 @@ var _dentro_de_muro: int = 0
 ## descarta de golpe las que quedan detrás o demasiado lejos. Cuesta más nodos,
 ## pero un nodo descartado no cuesta nada y un triángulo dibujado sí.
 ##
-## Cincuenta y dos metros es el compromiso: más pequeñas afinan el descarte pero
-## multiplican los nodos, y más grandes vuelven al problema de siempre.
-const LADO_PARCELA := 52.0
+## Setenta metros es el compromiso, y se ajustó MIDIENDO EN EL MÓVIL. A 52 el
+## descarte afinaba más, pero la pantalla del teléfono es mucho más ancha que
+## un 16:9 —ve mucho más mundo de golpe— y salían 156 draw calls, por encima
+## del presupuesto de 150 del §8. Menos parcelas y más grandes cambian unos
+## pocos triángulos de más por bastantes draw calls de menos, que es el cambio
+## que le conviene a un móvil.
+const LADO_PARCELA := 70.0
 
 ## Hasta qué distancia se ve cada pieza. Sin entrada, se ve siempre.
 ##
@@ -582,12 +591,12 @@ const LADO_PARCELA := 52.0
 ## Los números están escogidos por TAMAÑO, no por importancia: cuanto más
 ## pequeña es la pieza, antes deja de aportar.
 const ALCANCE := {
-	"piedrecitas": 42.0, "hojarasca": 44.0, "ramitas": 46.0,
-	"mata_hierba": 52.0, "nenufar": 60.0, "macizo_flores": 68.0,
-	"maceta": 80.0, "tocon": 82.0, "papelera": 82.0,
-	"losa_sendero": 92.0, "seto_bajo": 92.0, "matera": 92.0,
-	"valla_madera": 92.0, "farolillo": 95.0, "banco_parque": 95.0,
-	"arbusto": 100.0, "roca": 105.0, "farol_piedra": 100.0,
+	"piedrecitas": 36.0, "hojarasca": 38.0, "ramitas": 40.0,
+	"mata_hierba": 44.0, "nenufar": 52.0, "macizo_flores": 56.0,
+	"maceta": 66.0, "tocon": 68.0, "papelera": 68.0,
+	"losa_sendero": 76.0, "seto_bajo": 76.0, "matera": 78.0,
+	"valla_madera": 78.0, "farolillo": 80.0, "banco_parque": 80.0,
+	"arbusto": 84.0, "roca": 88.0, "farol_piedra": 84.0,
 }
 ## Cuántos metros dura el desvanecido al llegar al límite.
 const MARGEN_ALCANCE := 11.0
@@ -750,6 +759,12 @@ func _coronar_arena(centro: Vector3, radio: float) -> void:
 			var r := distancia + _rng.randf_range(0.0, receta.get("desvio", 0.0))
 			var sitio := centro + Vector3(cos(angulo), 0.0, sin(angulo)) * r \
 				+ Vector3.UP * _alto_suelo
+			# La corona rodea el ruedo, pero el ruedo tiene DOS BOCAS: por ahí
+			# entra y sale el camino. Sin esta comprobación se plantaba un
+			# cerezo a treinta centímetros del eje del sendero de salida, justo
+			# en mitad del paso.
+			if _pisa_un_tramo(sitio, 2.5):
+				continue
 			_plantar(receta, sitio, 0.0, Vector3.ZERO)
 
 
@@ -853,24 +868,35 @@ func _moja(sitio: Vector3, factor: float, margen: float) -> bool:
 	return hacia.length() <= _radio_contorno(angulo) * factor + margen
 
 
+## ¿Cae sobre algún TRAMO —camino o pradera—, con el margen que se le pida?
+##
+## Va aparte de `_pisa_el_recorrido()` porque las coronas de arena necesitan
+## esquivar los caminos pero NO las arenas: están puestas justo alrededor de una,
+## y comprobando las dos cosas se descartarían enteras.
+func _pisa_un_tramo(sitio: Vector3, margen: float) -> bool:
+	for tramo in _tramos:
+		var origen: Vector3 = tramo["origen"]
+		var direccion: Vector3 = tramo["direccion"]
+		var hacia := sitio - origen
+		var avance := hacia.dot(direccion)
+		if avance < -margen or avance > float(tramo["largo"]) + margen:
+			continue
+		var lateral := absf(hacia.dot(direccion.cross(Vector3.UP).normalized()))
+		var mitad: float = float(tramo["ancho"]) * 0.5 \
+			+ float(tramo.get("separacion", 0.0)) * 0.5 + margen
+		if lateral <= mitad:
+			return true
+	return false
+
+
 ## ¿Este punto cae sobre alguna parte por la que se juega?
 ##
 ## Mira los tramos como rectángulos y las arenas como círculos, con un margen de
 ## respeto. Es más barato y más predecible que consultar la física, y aquí lo
 ## que importa es que **nunca** aparezca un peñasco en el camino.
 func _pisa_el_recorrido(sitio: Vector3) -> bool:
-	for tramo in _tramos:
-		var origen: Vector3 = tramo["origen"]
-		var direccion: Vector3 = tramo["direccion"]
-		var hacia := sitio - origen
-		var avance := hacia.dot(direccion)
-		if avance < -margen_recorrido or avance > float(tramo["largo"]) + margen_recorrido:
-			continue
-		var lateral := absf(hacia.dot(direccion.cross(Vector3.UP).normalized()))
-		var mitad: float = float(tramo["ancho"]) * 0.5 \
-			+ float(tramo.get("separacion", 0.0)) * 0.5 + margen_recorrido
-		if lateral <= mitad:
-			return true
+	if _pisa_un_tramo(sitio, margen_recorrido):
+		return true
 	for nombre: String in _radios_arena:
 		var centro_arena: Vector3 = _centros_arena[nombre]
 		var d := Vector2(sitio.x - centro_arena.x, sitio.z - centro_arena.z).length()
@@ -1159,7 +1185,9 @@ func _plantar(receta: Dictionary, sitio: Vector3, rumbo: float,
 
 	# Casi todo se posa en el suelo de debajo. El puente no: el rayo caería al
 	# fondo del vaso del estanque y lo hundiría bajo el agua.
-	var base := _posar(sitio) if receta.get("posar", true) else sitio
+	var apoyo := _apoyo(sitio) if receta.get("posar", true) \
+		else {"punto": sitio, "normal": Vector3.UP}
+	var base: Vector3 = apoyo["punto"]
 	if is_inf(base.y):
 		return false
 
@@ -1191,8 +1219,11 @@ func _plantar(receta: Dictionary, sitio: Vector3, rumbo: float,
 	if receta.get("reserva", true) and not lejano:
 		_apuntar_hueco(base, hueco)
 
-	var pose := Transform3D(Basis.from_euler(Vector3(0.0, giro, 0.0)) * escala,
-		base - Vector3.UP * receta.get("hundir", 0.0) * escala)
+	var giro_base := Basis.from_euler(Vector3(0.0, giro, 0.0))
+	if receta.get("seguir_suelo", false):
+		giro_base = _tumbar(apoyo["normal"], giro)
+	var pose := Transform3D(giro_base * escala,
+		base - apoyo["normal"] * receta.get("hundir", 0.0) * escala)
 
 	var destino: Dictionary = _acumulado.get(pieza, {})
 	if destino.is_empty():
@@ -1212,6 +1243,35 @@ func _plantar(receta: Dictionary, sitio: Vector3, rumbo: float,
 
 # --- Rincones y senderos --------------------------------------------------------
 
+## Cuánto desnivel se le tolera a un rincón de punta a punta, en metros.
+##
+## Medio metro en diez de ancho es una pendiente que ni se nota al caminar y que
+## el mobiliario absorbe sin verse torcido. Con más, los bancos empiezan a
+## mirar al cielo y el empedrado se abre en escamas.
+const DESNIVEL_RINCON := 0.9
+
+
+## ¿Es lo bastante llano este sitio para poner una plaza?
+##
+## Se miran nueve puntos —el centro y ocho alrededor— y se compara el más alto
+## con el más bajo. No vale con mirar solo el centro: una plaza puede tener el
+## centro perfectamente horizontal y estar justo en el borde de una cuesta.
+func _es_llano(centro: Vector3, radio: float, tolerancia: float) -> bool:
+	var minimo := INF
+	var maximo := -INF
+	for i in 9:
+		var punto := centro
+		if i > 0:
+			var angulo := TAU * float(i - 1) / 8.0
+			punto += Vector3(cos(angulo), 0.0, sin(angulo)) * radio * 0.85
+		var apoyo := _posar(punto)
+		if is_inf(apoyo.y):
+			return false
+		minimo = minf(minimo, apoyo.y)
+		maximo = maxf(maximo, apoyo.y)
+	return maximo - minimo <= tolerancia
+
+
 ## Coloca los conjuntos de `RINCONES`.
 ##
 ## Cada uno se planta con `libre` puesto: la composición ya está decidida a
@@ -1228,15 +1288,24 @@ func _poblar_rincones(centro: Vector3) -> void:
 		# mano cada vez que cambie el recorrido es pedir problemas: si no cabe,
 		# se busca sitio girando alrededor del centro hasta encontrarlo.
 		var radio: float = rincon["radio"]
+		var distancia: float = rincon["distancia"]
 		var encontrado := false
-		for intento in 24:
+		# Se busca girando alrededor del centro y, si en toda la vuelta no cabe,
+		# acercándose. Además del recorrido, del agua y de los muros, ahora se
+		# exige TERRENO LLANO: la plaza de la fuente acabó en una ladera con los
+		# bancos desperdigados cuesta abajo y el empedrado colgando como
+		# escamas. Una plaza es una plaza porque está en un llano.
+		for intento in 60:
 			if not _pisa_el_recorrido(sitio) and not _moja(sitio, 1.4, radio) \
-					and not _dentro_de_un_estorbo(sitio, radio):
+					and not _dentro_de_un_estorbo(sitio, radio) \
+					and not _en_un_rincon(sitio, radio * 0.6) \
+					and _es_llano(sitio, radio, DESNIVEL_RINCON):
 				encontrado = true
 				break
-			rumbo += deg_to_rad(15.0)
-			sitio = centro + Vector3(cos(rumbo), 0.0, sin(rumbo)) \
-				* float(rincon["distancia"])
+			rumbo += deg_to_rad(13.0)
+			if intento % 28 == 27:
+				distancia = maxf(distancia - 9.0, 30.0)
+			sitio = centro + Vector3(cos(rumbo), 0.0, sin(rumbo)) * distancia
 		if not encontrado:
 			push_warning("DecoradorNivel: no cabe el rincón '%s'" % rincon["nombre"])
 			continue
@@ -1258,8 +1327,18 @@ func _poblar_rincones(centro: Vector3) -> void:
 				"alinear": true, "libre": true,
 				"hundir": pieza.get("hundir", 0.0),
 			}
-			_plantar(receta, sitio + hacia,
-				orientacion + deg_to_rad(pieza.get("giro", 0.0)), Vector3.ZERO)
+			# `mirar` calcula el giro en vez de darlo a mano.
+			#
+			# Los cuatro bancos de la plaza de la fuente llevaban 0, 90, 180 y
+			# 270 escritos a ojo, y salieron los cuatro girados media vuelta:
+			# sentados de espaldas al agua, que es lo contrario de lo que hace un
+			# banco alrededor de una fuente. Con la dirección calculada desde su
+			# propia posición no hay forma de equivocarse, y sigue valiendo si se
+			# mueve la pieza.
+			var propio: float = deg_to_rad(pieza.get("giro", 0.0))
+			if pieza.get("mirar", "") == "centro":
+				propio += _rumbo_hacia_el_centro(en)
+			_plantar(receta, sitio + hacia, orientacion + propio, Vector3.ZERO)
 
 		_empedrar(sitio, float(rincon.get("empedrado", 0.0)))
 		_sitios_rincon.append({"centro": sitio, "radio": radio})
@@ -1302,9 +1381,22 @@ func _empedrar(centro: Vector3, radio: float) -> void:
 			# quedaba EXACTAMENTE al ras del terreno — coplanar, y parpadeando
 			# en todo el empedrado en cuanto giraba la cámara.
 			_plantar({"pieza": "losa_sendero", "escala": [1.35, 1.95],
-				"libre": true, "reserva": false, "hundir": -0.03},
+				"libre": true, "reserva": false, "hundir": -0.03,
+				"seguir_suelo": true},
 				punto, _rng.randf_range(0.0, TAU), Vector3.ZERO)
 		anillo += 1.02
+
+
+## Hacia dónde tiene que girar una pieza colocada en `en` para mirar al centro.
+##
+## Las piezas del kit se modelaron mirando a su −Z, que es hacia dónde apunta
+## `Basis.from_euler(0, θ, 0) * (0, 0, −1)` = `(−sin θ, 0, −cos θ)`. Igualando
+## eso a la dirección hacia el centro —que desde `en` es `−en`— sale
+## `θ = atan2(en.x, en.y)`.
+static func _rumbo_hacia_el_centro(en: Vector2) -> float:
+	if en.length_squared() < 0.0001:
+		return 0.0
+	return atan2(en.x, en.y)
 
 
 ## Une cada rincón con el camino principal por un andén de losas.
@@ -1415,13 +1507,31 @@ func _sendero(desde: Vector3, hasta: Vector3, margen_final: float) -> void:
 		if _moja(punto, BORDE_AGUA, 0.4) or _en_un_rincon(punto, -0.5):
 			continue
 		var receta := {"pieza": "losa_sendero", "escala": [1.2, 1.7],
-			"libre": true, "reserva": false, "hundir": -0.03}
+			"libre": true, "reserva": false, "hundir": -0.03,
+			"seguir_suelo": true}
 		_plantar(receta, punto, _rng.randf_range(0.0, TAU), Vector3.ZERO)
 		# El andén se reserva para que no le crezca un árbol encima. Reserva el
 		# EJE, no cada losa: son piedras planas y se pisan, lo que no puede
 		# aparecer ahí es un peñasco.
 		if i % 3 == 0:
 			_apuntar_hueco(punto, 1.15)
+
+
+## Una base girada `rumbo` pero con el «arriba» pegado a la pendiente.
+##
+## Se reconstruyen los tres ejes a partir de la normal para que queden
+## perpendiculares: interpolando o rotando a ojo salen bases torcidas y la pieza
+## se ve cizallada.
+static func _tumbar(normal: Vector3, rumbo: float) -> Basis:
+	var arriba := normal.normalized()
+	var frente := Vector3(sin(rumbo), 0.0, cos(rumbo))
+	var derecha := arriba.cross(frente)
+	if derecha.length_squared() < 0.0001:
+		# La normal y el rumbo son paralelos (suelo vertical): cualquier eje
+		# perpendicular vale.
+		derecha = arriba.cross(Vector3.RIGHT)
+	derecha = derecha.normalized()
+	return Basis(derecha, arriba, derecha.cross(arriba).normalized())
 
 
 # --- Reparto del sitio ----------------------------------------------------------
@@ -1487,9 +1597,20 @@ func _dentro_de_un_estorbo(sitio: Vector3, radio: float) -> bool:
 ## de crear los cuerpos de los props, así que solo puede chocar con el blockout
 ## y con la hierba, nunca con otro árbol.
 func _posar(sitio: Vector3) -> Vector3:
+	return _apoyo(sitio)["punto"]
+
+
+## Dónde y CÓMO se apoya algo en el suelo: el punto y la inclinación.
+##
+## La normal hace falta para lo que va tumbado. Una losa de empedrado se
+## plantaba siempre horizontal, y en la ladera de al lado de la fuente eso
+## dejaba media plaza de piedras planas clavadas de canto en la cuesta. Lo que
+## va tumbado tiene que tumbarse CON el suelo.
+func _apoyo(sitio: Vector3) -> Dictionary:
+	var plano := {"punto": sitio, "normal": Vector3.UP}
 	var espacio := get_world_3d().direct_space_state
 	if espacio == null:
-		return sitio
+		return plano
 	# Desde MUY arriba y hasta muy abajo. Con el rayo corto de antes —cuatro
 	# metros por encima— todo lo que caía en las faldas de las colinas se
 	# quedaba sin tocar suelo: el terreno ya estaba por encima del punto de
@@ -1504,8 +1625,11 @@ func _posar(sitio: Vector3) -> Vector3:
 		# Sin suelo debajo. Se devuelve con la Y a infinito para que `_plantar`
 		# lo descarte: mejor un prop de menos que uno flotando en el vacío.
 		_sin_suelo += 1
-		return Vector3(sitio.x, INF, sitio.z)
-	return Vector3(sitio.x, choque["position"].y, sitio.z)
+		return {"punto": Vector3(sitio.x, INF, sitio.z), "normal": Vector3.UP}
+	return {
+		"punto": Vector3(sitio.x, choque["position"].y, sitio.z),
+		"normal": choque["normal"],
+	}
 
 
 ## Crea los MultiMesh de verdad, uno por trozo de malla. Devuelve cuántas

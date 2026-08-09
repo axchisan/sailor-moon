@@ -482,6 +482,42 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     árbol. El parámetro de verdad es `divisiones` (0 → 20 caras, 1 → 80, 2 →
     320); el decorado pasó de 489.000 triángulos a 277.000 solo con ponerlo bien
     donde no se nota.
+56. **Un `match` sin el caso que toca se lo traga sin decir nada.** El paso
+    `{"tipo": "pradera"}` llevaba desde que se escribió sin construirse porque
+    `construir()` no tenía esa rama: el nivel entero salía cincuenta metros más
+    corto, se aparecía pegada al canto del primer pasillo, y la corona de la
+    primera arena caía sobre el camino de salida —de ahí el árbol en mitad del
+    sendero—. **Todo `match` sobre datos lleva un `_:` que avise.**
+57. **…y ese comodín va EL ÚLTIMO.** Puesto en medio se traga los casos que
+    vienen detrás. Colocándolo tras `"cruce"` desaparecieron `"giro"` y
+    `"arena"`: el nivel se quedó en un pasillo suelto con una sola arena.
+    GDScript lo avisa con «Unreachable pattern», que es fácil de pasar por alto
+    entre otros avisos.
+58. **Algo elevado sin colisión es algo por dentro de lo que se camina.** Al
+    subir la franja de camino diez centímetros para quitarle el z-fighting se
+    convirtió en un escalón: el personaje seguía pisando el suelo de debajo y la
+    franja le tapaba las botas. Si una superficie sobresale, hay que poder
+    subirse encima.
+59. **Un rincón compuesto necesita terreno LLANO, y hay que comprobarlo.** La
+    plaza de la fuente cayó en una ladera y quedó con los bancos desperdigados
+    cuesta abajo y el empedrado colgando como escamas. `_es_llano()` mira nueve
+    puntos —el centro y ocho alrededor— porque el centro puede estar horizontal
+    justo en el borde de una cuesta.
+60. **El terreno se centraba donde lo dejó el editor, no en el parque.** Su zona
+    llana y sus colinas se miden desde su propio origen; al alargar el recorrido
+    el parque se desplazó treinta metros, se salió del llano y media mitad acabó
+    metida en las faldas de las montañas. Lo coloca `nivel.gd` desde
+    `extension()`, así que el llano sigue al parque pase lo que pase.
+61. **Lo que va tumbado tiene que tumbarse CON el suelo.** Las losas del
+    empedrado se plantaban siempre horizontales y en una cuesta sobresalían de
+    canto. `_apoyo()` devuelve también la normal, y las recetas con
+    `seguir_suelo` alinean su «arriba» a ella.
+62. **Los giros escritos a mano salen mal, y salen mal TODOS a la vez.** Los
+    cuatro bancos de la plaza llevaban 0, 90, 180 y 270 puestos a ojo, y los
+    cuatro acabaron de espaldas al agua: las piezas del kit miran a su −Z, que
+    no es lo que uno supone al escribir el número. Con `mirar: "centro"` el giro
+    se calcula (`atan2(en.x, en.y)`) y además sigue valiendo si se mueve la
+    pieza.
 
 ---
 

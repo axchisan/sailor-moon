@@ -23,8 +23,13 @@ class_name CameraRig
 @export var capturar_raton: bool = true
 
 @export_group("Límites")
-@export var min_pitch: float = -55.0
-@export var max_pitch: float = 25.0
+@export var min_pitch: float = -62.0
+## Poco margen hacia abajo a propósito. La cámara arranca a −32°, mirando a
+## Serena desde arriba en diagonal, que es como se lee un beat'em up: se ve el
+## suelo, se ven los enemigos que se acercan y se ve a dónde lleva el camino.
+## Dejándola bajar hasta los +25 de antes se acababa mirando el cielo con el
+## personaje tapando media pantalla.
+@export var max_pitch: float = 4.0
 
 @export_group("Encuadre")
 ## Estos valores están MEDIDOS, no puestos a ojo: con 3,5 m y 56° de campo,
@@ -32,14 +37,14 @@ class_name CameraRig
 ## Con los valores originales (5 m / 70°) ocupaba el 17% y se veía diminuta.
 ## Si los cambias, comprueba el encuadre con `unproject_position` de la cabeza
 ## y de los pies; a ojo es muy fácil equivocarse.
-@export var distance: float = 3.5
+@export var distance: float = 4.3
 @export var fov: float = 56.0
 
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
 
 var _yaw: float = 0.0
-var _pitch: float = -15.0
+var _pitch: float = -32.0
 var _looking_with_mouse: bool = false
 var _es_escritorio: bool = false
 

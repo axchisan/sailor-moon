@@ -30,7 +30,12 @@ const RECORRIDO: Array[Dictionary] = [
 	# nueve metros el sitio se lee como un laberinto, y estando pegada al borde
 	# lo primero que apetece es salirse. Con una pradera de treinta metros
 	# alrededor, el parque empieza abriéndose.
-	{"tipo": "pradera", "largo": 52.0, "ancho": 54.0, "nodo": "PraderaInicio"},
+	# Treinta y cuatro metros, no cincuenta y dos. Con los cincuenta el parque
+	# entero se desplazaba tanto que se salía de la zona llana del terreno y
+	# media mitad acababa metida en las faldas de las montañas, y de camino a la
+	# primera arena se hacía largo. Treinta y cuatro siguen dando la sensación de
+	# abrirse sin convertir el arranque en una caminata.
+	{"tipo": "pradera", "largo": 34.0, "ancho": 46.0, "nodo": "PraderaInicio"},
 	# Y el pasillo que sale de ella va abierto por un lado: un camino con muro a
 	# ambos lados es un corredor. Con uno solo, es un sendero que bordea un seto.
 	{"tipo": "pasillo", "largo": 20.0, "ancho": 9.0, "muros": "derecha"},
@@ -221,7 +226,7 @@ func construir() -> void:
 	# Bien DENTRO de la pradera, no en su primer metro. Apareciendo al principio
 	# del tramo, por mucho que la pradera sea grande, lo que se tiene detrás es
 	# el canto — y lo primero que hace cualquiera al empezar es girarse.
-	punto_inicio = Vector3(0.0, grosor_suelo * 0.5 + 0.8, -18.0)
+	punto_inicio = Vector3(0.0, grosor_suelo * 0.5 + 0.8, -13.0)
 
 	# Se recorre con índice, no con `for`, porque una arena necesita mirar el
 	# paso siguiente: si detrás viene un giro, su salida va en la dirección YA
@@ -233,6 +238,13 @@ func construir() -> void:
 		match paso.get("tipo", ""):
 			"pasillo":
 				_pasillo(paso)
+			# Faltaba, y el `match` se lo tragaba sin decir nada: la pradera de
+			# arranque llevaba desde que se escribió sin construirse. Se veía en
+			# el sitio equivocado —el nivel entero cincuenta metros más corto—,
+			# se aparecía pegada al canto del primer pasillo, y la corona de la
+			# primera arena caía justo encima del camino de salida.
+			"pradera":
+				_pradera(paso)
 			"cruce":
 				_cruce(paso)
 			"giro":
@@ -248,6 +260,12 @@ func construir() -> void:
 				_direccion = salida
 				if consumido:
 					i += 1
+			# El comodín va EL ÚLTIMO. Puesto en medio se traga los casos que
+			# vienen detrás —«giro» y «arena»— y el nivel se queda en un pasillo
+			# suelto con una sola arena.
+			_:
+				push_warning("ConstructorNivel: paso de tipo '%s' desconocido"
+					% paso.get("tipo", ""))
 		i += 1
 
 	var lotes := _volcar_lotes()
@@ -303,9 +321,14 @@ func _pasillo(paso: Dictionary) -> void:
 	# Franja de camino, por encima del suelo lo justo para que no pelee con él.
 	# La caja es más gruesa que el desnivel para que su cara de abajo siga
 	# enterrada: si asoma, se ve el canto flotando sobre la hierba.
+	#
+	# Y CON COLISIÓN. Al subirla diez centímetros para quitar el z-fighting se
+	# convirtió en un escalón por el que se caminaba por dentro: el personaje
+	# seguía pisando el suelo de abajo y la franja le tapaba las botas. Si algo
+	# sobresale, hay que poder subirse encima.
 	_losa("Camino", centro + Vector3.UP * (grosor_suelo * 0.5 + desnivel * 0.5),
 		Vector3(ancho_camino, desnivel + 0.06, largo_real + solape * 2.0), camino,
-		giro, inclinacion, false)
+		giro, inclinacion, true)
 
 	var lado := _direccion.cross(Vector3.UP).normalized()
 	# Los muros son opcionales y por lado. Un camino encajonado entre dos setos
@@ -360,7 +383,7 @@ func _pradera(paso: Dictionary) -> void:
 	# dónde se va sin que el resto deje de ser pisable.
 	_losa("Camino", centro + Vector3.UP * (grosor_suelo * 0.5 + desnivel * 0.5),
 		Vector3(ancho_camino, desnivel + 0.06, largo + solape * 2.0), camino,
-		giro, 0.0, false)
+		giro, 0.0, true)
 
 	# Un par de manchas de tierra sueltas: una explanada de césped perfecto se
 	# lee como un campo de fútbol. Con calvas parece un sitio por el que pasa
@@ -583,7 +606,7 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 	cuerpo.add_child(forma)
 
 	add_child(cuerpo)
-	if nombre.begins_with("Suelo"):
+	if nombre.begins_with("Suelo") or nombre.begins_with("Camino"):
 		cuerpos_suelo.append(cuerpo)
 	elif nombre.begins_with("Borde") or nombre.begins_with("Plataforma") \
 			or nombre.begins_with("Talud"):
@@ -661,7 +684,7 @@ func _disco(nombre: String, centro: Vector3, radio: float, superficie: String) -
 	cuerpo.add_child(forma)
 
 	add_child(cuerpo)
-	if nombre.begins_with("Suelo"):
+	if nombre.begins_with("Suelo") or nombre.begins_with("Camino"):
 		cuerpos_suelo.append(cuerpo)
 	_piezas += 1
 
