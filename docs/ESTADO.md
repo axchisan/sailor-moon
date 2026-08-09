@@ -387,6 +387,28 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     del §8. Agrupadas en un `MultiMeshInstance3D` por color son 4, y los
     `StaticBody3D` se quedan solo con la colisión, que no cuesta dibujado. El
     Nivel 1 pasó de 163 a 57.
+41. **Godot NO reimporta un `.glb` regenerado si el editor no está abierto.** Se
+    reescribió el puente en Blender, se exportó bien (14 m en vez de 3), y el
+    juego seguía poniendo el viejo — sin ningún error. La caché de importación
+    manda mientras el `.md5` coincida. Para forzarla:
+    ```bash
+    rm -f .godot/imported/<pieza>.glb-*.md5 .godot/imported/<pieza>.glb-*.scn
+    /Applications/Godot.app/Contents/MacOS/Godot --headless --path . --import
+    ```
+    Vale para cualquier asset regenerado desde `tools/`, no solo modelos.
+42. **El agua tiene que morir DENTRO de la ladera del vaso, no antes.** La
+    lámina se hizo del radio nominal y el vaso a 1,18 de ese radio, así que
+    quedaba un anillo de hoyo seco alrededor del charco: se leía como una mancha
+    azul flotando en un cráter y la espuma de orilla —que se calcula por
+    profundidad— solo salía por el lado donde el terreno subía antes. La lámina
+    va al 1,14 (`BORDE_AGUA` en `decorador_nivel.gd`): el terreno la recorta
+    cerca del borde y la línea de costa la dibuja el propio relieve. Pasarse del
+    1,18 es peor todavía — el agua asomaría por encima de la hierba.
+43. **`_posar()` no vale para nada que vaya sobre el estanque.** Lanza un rayo
+    hacia abajo, y dentro del vaso el rayo encuentra el fondo cavado: la lámina
+    de agua acabó 1,85 m bajo tierra (invisible, sin ningún error) y el puente
+    hundido. El nivel del agua se mide promediando cuatro puntos de la ORILLA, y
+    el puente lleva `"posar": false` en su receta.
 
 ---
 

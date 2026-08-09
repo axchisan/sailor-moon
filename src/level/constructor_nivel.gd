@@ -30,7 +30,7 @@ const RECORRIDO: Array[Dictionary] = [
 	# nueve metros el sitio se lee como un laberinto, y estando pegada al borde
 	# lo primero que apetece es salirse. Con una pradera de treinta metros
 	# alrededor, el parque empieza abriéndose.
-	{"tipo": "pradera", "largo": 30.0, "ancho": 34.0, "nodo": "PraderaInicio"},
+	{"tipo": "pradera", "largo": 52.0, "ancho": 54.0, "nodo": "PraderaInicio"},
 	# Y el pasillo que sale de ella va abierto por un lado: un camino con muro a
 	# ambos lados es un corredor. Con uno solo, es un sendero que bordea un seto.
 	{"tipo": "pasillo", "largo": 20.0, "ancho": 9.0, "muros": "derecha"},
@@ -198,7 +198,10 @@ func construir() -> void:
 	# Un par de metros DENTRO del primer tramo: el recorrido arranca en el
 	# origen y avanza hacia −Z, así que empezar en +Z es empezar en el aire.
 	# La altura es la cara superior de la losa (grosor/2) más un margen.
-	punto_inicio = Vector3(0.0, grosor_suelo * 0.5 + 0.8, -2.5)
+	# Bien DENTRO de la pradera, no en su primer metro. Apareciendo al principio
+	# del tramo, por mucho que la pradera sea grande, lo que se tiene detrás es
+	# el canto — y lo primero que hace cualquiera al empezar es girarse.
+	punto_inicio = Vector3(0.0, grosor_suelo * 0.5 + 0.8, -18.0)
 
 	# Se recorre con índice, no con `for`, porque una arena necesita mirar el
 	# paso siguiente: si detrás viene un giro, su salida va en la dirección YA

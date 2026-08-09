@@ -123,6 +123,7 @@ func construir() -> void:
 
 	if seguir_al_escenario:
 		_apoyar_el_escenario()
+	_excavar()
 
 	_montar_malla()
 	_montar_colision()
@@ -297,6 +298,51 @@ func _apoyar_el_escenario() -> void:
 				levantados += 1
 	print("[Terreno] %d zonas elevadas, %d vértices levantados" % [
 		zonas.size(), levantados])
+
+
+## Hondonadas pedidas desde fuera: el vaso del estanque, y lo que venga.
+##
+## Es la hermana de `zonas_elevadas()`, pero al revés y declarada a mano — el
+## constructor no sabe nada de estanques, los pone el decorador. Se rellenan
+## ANTES de construir el terreno, porque después ya está la malla hecha.
+##
+## Cada una es `{centro, radio, hondura, irregular}`. `irregular` deforma el
+## borde con ruido para que el hoyo no sea un cilindro perfecto: un estanque
+## redondo se ve como una moneda tirada en la hierba.
+var hondonadas: Array[Dictionary] = []
+
+
+## Cava las hondonadas en la malla ya generada.
+func _excavar() -> void:
+	if hondonadas.is_empty():
+		return
+	var cavados := 0
+	for j in _lado:
+		for i in _lado:
+			var k := j * _lado + i
+			var x := global_position.x - alcance + float(i) * paso
+			var z := global_position.z - alcance + float(j) * paso
+			for hoyo: Dictionary in hondonadas:
+				var centro: Vector3 = hoyo["centro"]
+				var d := Vector2(x - centro.x, z - centro.z).length()
+				var radio: float = hoyo["radio"]
+				# El borde ondula: sin esto el vaso es un cilindro y el agua
+				# vuelve a leerse como un disco pegado encima.
+				if hoyo.get("irregular", true):
+					var angulo := atan2(z - centro.z, x - centro.x)
+					radio *= 1.0 + 0.20 * sin(angulo * 3.0 + 1.3) \
+						+ 0.11 * sin(angulo * 5.0 - 0.6)
+				if d > radio:
+					continue
+				# Perfil de cuenco: hondo en el medio y subiendo hacia la orilla.
+				# Con paredes rectas el agua parece una piscina.
+				var t_hoyo := 1.0 - (d / maxf(radio, 0.01))
+				var baja: float = float(hoyo["hondura"]) * smoothstep(0.0, 0.65, t_hoyo)
+				if _alturas[k] - baja < _alturas[k]:
+					_alturas[k] -= baja
+					cavados += 1
+	print("[Terreno] %d hondonadas, %d vértices cavados" % [
+		hondonadas.size(), cavados])
 
 
 ## Las zonas altas del escenario, tal como las calcula el constructor.

@@ -127,6 +127,26 @@ const CAMPO: Array[Dictionary] = [
 		"escala": [1.0, 1.3]},
 ]
 
+## Detalle menudo: lo que separa un suelo de un campo de golf.
+##
+## Va aparte del resto porque son MUCHAS copias de piezas diminutas, y porque se
+## siembra por todo —camino incluido— en vez de respetar el recorrido: una
+## brizna de hierba o cuatro piedrecitas en el borde del sendero es justo lo que
+## hace que no parezca recién asfaltado.
+##
+## Todas son de menos de cien triángulos y van en multimalla, así que quinientas
+## matas de hierba cuestan una sola llamada de dibujado.
+const DETALLE: Array[Dictionary] = [
+	{"pieza": "mata_hierba", "copias": 520, "desde": 6.0, "hasta": 84.0,
+		"escala": [0.7, 1.6]},
+	{"pieza": "piedrecitas", "copias": 190, "desde": 6.0, "hasta": 84.0,
+		"escala": [0.7, 1.5]},
+	{"pieza": "ramitas", "copias": 130, "desde": 8.0, "hasta": 80.0,
+		"escala": [0.8, 1.4]},
+	{"pieza": "hojarasca", "copias": 160, "desde": 6.0, "hasta": 78.0,
+		"escala": [0.8, 1.7]},
+]
+
 ## Lo que rodea a cada arena. Un anillo cerrado de cerezos: encierra la pelea
 ## sin necesidad de más muros, y de paso tapa lo que hay detrás.
 const CORONA_ARENA: Array[Dictionary] = [
@@ -158,6 +178,10 @@ const CUERPO := {
 	"farol_piedra": {"forma": "cilindro", "radio": 0.33, "alto": 1.80, "centro_y": 0.90},
 	"valla_madera": {"forma": "caja", "tam": Vector3(3.0, 1.15, 0.18), "centro_y": 0.57},
 	"torii": {"forma": "caja", "tam": Vector3(0.55, 4.6, 0.55), "centro_y": 2.3},
+	# El puente se atravesaba. La caja cubre el tablero entero y su cara de
+	# arriba coincide con la tabla (0,30 en el modelo), no con la barandilla: si
+	# se pone más alta se camina flotando un palmo por encima de la madera.
+	"puente_madera": {"forma": "caja", "tam": Vector3(2.4, 0.6, 14.0), "centro_y": 0.0},
 	"roca_grande": {"forma": "esfera", "radio": 1.25, "centro_y": 0.80},
 	"tocon": {"forma": "cilindro", "radio": 0.52, "alto": 0.66, "centro_y": 0.33},
 	"farolillo": {"forma": "cilindro", "radio": 0.10, "alto": 2.1, "centro_y": 1.05},
@@ -225,16 +249,11 @@ const FONDO: Array[Dictionary] = [
 
 @export_group("Estanque")
 @export var radio_estanque: float = 9.0
-## A qué altura queda la lámina respecto del terreno.
-##
-## Va ligeramente POR ENCIMA, no hundida. Hundirla era la idea original —el agua
-## asomando solo por las hondonadas, con el borde irregular gratis— pero el
-## campo es demasiado llano ahí y la lámina desaparecía entera bajo la hierba.
-##
-## Hacerlo bien pide una hondonada de verdad en el terreno, que es la lista de
-## zonas hundidas que todavía no existe. Mientras tanto, apoyada y rodeada de
-## piedras, se lee como una charca.
-@export var hondura_estanque: float = -0.06
+## Cuánto se cava el vaso del estanque en el terreno.
+@export var hondura_vaso: float = 1.5
+## Cuánto queda la lámina por debajo del nivel del suelo de alrededor. Poco: lo
+## justo para que el agua tenga orilla y no acabe en un canto.
+@export var calado: float = 0.35
 ## Dónde va, en metros desde el centro de lo construido y en grados.
 @export var distancia_estanque: float = 62.0
 @export var rumbo_estanque: float = 206.0
@@ -250,6 +269,9 @@ const FONDO: Array[Dictionary] = [
 @export var faldon: float = 210.0
 
 var _rng := RandomNumberGenerator.new()
+## Dónde está el agua, para que el resto de la siembra la esquive.
+var _sitio_estanque := Vector3.ZERO
+var _hay_estanque := false
 ## Una lista de transformadas por cada trozo de malla, agrupadas por pieza.
 ## Se acumula todo y al final se vuelca en los MultiMesh de una vez: así una
 ## pieza sembrada desde tres sitios distintos sigue siendo una sola draw call.
@@ -294,12 +316,17 @@ func decorar(constructor: ConstructorNivel) -> void:
 		for nombre: String in constructor.centros_arena:
 			_coronar_arena(constructor.centros_arena[nombre],
 				constructor.radios_arena.get(nombre, 11.0))
+	# Se apunta antes de sembrar nada: el campo y el detalle tienen que saber
+	# esquivar el agua, y ellos corren antes de que el estanque exista.
+	_sitio_estanque = sitio_del_estanque(constructor) if radio_estanque > 0.0 \
+		else Vector3.ZERO
+	_hay_estanque = radio_estanque > 0.0
+
 	_puerta_de_entrada(constructor)
 	_poblar_campo(medida["centro"], medida["radio"])
+	_sembrar_detalle(medida["centro"])
 	if radio_estanque > 0.0:
-		var rumbo := deg_to_rad(rumbo_estanque)
-		_estanque(medida["centro"]
-			+ Vector3(cos(rumbo), 0.0, sin(rumbo)) * distancia_estanque)
+		_estanque(sitio_del_estanque(constructor))
 	if constructor.radio_limite > 0.0:
 		_vestir_limite(medida["centro"], constructor.radio_limite)
 	if montar_fondo:
@@ -416,7 +443,44 @@ func _poblar_campo(centro: Vector3, _radio_nivel: float) -> void:
 			# plantaba peñascos en mitad del camino de salida.
 			if _pisa_el_recorrido(sitio):
 				continue
+			# Y nada del campo puede caer en el agua ni en la ladera del vaso:
+			# el peñasco que salía flotando en mitad del estanque venía de aquí.
+			if _moja(sitio, 1.18, 2.2):
+				continue
 			_plantar(receta, sitio, 0.0, Vector3.ZERO)
+
+
+## Siembra el detalle menudo por todas partes, camino incluido.
+##
+## A diferencia del campo, esto SÍ puede caer sobre el recorrido: unas briznas
+## en el borde del sendero o unas piedrecitas sueltas son exactamente lo que
+## hace que el camino no parezca recién asfaltado. Nada de esto tiene cuerpo,
+## así que no estorba.
+func _sembrar_detalle(centro: Vector3) -> void:
+	for receta in DETALLE:
+		var copias: int = receta["copias"]
+		for i in copias:
+			var theta := TAU * fmod(float(i) * 0.618034, 1.0) \
+				+ _rng.randf_range(-0.4, 0.4)
+			var r: float = _rng.randf_range(receta["desde"], receta["hasta"])
+			var sitio := centro + Vector3(cos(theta), 0.0, sin(theta)) * r
+			# Salvo dentro del agua: unas briznas de hierba asomando en mitad
+			# del estanque delatan que el agua es una lámina puesta encima.
+			if _moja(sitio, BORDE_AGUA, 0.3):
+				continue
+			_plantar(receta, sitio, 0.0, Vector3.ZERO)
+
+
+## ¿Este punto cae dentro del estanque?
+##
+## `factor` escala el contorno —1,0 es el borde del agua y 1,18 el del vaso
+## cavado— y `margen` añade metros por fuera.
+func _moja(sitio: Vector3, factor: float, margen: float) -> bool:
+	if not _hay_estanque:
+		return false
+	var hacia := Vector2(sitio.x - _sitio_estanque.x, sitio.z - _sitio_estanque.z)
+	var angulo := atan2(hacia.y, hacia.x)
+	return hacia.length() <= _radio_contorno(angulo) * factor + margen
 
 
 ## ¿Este punto cae sobre alguna parte por la que se juega?
@@ -452,42 +516,95 @@ func _pisa_el_recorrido(sitio: Vector3) -> bool:
 ## orientarse, y el puente invita a cruzarlo aunque se pueda rodear — que es
 ## exactamente lo que se busca en una zona opcional.
 ##
-## El agua es un disco liso puesto **por debajo del terreno**: al haber ondulado
-## el campo, la lámina asoma solo por las hondonadas, y el borde del agua queda
-## irregular sin tener que recortar nada. Un disco a la altura del terreno se
-## vería como una moneda azul tirada en la hierba.
+## El agua NO es un disco puesto encima. El terreno lleva cavado un vaso con el
+## mismo contorno ondulado (`hondonada_estanque()`), y la lámina se posa dentro
+## a la altura de la orilla menos el calado. Así el borde del agua lo dibuja el
+## propio terreno al asomar, en vez de acabarse en el canto del disco — que era
+## justo lo que la delataba como calcomanía.
+## Dónde va el estanque. Lo pregunta el nivel ANTES de construir el terreno,
+## para cavarle el vaso, y luego lo usa el propio decorador para poner el agua.
+## Un solo sitio decide, o el agua acaba en un sitio y el hoyo en otro.
+func sitio_del_estanque(constructor: ConstructorNivel) -> Vector3:
+	var medida := constructor.extension()
+	var rumbo := deg_to_rad(rumbo_estanque)
+	return medida["centro"] + Vector3(cos(rumbo), 0.0, sin(rumbo)) * distancia_estanque
+
+
+## La hondonada que hay que cavar para este estanque.
+func hondonada_estanque(constructor: ConstructorNivel) -> Dictionary:
+	return {
+		"centro": sitio_del_estanque(constructor),
+		"radio": radio_estanque * 1.18,
+		"hondura": hondura_vaso,
+		"irregular": true,
+	}
+
+
 func _estanque(centro: Vector3) -> void:
-	var sitio := _posar(centro)
+	# El nivel del agua se mide en la ORILLA, no en el fondo del vaso. Posando
+	# la lámina sobre el centro, el rayo encuentra el fondo cavado y el agua
+	# queda enterrada metro y medio por debajo del hoyo, invisible.
+	#
+	# Se promedian cuatro puntos del borde para que un socavón suelto no
+	# incline la referencia.
+	var suma := 0.0
+	for i in 4:
+		var angulo := TAU * float(i) / 4.0
+		var borde := centro + Vector3(cos(angulo), 0.0, sin(angulo)) \
+			* (radio_estanque * 1.35)
+		suma += _posar(borde).y
+	var sitio := Vector3(centro.x, suma * 0.25, centro.z)
 
-	var malla := CylinderMesh.new()
-	malla.top_radius = radio_estanque
-	malla.bottom_radius = radio_estanque
-	malla.height = 0.5
-	malla.radial_segments = 24
-
+	# La lámina se construye a mano y con el MISMO contorno ondulado que el
+	# vaso: un disco perfecto encima de un hoyo irregular deja media orilla de
+	# agua flotando sobre la hierba.
 	var lamina := MeshInstance3D.new()
 	lamina.name = "Estanque"
-	lamina.mesh = malla
-	lamina.material_override = PaletaTerreno.obtener("agua")
+	lamina.mesh = _malla_de_agua()
+	lamina.material_override = load("res://src/level/agua.tres")
 	lamina.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	# La malla tiene medio metro de grosor: se baja esa mitad para que la CARA
-	# de arriba quede justo donde toca.
-	lamina.position = sitio + Vector3.DOWN * (hondura_estanque + 0.25)
+	# Un poco por debajo del borde del vaso: es lo que hace que el agua tenga
+	# orilla en vez de acabarse en un canto.
+	lamina.position = sitio + Vector3.DOWN * calado
 	add_child(lamina)
 
-	# El puente cruza por el centro. Se gira al azar pero reproducible: da igual
-	# por dónde se cruce, pero que no esté siempre en el mismo eje.
-	var rumbo := _rng.randf_range(0.0, TAU)
-	var receta_puente := {"pieza": "puente_madera", "escala": [1.35, 1.35],
-		"alinear": true}
-	_plantar(receta_puente, sitio + Vector3.UP * 0.15, rumbo, Vector3.ZERO)
+	# El puente cruza por donde el estanque es MÁS ESTRECHO. Con un rumbo al
+	# azar caía casi siempre en un través ancho y se quedaba corto, flotando en
+	# mitad del agua sin tocar ninguna orilla — que es exactamente lo que pasaba
+	# con el puentecito de tres metros.
+	var rumbo := _eje_mas_estrecho()
+	var delante := _radio_contorno(rumbo)
+	var detras := _radio_contorno(rumbo + PI)
+	var cruce := (delante + detras) * BORDE_AGUA
+	# El contorno es asimétrico, así que el centro del estanque no es el punto
+	# medio del cruce. Puesto en el centro, un extremo apoyaba dos metros dentro
+	# de la hierba y el otro se quedaba mojando el agua.
+	var eje_puente := Vector3(cos(rumbo), 0.0, sin(rumbo))
+	var medio := sitio + eje_puente * (delante - detras) * BORDE_AGUA * 0.5
+	# Un metro de apoyo en cada punta. La escala es uniforme (engorda también el
+	# ancho), pero como el modelo ya mide el través típico, se queda cerca de 1.
+	var escala_puente := (cruce + 2.0) / LARGO_PUENTE
+	var receta_puente := {"pieza": "puente_madera",
+		"escala": [escala_puente, escala_puente], "alinear": true,
+		# Sin `posar`: el rayo caería al fondo del vaso y hundiría el puente.
+		"posar": false}
+	# El modelo mira a lo largo de +Z, y el rumbo es un ángulo en el plano XZ.
+	_plantar(receta_puente, medio, rumbo + PI * 0.5, Vector3.ZERO)
 
-	# Nenúfares flotando, apartados del puente para no atravesarlo.
+	# Nenúfares flotando, apartados del pasillo del puente para no atravesarlo.
+	var ancho_libre := 2.2 * escala_puente
 	for i in 9:
 		var angulo := TAU * float(i) / 9.0 + 0.4
 		var r := _rng.randf_range(radio_estanque * 0.30, radio_estanque * 0.78)
 		var punto := sitio + Vector3(cos(angulo), 0.0, sin(angulo)) * r
-		punto.y = sitio.y - hondura_estanque + 0.02
+		# Distancia al eje del puente: si el nenúfar cae dentro del pasillo, se
+		# aparta de lado en vez de saltárselo (nueve son pocos para perder uno).
+		var lado := (punto - medio) - eje_puente * (punto - medio).dot(eje_puente)
+		if lado.length() < ancho_libre:
+			var empuje: float = ancho_libre + 0.6 - lado.length()
+			punto += (lado.normalized() if lado.length() > 0.01
+				else Vector3(-eje_puente.z, 0.0, eje_puente.x)) * empuje
+		punto.y = sitio.y - calado + 0.02
 		var pose := Transform3D(
 			Basis.from_euler(Vector3(0.0, _rng.randf_range(0.0, TAU), 0.0))
 				* Basis.from_scale(Vector3.ONE * _rng.randf_range(0.8, 1.4)),
@@ -498,10 +615,102 @@ func _estanque(centro: Vector3) -> void:
 	# acabarse contra la hierba.
 	for i in 14:
 		var angulo := TAU * float(i) / 14.0 + 0.2
+		# Sobre el contorno de verdad, no sobre el radio nominal: donde la
+		# orilla se ensancha un 30 %, una piedra al radio nominal cae al agua.
 		var punto := sitio + Vector3(cos(angulo), 0.0, sin(angulo)) \
-			* (radio_estanque + _rng.randf_range(0.2, 1.6))
+			* (_radio_contorno(angulo) * 1.18 + _rng.randf_range(0.4, 1.8))
 		_plantar({"pieza": "roca", "escala": [0.9, 1.9]},
 			_posar(punto), 0.0, Vector3.ZERO)
+
+
+## La lámina de agua: un abanico de triángulos con el borde ondulado.
+##
+## Se hace a mano en vez de con un `CylinderMesh` porque el contorno tiene que
+## ser **el mismo** que el del vaso cavado en el terreno — con las mismas dos
+## ondas y los mismos coeficientes. Si uno es redondo y el otro no, media orilla
+## queda con agua flotando sobre la hierba y la otra media con el vaso a la
+## vista.
+##
+## Va bastante subdividida a propósito: el shader mueve los vértices, y con
+## pocos la ondulación se ve como un mantel doblándose.
+## Hasta dónde llega la lámina de agua, en múltiplos del contorno nominal.
+##
+## El vaso se cava a 1,18 (ver `hondonada_estanque()`) y el agua tiene que morir
+## DENTRO de esa ladera, cerca del borde. Con la lámina al 1,00 quedaba un
+## anillo de vaso seco alrededor del agua, el charco se leía como una mancha
+## flotando en un hoyo y la espuma de orilla solo salía por el lado donde el
+## terreno subía antes. Pasarse de 1,18 es peor: el agua asomaría por encima de
+## la hierba.
+const BORDE_AGUA := 1.14
+
+
+## Largo del modelo de puente, tal como sale de Blender. Debe coincidir con
+## `PUENTE_LARGO` de `tools/blender_kit_expansion.py`.
+const LARGO_PUENTE := 14.0
+
+
+## El radio del estanque en una dirección dada.
+##
+## Es LA fórmula del contorno: la usan la lámina de agua, el vaso que se cava en
+## el terreno (`terreno_nivel.gd`, con estos mismos coeficientes) y el cálculo
+## de por dónde cruza el puente. Si se toca aquí hay que tocarla allí, o media
+## orilla se queda con el agua flotando sobre la hierba.
+func _radio_contorno(angulo: float) -> float:
+	return radio_estanque * (1.0 + 0.20 * sin(angulo * 3.0 + 1.3)
+		+ 0.11 * sin(angulo * 5.0 - 0.6))
+
+
+## Por dónde es más corto cruzar el estanque de orilla a orilla.
+func _eje_mas_estrecho() -> float:
+	var mejor := 0.0
+	var minimo := INF
+	# Medio giro basta: el eje de θ y el de θ+π son el mismo cruce.
+	for i in 48:
+		var angulo := PI * float(i) / 48.0
+		var ancho := _radio_contorno(angulo) + _radio_contorno(angulo + PI)
+		if ancho < minimo:
+			minimo = ancho
+			mejor = angulo
+	return mejor
+
+
+func _malla_de_agua() -> ArrayMesh:
+	var vertices := PackedVector3Array()
+	var normales := PackedVector3Array()
+	var indices := PackedInt32Array()
+	var lados := 40
+	var anillos := 5
+
+	vertices.append(Vector3.ZERO)
+	normales.append(Vector3.UP)
+	for anillo in anillos:
+		var t := float(anillo + 1) / float(anillos)
+		for i in lados:
+			var angulo := TAU * float(i) / float(lados)
+			var radio := _radio_contorno(angulo) * BORDE_AGUA * t
+			vertices.append(Vector3(cos(angulo) * radio, 0.0, sin(angulo) * radio))
+			normales.append(Vector3.UP)
+
+	# Abanico del centro al primer anillo
+	for i in lados:
+		indices.append_array([0, 1 + i, 1 + (i + 1) % lados])
+	# Y bandas entre anillos
+	for anillo in anillos - 1:
+		var base := 1 + anillo * lados
+		var siguiente := base + lados
+		for i in lados:
+			var j := (i + 1) % lados
+			indices.append_array([base + i, siguiente + i, base + j,
+				base + j, siguiente + i, siguiente + j])
+
+	var datos := []
+	datos.resize(Mesh.ARRAY_MAX)
+	datos[Mesh.ARRAY_VERTEX] = vertices
+	datos[Mesh.ARRAY_NORMAL] = normales
+	datos[Mesh.ARRAY_INDEX] = indices
+	var malla := ArrayMesh.new()
+	malla.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, datos)
+	return malla
 
 
 ## Apunta una copia ya colocada, saltándose el cálculo de pose de `_plantar`.
@@ -578,8 +787,11 @@ func _plantar(receta: Dictionary, sitio: Vector3, rumbo: float,
 	elif not lejano:
 		giro = _rng.randf_range(0.0, TAU)
 
+	# Casi todo se posa en el suelo de debajo. El puente no: el rayo caería al
+	# fondo del vaso del estanque y lo hundiría bajo el agua.
+	var base := _posar(sitio) if receta.get("posar", true) else sitio
 	var pose := Transform3D(Basis.from_euler(Vector3(0.0, giro, 0.0)) * escala,
-		_posar(sitio) - Vector3.UP * receta.get("hundir", 0.0) * escala)
+		base - Vector3.UP * receta.get("hundir", 0.0) * escala)
 
 	var destino: Dictionary = _acumulado.get(pieza, {})
 	if destino.is_empty():

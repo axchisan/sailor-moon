@@ -52,6 +52,9 @@ ninguno, y `subida`), `cruce`, `arena`, `giro`.
   las montañas de cono
 - **Red de seguridad**: pasado el radio de colinas + margen, se devuelve al mapa
 - **Cero agujeros**, verificado por barrido de rayos en cada carga
+- **Zonas hundidas** (`hondonadas` en `terreno_nivel.gd`): el vaso del estanque
+  se cava en el propio terreno con perfil de cuenco y borde ondulado. La hermana
+  de `zonas_elevadas()`
 
 ### Superficies
 Ocho recetas en `PaletaTerreno`, todas del mismo shader: `hierba`,
@@ -61,11 +64,28 @@ Ocho recetas en `PaletaTerreno`, todas del mismo shader: `hierba`,
 ### Props
 **Kit 1** (`blender_kit_parque.py`): cerezo, cerezo gigante, arbusto, roca,
 valla, banco, papelera, farol de piedra, torii, pagoda, montaña.
-**Kit 2** (`blender_kit_expansion.py`): portal antiguo, puente, peñasco, macizo
-de flores, tocón, farolillo, nenúfar.
+**Kit 2** (`blender_kit_expansion.py`): portal antiguo, pasarela de 14 m,
+peñasco, macizo de flores, tocón, farolillo, nenúfar.
+**Detalle de suelo** (mismo archivo, `generar_detalle()`): mata de hierba,
+piedrecitas, ramitas, hojarasca, mariposa, pajarillo.
 
-Todo en `MultiMesh` — ~1000 props en 27 draw calls. Colisión por forma
+Todo en `MultiMesh` — ~1950 props en 32 draw calls. Colisión por forma
 primitiva, solo en lo que pararía a una niña.
+
+### El estanque
+Es el único sitio del nivel donde el terreno y el decorado tienen que cuadrar al
+centímetro, así que **una sola función manda sobre la forma**: `_radio_contorno()`
+en `decorador_nivel.gd`. La usan la lámina de agua, el vaso que se cava en el
+terreno y el cálculo de por dónde cruza el puente.
+
+- **Agua** (`agua.gdshader`): dos capas de onda cruzadas, espuma de orilla por
+  profundidad del buffer, destellos y desplazamiento de vértices. Posterizada a
+  cuatro tonos, igual que el resto del escenario
+- **Nivel de la lámina**: la altura media de cuatro puntos de la ORILLA menos el
+  calado. Nunca `_posar()` — ver trampa 43
+- **El puente cruza por donde el estanque es más estrecho** y se escala a ese
+  través, con un metro de apoyo por punta
+- Campo, detalle y piedras de orilla esquivan el agua (`_moja()`)
 
 ### Juego
 - 7 Estrellas, 3 faroles, encuentro con Mercury, 3 arenas
@@ -78,16 +98,21 @@ primitiva, solo en lo que pararía a una niña.
 
 ## Lo que falta
 
+### Hecho en este bloque
+| Qué | Cómo quedó |
+|---|---|
+| Zonas hundidas en el terreno | `hondonadas` + `_excavar()`, con perfil de cuenco |
+| Agua que parezca agua | Shader propio con ondas, espuma de orilla y destellos |
+| Estanque menos redondo | Contorno de dos senos, compartido por agua, vaso y puente |
+| Colisión del puente | Caja de 14 m alineada con la tabla, no con la barandilla |
+| Arranque al borde | Pradera de salida de 30×34 a 52×54, spawn movido a z = −18 |
+| Detalle del suelo | 520 matas, 190 piedrecitas, 130 ramitas, 160 hojarascas |
+| Animalitos | 22 mariposas y 9 pajarillos en `bichos.gd`, en multimalla |
+
 ### En curso
 | Qué | Por qué |
 |---|---|
-| **Zonas hundidas en el terreno** | El estanque está apoyado, no encajado. Es la hermana de `zonas_elevadas()` |
-| **Agua que parezca agua** | Ahora es una textura fija: sin movimiento no se lee como líquido |
-| **Estanque menos redondo** | Un disco perfecto se ve como una moneda |
-| **Colisión del puente** | Se atraviesa |
-| **Arranque aún al borde** | La pradera ayudó pero se sigue viendo el final del camino |
-| **Detalle del suelo** | Hierba alta, piedrecitas, palitos, hojas: el suelo es liso |
-| **Animalitos** | Algo que se mueva. Un parque sin bichos está muerto |
+| **Mapa de escenarios** | El portal ya abre, pero no lleva a ninguna parte todavía |
 
 ### Del plan maestro
 | Fase | Estado |

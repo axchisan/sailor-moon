@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://src/level/agua.gdshader" id="1_agua"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_agua")
+shader_parameter/color_hondo = Color(0.18, 0.44, 0.62, 1)
+shader_parameter/color_claro = Color(0.42, 0.72, 0.85, 1)
+shader_parameter/color_espuma = Color(0.92, 0.98, 1, 1)
+shader_parameter/transparencia = 0.72
+shader_parameter/orilla = 1.4
+shader_parameter/velocidad = 0.35
+shader_parameter/escala_onda = 4.2
+shader_parameter/tonos = 4
+shader_parameter/altura_ola = 0.06

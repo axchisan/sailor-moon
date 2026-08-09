@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3]
+[gd_scene load_steps=32 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/prototypes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/peluchin.tscn" id="2_peluchin"]
@@ -25,6 +25,7 @@
 [ext_resource type="Script" path="res://src/gameplay/objetivos_nivel.gd" id="23_objetivos"]
 [ext_resource type="Script" path="res://src/gameplay/rincon.gd" id="24_rincon"]
 [ext_resource type="Script" path="res://src/gameplay/portal_salida.gd" id="25_portal"]
+[ext_resource type="Script" path="res://src/gameplay/bichos.gd" id="26_bichos"]
 
 [sub_resource type="ShaderMaterial" id="SkyMat_1"]
 shader = ExtResource("9_cielo")
@@ -187,6 +188,9 @@ script = ExtResource("15_companero")
 id = "luna"
 modelo = ExtResource("18_luna")
 lado = -1.0
+
+[node name="Bichos" type="Node3D" parent="."]
+script = ExtResource("26_bichos")
 
 [node name="Objetivos" type="Node" parent="."]
 script = ExtResource("23_objetivos")

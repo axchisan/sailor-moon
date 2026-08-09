@@ -96,29 +96,65 @@ def portal_antiguo():
     return _unir("portal_antiguo", [piedra, runas, cristal])
 
 
+# Largo del puente, de punta a punta. El estanque mide dieciocho metros de
+# través, así que un puentecito de tres —el primero— se quedaba flotando en
+# mitad del agua sin tocar ninguna de las dos orillas. Se coloca escalado para
+# que las puntas siempre apoyen en tierra, y este número es el que hay que usar
+# al calcular esa escala desde Godot.
+PUENTE_LARGO = 14.0
+
+
 def puente_madera():
-    """Puente arqueado de tres metros, para cruzar el arroyo."""
+    """Pasarela de catorce metros sobre pilotes, para cruzar el estanque.
+
+    Es PLANA a propósito. Un arco queda bonito en tres metros, pero en catorce
+    obliga a una rampa, y la colisión de este prop es una caja: o la caja sigue
+    el arco —imposible con una sola— o el personaje camina flotando sobre la
+    subida. Plano, la caja coincide con la tabla y se cruza sin sorpresas.
+    """
+    medio = PUENTE_LARGO * 0.5
+    alto_tabla = 0.30
+    ancho = 2.10
+
     bm = bmesh.new()
-    # Tablero en arco: nueve tablas, cada una un poco más alta hacia el centro.
-    for i in range(9):
-        t = (i + 0.5) / 9.0
-        y = -1.5 + t * 3.0
-        z = 0.28 + math.sin(math.pi * t) * 0.42
-        _caja(bm, (0, y, z), (1.70, 0.30, 0.10))
+    # Tablas cruzadas, una detrás de otra a todo lo largo.
+    tablas = int(PUENTE_LARGO / 0.42)
+    for i in range(tablas):
+        t = (i + 0.5) / tablas
+        _caja(bm, (0, -medio + t * PUENTE_LARGO, alto_tabla),
+              (ancho, 0.34, 0.09))
+    # Dos largueros por debajo, que es lo que sostiene las tablas.
+    for signo in (-1, 1):
+        _caja(bm, (signo * (ancho * 0.5 - 0.14), 0.0, alto_tabla - 0.14),
+              (0.16, PUENTE_LARGO, 0.20))
     tablero = _pieza("puente_tablero", "madera", bm)
 
     bm = bmesh.new()
-    # Barandillas: postes cortos siguiendo la curva, y pasamanos por tramos.
+    # Barandillas: un poste cada metro y pico, con el pasamanos por tramos.
+    postes = int(PUENTE_LARGO / 1.25)
     for signo in (-1, 1):
-        for i in range(5):
-            t = (i + 0.5) / 5.0
-            y = -1.5 + t * 3.0
-            z = 0.28 + math.sin(math.pi * t) * 0.42
-            _caja(bm, (signo * 0.78, y, z + 0.34), (0.10, 0.10, 0.58))
-            _caja(bm, (signo * 0.78, y, z + 0.62), (0.12, 0.66, 0.09))
+        for i in range(postes):
+            t = (i + 0.5) / postes
+            y = -medio + t * PUENTE_LARGO
+            _caja(bm, (signo * (ancho * 0.5 - 0.06), y, alto_tabla + 0.36),
+                  (0.11, 0.11, 0.62))
+            _caja(bm, (signo * (ancho * 0.5 - 0.06), y, alto_tabla + 0.64),
+                  (0.13, PUENTE_LARGO / postes, 0.09))
     baranda = _pieza("puente_baranda", "madera_oscura", bm)
 
-    return _unir("puente_madera", [tablero, baranda])
+    bm = bmesh.new()
+    # Pilotes hasta el fondo del vaso. Sin ellos la pasarela se lee como una
+    # tabla puesta encima del agua; con ellos se lee como construida ahí.
+    pares = 4
+    for signo in (-1, 1):
+        for i in range(pares):
+            t = (i + 0.5) / pares
+            y = -medio + t * PUENTE_LARGO
+            _cilindro(bm, (signo * (ancho * 0.5 - 0.18), y, -0.75),
+                      0.13, 0.11, 2.10, lados=6)
+    pilotes = _pieza("puente_pilote", "madera_oscura", bm)
+
+    return _unir("puente_madera", [tablero, baranda, pilotes])
 
 
 def roca_grande():
@@ -196,6 +232,103 @@ def generar_expansion():
     piezas = {}
     for hacer in (portal_antiguo, puente_madera, roca_grande, macizo_flores,
                   tocon, farolillo, nenufar):
+        objeto = hacer()
+        piezas[objeto.name] = _exportar(objeto)
+    return piezas
+
+
+# --- Detalle de suelo y bichos --------------------------------------------------
+#
+# Lo que separa un suelo de un campo de golf. Son piezas diminutas que van en
+# multimalla por centenares: cada una cuesta menos de cien triángulos y el suelo
+# deja de ser una superficie lisa.
+
+def mata_hierba():
+    """Un puñado de briznas altas. Se siembra a cientos."""
+    bm = bmesh.new()
+    for i in range(6):
+        angulo = math.tau * i / 6.0 + 0.4
+        r = 0.05 + (i % 3) * 0.04
+        alto = 0.28 + (i % 4) * 0.09
+        # Cada brizna es un cono muy fino: cuatro lados bastan porque nunca se
+        # ve una sola, se ve la mata entera.
+        _cilindro(bm, (math.cos(angulo) * r, math.sin(angulo) * r, alto * 0.5),
+                  0.035, 0.004, alto, lados=4)
+    return _pieza("mata_hierba", "hoja", bm)
+
+
+def piedrecitas():
+    """Grupo de guijarros sueltos."""
+    bm = bmesh.new()
+    for i in range(5):
+        angulo = math.tau * i / 5.0
+        r = 0.12 + (i % 2) * 0.10
+        _esfera(bm, Vector((math.cos(angulo) * r, math.sin(angulo) * r, 0.04)),
+                0.07 + (i % 3) * 0.025, achatado=0.5, ruido=0.3, cortes=4)
+    return _pieza("piedrecitas", "piedra", bm)
+
+
+def ramitas():
+    """Palitos caídos, como los que deja un árbol."""
+    bm = bmesh.new()
+    for i in range(3):
+        giro = 0.7 * i
+        _caja(bm, (0.10 * i - 0.10, 0.06 * (i % 2), 0.03),
+              (0.42 + 0.14 * i, 0.045, 0.045), giro=giro)
+    return _pieza("ramitas", "corteza", bm)
+
+
+def hojarasca():
+    """Mancha de hojas caídas. Va pegada al suelo."""
+    bm = bmesh.new()
+    for i in range(7):
+        angulo = math.tau * i / 7.0 + 0.9
+        r = 0.08 + (i % 3) * 0.07
+        _esfera(bm, Vector((math.cos(angulo) * r, math.sin(angulo) * r, 0.015)),
+                0.09, achatado=0.16, ruido=0.25, cortes=4)
+    return _pieza("hojarasca", "flor_alt", bm)
+
+
+def mariposa():
+    """Dos alas y un cuerpo. Se anima desde el juego, no aquí."""
+    bm = bmesh.new()
+    _cilindro(bm, (0, 0, 0), 0.018, 0.010, 0.13, lados=4)
+    cuerpo = _pieza("mariposa_cuerpo", "corteza", bm)
+
+    bm = bmesh.new()
+    # Alas planas y anchas, una a cada lado. Achatadas casi a cero: a esta
+    # escala una forma de ala de verdad no se distingue de un rombo.
+    for signo in (-1, 1):
+        _esfera(bm, Vector((signo * 0.10, 0.02, 0.02)), 0.11,
+                achatado=0.10, cortes=4)
+        _esfera(bm, Vector((signo * 0.08, -0.06, 0.0)), 0.075,
+                achatado=0.10, cortes=4)
+    alas = _pieza("mariposa_alas", "flor", bm)
+
+    return _unir("mariposa", [cuerpo, alas])
+
+
+def pajarillo():
+    """Pájaro rechoncho, del tamaño de un gorrión."""
+    bm = bmesh.new()
+    _esfera(bm, Vector((0, 0, 0.11)), 0.115, achatado=0.85, cortes=6)
+    _esfera(bm, Vector((0, -0.10, 0.17)), 0.070, cortes=5)
+    # Cola: una cuña hacia atrás
+    _caja(bm, (0, 0.14, 0.10), (0.10, 0.14, 0.03))
+    cuerpo = _pieza("pajarillo_cuerpo", "flor_campo_alt", bm)
+
+    bm = bmesh.new()
+    _cilindro(bm, (0, -0.16, 0.17), 0.028, 0.004, 0.07, lados=4)
+    pico = _pieza("pajarillo_pico", "farol", bm)
+
+    return _unir("pajarillo", [cuerpo, pico])
+
+
+def generar_detalle():
+    _limpiar()
+    piezas = {}
+    for hacer in (mata_hierba, piedrecitas, ramitas, hojarasca,
+                  mariposa, pajarillo):
         objeto = hacer()
         piezas[objeto.name] = _exportar(objeto)
     return piezas

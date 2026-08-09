@@ -49,8 +49,14 @@ func _ready() -> void:
 	# El terreno va PRIMERO de todo lo que se genera: los props se posan con un
 	# rayo sobre el suelo, así que el suelo tiene que existir ya.
 	#
+	var decorador := get_node_or_null("Decorado") as DecoradorNivel
+
 	_terreno = get_node_or_null("Terreno") as TerrenoNivel
 	if _terreno != null:
+		# Las hondonadas se piden ANTES de construir: después ya está la malla
+		# hecha y cavar sobre ella dejaría la colisión desincronizada.
+		if decorador != null and _constructor != null and decorador.radio_estanque > 0.0:
+			_terreno.hondonadas.append(decorador.hondonada_estanque(_constructor))
 		_terreno.construir()
 		if _constructor != null:
 			_constructor.radio_limite = _terreno.radio_colinas
@@ -63,7 +69,6 @@ func _ready() -> void:
 	# faroles se colocan por coordenadas del recorrido, no por lo que haya
 	# plantado alrededor, así que el orden entre ellos da igual — pero si el
 	# decorador corriera primero, no tendría tramos que consultar.
-	var decorador := get_node_or_null("Decorado") as DecoradorNivel
 	if decorador != null and _constructor != null:
 		decorador.decorar(_constructor)
 
@@ -76,6 +81,13 @@ func _ready() -> void:
 		for nodo in get_tree().get_nodes_in_group("faroles"):
 			(nodo as Farol).encendido.connect(_al_encender_farol)
 		print("[Nivel] %d faroles colocados" % _faroles_totales)
+
+	var bichos := get_node_or_null("Bichos") as Bichos
+	if bichos != null and _constructor != null and _terreno != null:
+		bichos.poblar(_constructor.extension()["centro"],
+			func(p: Vector3) -> float:
+				var local := p - _terreno.global_position
+				return _terreno.altura_en(local.x, local.z) + _terreno.global_position.y)
 
 	_montar_objetivos()
 
