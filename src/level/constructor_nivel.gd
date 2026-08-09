@@ -389,16 +389,15 @@ func _pradera(paso: Dictionary) -> void:
 		Vector3(ancho_camino, desnivel + 0.06, largo + solape * 2.0), camino,
 		giro, 0.0, true)
 
-	# Un par de manchas de tierra sueltas: una explanada de césped perfecto se
-	# lee como un campo de fútbol. Con calvas parece un sitio por el que pasa
-	# gente.
-	for ficha: Array in [[-0.30, 0.28, 7.0], [0.34, 0.68, 5.5], [0.16, 0.16, 4.0]]:
-		var lado := _direccion.cross(Vector3.UP).normalized()
-		_losa("Camino",
-			centro + lado * (ficha[0] * ancho * 0.5)
-				+ _direccion * ((ficha[1] - 0.5) * largo)
-				+ Vector3.UP * (grosor_suelo * 0.5 + 0.015),
-			Vector3(ficha[2], 0.06, ficha[2] * 0.8), camino, giro, 0.0, false)
+	# Aquí había tres «manchas de tierra sueltas» para que la explanada no se
+	# leyera como un campo de fútbol. La idea era buena y la ejecución no: eran
+	# losas RECTANGULARES, con sus cuatro esquinas en ángulo recto y su canto
+	# perfectamente recto, puestas encima del césped. No parecían calvas de
+	# tierra; parecían bloques cuadrados pegados al mapa, y de paso borraban el
+	# relieve que hubiera debajo.
+	#
+	# Una calva de tierra se hace con lo que ya hay para eso —piedrecitas,
+	# hojarasca, matas ralas del decorador—, no con una caja.
 
 	if paso.get("nodo", "") != "":
 		centros_arena[paso["nodo"]] = centro

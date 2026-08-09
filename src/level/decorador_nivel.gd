@@ -271,7 +271,7 @@ const RINCONES: Array[Dictionary] = [
 		]},
 	# El vivero: materas en fila y macetas por el suelo. Es el rincón que más
 	# «alguien cuida esto» dice, y el más barato de todos.
-	{"nombre": "Vivero", "empedrado": 5.2, "rumbo": 162.0, "distancia": 48.0, "radio": 9.0,
+	{"nombre": "Vivero", "empedrado": 4.6, "rumbo": 162.0, "distancia": 45.0, "radio": 7.5,
 		"piezas": [
 			{"pieza": "matera", "en": Vector2(-3.4, 2.2)},
 			{"pieza": "matera", "en": Vector2(-1.2, 2.4)},
@@ -1304,7 +1304,7 @@ func _poblar_rincones(centro: Vector3) -> void:
 				break
 			rumbo += deg_to_rad(13.0)
 			if intento % 28 == 27:
-				distancia = maxf(distancia - 9.0, 30.0)
+				distancia = maxf(distancia - 9.0, 24.0)
 			sitio = centro + Vector3(cos(rumbo), 0.0, sin(rumbo)) * distancia
 		if not encontrado:
 			push_warning("DecoradorNivel: no cabe el rincón '%s'" % rincon["nombre"])
