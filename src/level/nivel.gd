@@ -46,8 +46,14 @@ func _ready() -> void:
 
 	# El terreno va PRIMERO de todo lo que se genera: los props se posan con un
 	# rayo sobre el suelo, así que el suelo tiene que existir ya.
+	#
+	# Pero él a su vez mide el blockout con rayos para apoyarlo, así que antes
+	# hay que dejar que la física registre los cuerpos que el constructor acaba
+	# de crear. Sin esta espera los rayos salen al vacío y el terreno se queda
+	# plano bajo el camino elevado, que es justo lo que se quería arreglar.
 	_terreno = get_node_or_null("Terreno") as TerrenoNivel
 	if _terreno != null:
+		await get_tree().physics_frame
 		_terreno.construir()
 		if _constructor != null:
 			_constructor.radio_limite = _terreno.radio_colinas

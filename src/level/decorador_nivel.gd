@@ -170,13 +170,10 @@ const FONDO: Array[Dictionary] = [
 	# cordillera en vez de contra el cielo raso.
 	{"pieza": "pagoda_lejana", "copias": 1, "radio": 46.0, "desvio": 0.0,
 		"escala": [1.5, 1.5], "arco": [24.0, 24.0]},
-	# Los torii bajan al campo abierto. Antes estaban tan lejos que se
-	# encaramaban a una colina y quedaban torcidos y flotando; y un torii no es
-	# un elemento de horizonte, es una puerta por la que se pasa.
-	{"pieza": "torii", "copias": 1, "radio": 14.0, "desvio": 0.0,
-		"escala": [1.7, 1.7], "arco": [128.0, 128.0]},
-	{"pieza": "torii", "copias": 1, "radio": 18.0, "desvio": 0.0,
-		"escala": [1.5, 1.5], "arco": [-96.0, -96.0]},
+	# Los torii ya no van aquí. Un torii es una PUERTA: puesto en dos sitios
+	# cualesquiera del horizonte no significa nada, y encima se encaramaba a una
+	# colina y quedaba torcido. Ahora hay uno solo, en la entrada del parque,
+	# colocado por `_puerta_de_entrada()`.
 ]
 
 @export_group("Interruptores")
@@ -233,6 +230,7 @@ func decorar(constructor: ConstructorNivel) -> void:
 		for nombre: String in constructor.centros_arena:
 			_coronar_arena(constructor.centros_arena[nombre],
 				constructor.radios_arena.get(nombre, 11.0))
+	_puerta_de_entrada(constructor)
 	if constructor.radio_limite > 0.0:
 		_vestir_limite(medida["centro"], constructor.radio_limite)
 	if montar_fondo:
@@ -298,6 +296,31 @@ func _coronar_arena(centro: Vector3, radio: float) -> void:
 			var sitio := centro + Vector3(cos(angulo), 0.0, sin(angulo)) * r \
 				+ Vector3.UP * _alto_suelo
 			_plantar(receta, sitio, 0.0, Vector3.ZERO)
+
+
+## El torii de la entrada, cruzando el camino justo detrás del punto de partida.
+##
+## Un torii marca **por dónde se entra a un sitio**. Repartidos por el horizonte
+## no dicen nada; plantado a la espalda del arranque, lo primero que se ve al
+## girarse es la puerta por la que se acaba de pasar, y el parque empieza a
+## tener una entrada en vez de un borde.
+##
+## Va detrás y no delante para no tapar la vista del camino en el primer
+## fotograma de la partida.
+func _puerta_de_entrada(constructor: ConstructorNivel) -> void:
+	var partes := _partes("torii")
+	if partes.is_empty() or constructor.tramos.is_empty():
+		return
+	var tramo: Dictionary = constructor.tramos[0]
+	var direccion: Vector3 = tramo["direccion"]
+	# Un poco por detrás del inicio, sobre el eje del camino.
+	var sitio := constructor.punto_inicio - direccion * 4.5
+	sitio.y = 0.0
+	# El torii se modeló a lo ancho de su eje X, así que hay que atravesarlo al
+	# camino igual que la puerta del guardián: rumbo a secas, sin los 90°.
+	var rumbo := atan2(-direccion.x, -direccion.z)
+	var receta := {"pieza": "torii", "escala": [2.0, 2.0], "alinear": true}
+	_plantar(receta, _posar(sitio), rumbo, Vector3.ZERO)
 
 
 ## Arboleda y pedregal alrededor de todo, al pie de la ladera.

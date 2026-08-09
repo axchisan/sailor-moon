@@ -102,18 +102,32 @@ void fragment() {
 	vec3 mundo = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	vec3 n = abs(normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz));
 
-	// Eje dominante de la normal: suelo -> plano XZ, muro -> ZY o XY.
-	vec2 uv;
-	if (n.y >= n.x && n.y >= n.z) {
-		uv = mundo.xz;
-	} else if (n.x >= n.z) {
-		uv = mundo.zy;
-	} else {
-		uv = mundo.xy;
-	}
-	uv /= max(escala, 0.01);
+	// Proyección triplanar con MEZCLA, no eligiendo un eje con un `if`.
+	//
+	// Elegir el eje dominante es más barato, pero produce parpadeos: en cuanto
+	// dos componentes de la normal se parecen —una superficie a 45°, o
+	// simplemente el error de precisión al girar la cámara— la condición salta
+	// de rama y el patrón cambia de golpe. Se veía como un centelleo en los
+	// muros al mover la vista.
+	//
+	// Mezclando los tres planos con pesos, la transición es continua y el
+	// problema desaparece por completo. Cuesta tres muestras de ruido en vez de
+	// una, pero el ruido aquí es aritmética pura, no lectura de textura.
+	vec3 peso = pow(n, vec3(4.0));
+	peso /= max(peso.x + peso.y + peso.z, 0.0001);
 
-	float patron = manchas(uv);
+	float inv = 1.0 / max(escala, 0.01);
+	vec2 uv_y = mundo.xz * inv;
+	vec2 uv_x = mundo.zy * inv;
+	vec2 uv_z = mundo.xy * inv;
+
+	float patron = manchas(uv_y) * peso.y
+		+ manchas(uv_x) * peso.x
+		+ manchas(uv_z) * peso.z;
+	// Para el grano y las vetas basta el plano dominante: son detalle fino y
+	// una costura ahí no se ve.
+	vec2 uv = peso.y >= peso.x && peso.y >= peso.z ? uv_y
+		: (peso.x >= peso.z ? uv_x : uv_z);
 	if (vetas > 0.001) {
 		// Las vetas van a lo largo de un eje y muy estiradas en el otro.
 		patron = mix(patron, ruido(vec2(uv.x * 9.0, uv.y * 0.6)), vetas);

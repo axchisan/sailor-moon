@@ -49,6 +49,11 @@ class_name Companero
 @export var distancia_comoda: float = 2.4
 ## Si se queda más lejos que esto, corre.
 @export var distancia_carrera: float = 6.0
+## Pasada esta distancia se da por perdida y aparece al lado. Un gato que se
+## queda atrás para siempre deja de acompañar, que es su único trabajo.
+@export var distancia_maxima: float = 26.0
+## Y si queda más abajo que esto, se ha caído por un hueco.
+@export var caida_maxima: float = 9.0
 @export var velocidad: float = 3.2
 @export var velocidad_carrera: float = 6.0
 @export var giro: float = 8.0
@@ -269,6 +274,24 @@ func _buscar_objetivo() -> Node3D:
 ##    feo, pero un gato que se queda atrás para siempre es peor: deja de
 ##    acompañar, que es su único trabajo.
 func _desatascar(delta: float, distancia: float) -> void:
+	# Lo primero, las dos formas de perderla del todo. Van antes que nada y no
+	# dependen de estar «andando»: precisamente el caso malo es haberse quedado
+	# quieta en un sitio del que no puede salir.
+	#
+	# Pasó de verdad: desapareció y no volvió a aparecer en toda la partida.
+	if distancia > distancia_maxima:
+		teletransportar_junto_al_objetivo()
+		_atascado = 0.0
+		return
+	var objetivo := _buscar_objetivo()
+	if objetivo != null and global_position.y < objetivo.global_position.y - caida_maxima:
+		# Se ha caído por debajo del mundo. Sin esto se queda cayendo para
+		# siempre, y como cae en vertical la distancia en el plano no cambia:
+		# el detector de atasco por tiempo nunca se entera.
+		teletransportar_junto_al_objetivo()
+		_atascado = 0.0
+		return
+
 	if not _andando:
 		_atascado = 0.0
 		return

@@ -62,6 +62,17 @@ class_name TerrenoNivel
 @export var escala_colinas: float = 62.0
 @export var semilla: int = 7781
 
+@export_group("Apoyo del escenario")
+## Levanta el terreno bajo las partes altas del blockout, para que un camino en
+## cuesta no quede flotando sobre un llano.
+@export var seguir_al_escenario: bool = true
+## Cuánto queda el terreno por debajo de la losa que apoya. Lo justo para no
+## asomar por encima del suelo pisable.
+@export var hundido_bajo_losa: float = 0.55
+## Más pasadas = la loma sube más lejos y más suave. Con pocas, el terreno copia
+## el escalón de las losas y sale un muro de tierra.
+@export_range(0, 40) var pasadas_suavizado: int = 14
+
 @export_group("Aspecto")
 @export var superficie: String = "hierba_lejos"
 ## A qué color tira lo lejano. El morado azulado no es capricho: es el color del
@@ -87,6 +98,9 @@ func construir() -> void:
 			var x := -alcance + float(i) * paso
 			var z := -alcance + float(j) * paso
 			_alturas[j * _lado + i] = altura_en(x, z)
+
+	if seguir_al_escenario:
+		_apoyar_el_escenario()
 
 	_montar_malla()
 	_montar_colision()
@@ -145,6 +159,69 @@ func altura_en(x: float, z: float) -> float:
 		var cresta := (_ruido.get_noise_2d(x * 0.6, z * 0.6) + 1.0) * 0.5
 		altura += pow(t_sierra, 1.6) * altura_cordillera * (0.35 + cresta * 0.65)
 	return altura
+
+
+## Levanta el terreno bajo las partes altas del escenario.
+##
+## El parque no está todo a la misma altura: el pasillo que sube al guardián
+## gana 2,5 m y su arena se queda ahí arriba. Con el terreno plano por debajo,
+## ese tramo quedaba **flotando**, con el canto de las losas al aire y un
+## escalón de dos metros y medio en el vacío.
+##
+## En vez de mantener una copia de las alturas del recorrido —que habría que
+## actualizar cada vez que se toque el nivel—, se **mide el escenario que ya
+## está construido** con un rayo por vértice. Así funciona con cualquier
+## escenario futuro sin escribir nada: si hay algo sólido arriba, el terreno
+## sube a apoyarlo.
+##
+## Los rayos van hacia abajo desde muy alto y solo miran la capa del escenario.
+## Son unos once mil, pero se lanzan una vez al cargar el nivel y no llegan a
+## los pocos milisegundos.
+func _apoyar_el_escenario() -> void:
+	var espacio := get_world_3d().direct_space_state
+	if espacio == null:
+		return
+
+	var apoyo := PackedFloat32Array()
+	apoyo.resize(_lado * _lado)
+	var encontrados := 0
+	for j in _lado:
+		for i in _lado:
+			var k := j * _lado + i
+			apoyo[k] = _alturas[k]
+			var x := global_position.x - alcance + float(i) * paso
+			var z := global_position.z - alcance + float(j) * paso
+			var desde := Vector3(x, global_position.y + 60.0, z)
+			var hasta := Vector3(x, global_position.y - 20.0, z)
+			var consulta := PhysicsRayQueryParameters3D.create(desde, hasta)
+			consulta.collision_mask = 1
+			var choque := espacio.intersect_ray(consulta)
+			if choque.is_empty():
+				continue
+			# La cara de abajo de la losa: el terreno tiene que llegar hasta
+			# ahí, no hasta la de arriba, o taparía el suelo por el que se anda.
+			var bajo_la_losa: float = choque["position"].y - global_position.y - hundido_bajo_losa
+			if bajo_la_losa > apoyo[k]:
+				apoyo[k] = bajo_la_losa
+				encontrados += 1
+
+	# Suavizado: sin él, el terreno copia el escalón de las losas y queda un
+	# muro vertical de tierra. Con unas cuantas pasadas de promedio, la subida
+	# se convierte en una loma que sale del llano y sube hasta el camino, que es
+	# lo que hace que el tramo alto parezca estar en una colina.
+	for _pasada in pasadas_suavizado:
+		var copia := apoyo.duplicate()
+		for j in range(1, _lado - 1):
+			for i in range(1, _lado - 1):
+				var k := j * _lado + i
+				var suma := copia[k] + copia[k - 1] + copia[k + 1] \
+					+ copia[k - _lado] + copia[k + _lado]
+				var media := suma / 5.0
+				# Solo se suaviza hacia ARRIBA: bajar aquí volvería a despegar
+				# el terreno de las losas que acaba de apoyar.
+				apoyo[k] = maxf(_alturas[k], maxf(apoyo[k], media))
+	_alturas = apoyo
+	print("[Terreno] %d vértices apoyados en el escenario" % encontrados)
 
 
 func _montar_malla() -> void:

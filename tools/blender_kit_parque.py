@@ -268,8 +268,12 @@ def cerezo():
     # ramas arrancan altas y con poca inclinación para que la copa se apoye en
     # ellas en vez de flotar por encima.
     _cilindro(bm, (0, 0, 0.95), 0.15, 0.09, 1.9, lados=10)
-    _cilindro(bm, (-0.26, 0.08, 1.95), 0.07, 0.05, 0.75, lados=7)
-    _cilindro(bm, (0.24, -0.10, 2.00), 0.07, 0.05, 0.80, lados=7)
+    # Mismo arreglo que en el cerezo gigante: en tramos, naciendo dentro del
+    # tronco. Aquí la copa las tapaba casi siempre, pero flotaban igual.
+    _cilindro(bm, (-0.08, 0.03, 1.80), 0.08, 0.06, 0.55, lados=6)
+    _cilindro(bm, (-0.22, 0.07, 2.15), 0.06, 0.04, 0.55, lados=6)
+    _cilindro(bm, (0.07, -0.04, 1.85), 0.08, 0.06, 0.55, lados=6)
+    _cilindro(bm, (0.21, -0.09, 2.20), 0.06, 0.04, 0.55, lados=6)
     tronco = _pieza("cerezo_tronco", "corteza", bm)
 
     bm = bmesh.new()
@@ -410,8 +414,18 @@ def cerezo_gigante():
     60 m solo cuenta la silueta."""
     bm = bmesh.new()
     _cilindro(bm, (0, 0, 2.4), 0.7, 0.35, 4.8, lados=6)
-    _cilindro(bm, (-1.2, 0.4, 5.2), 0.30, 0.18, 2.6, lados=5)
-    _cilindro(bm, (1.1, -0.5, 5.4), 0.30, 0.18, 2.8, lados=5)
+    # Las ramas van en TRAMOS ESCALONADOS, cada uno un poco más afuera y más
+    # arriba, y el primero nace DENTRO del tronco.
+    #
+    # Antes eran un solo cilindro vertical plantado a 1,2 m del eje, y el
+    # tronco a esa altura no llega ni a medio metro de radio: se veían dos
+    # palos flotando en el aire al lado del árbol. `_cilindro` solo hace
+    # cilindros verticales, así que la inclinación se consigue encadenando
+    # trozos solapados en vez de rotando uno largo.
+    for signo in (-1, 1):
+        _cilindro(bm, (signo * 0.28, signo * 0.10, 4.55), 0.26, 0.22, 1.3, lados=5)
+        _cilindro(bm, (signo * 0.72, signo * 0.24, 5.45), 0.22, 0.16, 1.3, lados=5)
+        _cilindro(bm, (signo * 1.10, signo * 0.34, 6.20), 0.16, 0.11, 1.1, lados=5)
     tronco = _pieza("gigante_tronco", "corteza", bm)
 
     bm = bmesh.new()
