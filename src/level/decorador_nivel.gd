@@ -193,7 +193,7 @@ const DETALLE: Array[Dictionary] = [
 const RINCONES: Array[Dictionary] = [
 	# Puesto de dulces con terraza. El más vistoso: va donde se ve desde el
 	# camino principal, para que se vea y apetezca acercarse.
-	{"nombre": "Kiosco", "empedrado": 6.4, "rumbo": 40.0, "distancia": 56.0, "radio": 10.0,
+	{"nombre": "Kiosco", "empedrado": 6.4, "rumbo": 40.0, "distancia": 46.0, "radio": 10.0,
 		"piezas": [
 			{"pieza": "puesto_dulces", "en": Vector2(0.0, 4.0), "mirar": "centro"},
 			{"pieza": "mesa_sombrilla", "en": Vector2(-3.1, -0.4)},
@@ -208,7 +208,7 @@ const RINCONES: Array[Dictionary] = [
 		]},
 	# Zona de juegos. Es PARA ELLA: un columpio y un tobogán en un juego de
 	# regalo para una niña de ocho años valen más que diez árboles.
-	{"nombre": "Juegos", "empedrado": 0.0, "rumbo": 116.0, "distancia": 54.0, "radio": 11.0,
+	{"nombre": "Juegos", "empedrado": 0.0, "rumbo": 116.0, "distancia": 45.0, "radio": 11.0,
 		"piezas": [
 			{"pieza": "columpio", "en": Vector2(-2.6, 1.4), "giro": 12.0},
 			{"pieza": "tobogan", "en": Vector2(3.2, 0.6), "giro": 200.0},
@@ -226,7 +226,7 @@ const RINCONES: Array[Dictionary] = [
 	# Plaza de la fuente: simétrica a propósito. Es lo único del parque que se
 	# lee como construido por alguien con un plano, y el contraste con el resto
 	# —que es todo irregular— es justo lo que la hace destacar.
-	{"nombre": "Fuente", "empedrado": 8.2, "rumbo": 302.0, "distancia": 58.0, "radio": 11.0,
+	{"nombre": "Fuente", "empedrado": 8.2, "rumbo": 302.0, "distancia": 46.0, "radio": 11.0,
 		"piezas": [
 			{"pieza": "fuente_piedra", "en": Vector2(0.0, 0.0)},
 			{"pieza": "banco_parque", "en": Vector2(0.0, -3.7), "mirar": "centro"},
@@ -243,7 +243,7 @@ const RINCONES: Array[Dictionary] = [
 			{"pieza": "farolillo", "en": Vector2(5.6, 4.6)},
 		]},
 	# Merendero: mesas y sombra, sin nada más. Un sitio para estar.
-	{"nombre": "Merendero", "empedrado": 5.6, "rumbo": 348.0, "distancia": 50.0, "radio": 9.0,
+	{"nombre": "Merendero", "empedrado": 5.6, "rumbo": 348.0, "distancia": 43.0, "radio": 9.0,
 		"piezas": [
 			{"pieza": "mesa_sombrilla", "en": Vector2(-2.8, 1.2)},
 			{"pieza": "mesa_sombrilla", "en": Vector2(2.6, 2.0)},
@@ -256,7 +256,7 @@ const RINCONES: Array[Dictionary] = [
 	# El altar del gato. Un guiño: en el juego hay dos gatos que hablan, y
 	# encontrarse su estatua en el parque es de las cosas que sí se miran dos
 	# veces a los ocho años.
-	{"nombre": "AltarGato", "empedrado": 4.6, "rumbo": 248.0, "distancia": 56.0, "radio": 8.0,
+	{"nombre": "AltarGato", "empedrado": 4.6, "rumbo": 248.0, "distancia": 47.0, "radio": 8.0,
 		"piezas": [
 			{"pieza": "estatua_gato", "en": Vector2(0.0, 1.6), "mirar": "centro"},
 			{"pieza": "farol_piedra", "en": Vector2(-2.0, 0.6)},
@@ -271,7 +271,7 @@ const RINCONES: Array[Dictionary] = [
 		]},
 	# El vivero: materas en fila y macetas por el suelo. Es el rincón que más
 	# «alguien cuida esto» dice, y el más barato de todos.
-	{"nombre": "Vivero", "empedrado": 5.2, "rumbo": 162.0, "distancia": 58.0, "radio": 9.0,
+	{"nombre": "Vivero", "empedrado": 5.2, "rumbo": 162.0, "distancia": 48.0, "radio": 9.0,
 		"piezas": [
 			{"pieza": "matera", "en": Vector2(-3.4, 2.2)},
 			{"pieza": "matera", "en": Vector2(-1.2, 2.4)},
@@ -291,7 +291,7 @@ const RINCONES: Array[Dictionary] = [
 	# Tres o cuatro piezas cada uno. No son destinos como el kiosco: son los
 	# sitios que aparecen POR EL CAMINO, y su trabajo es que entre un rincón
 	# grande y el siguiente no haya sesenta metros de pradera pelada.
-	{"nombre": "Descanso", "empedrado": 3.4, "rumbo": 70.0, "distancia": 44.0,
+	{"nombre": "Descanso", "empedrado": 3.4, "rumbo": 70.0, "distancia": 38.0,
 		"radio": 6.0, "piezas": [
 			{"pieza": "banco_parque", "en": Vector2(-1.9, 0.0), "giro": 90.0},
 			{"pieza": "banco_parque", "en": Vector2(1.9, 0.0), "giro": 270.0},
@@ -299,7 +299,7 @@ const RINCONES: Array[Dictionary] = [
 			{"pieza": "farol_piedra", "en": Vector2(-2.8, -2.4)},
 			{"pieza": "papelera", "en": Vector2(2.8, -2.4)},
 		]},
-	{"nombre": "Bancal", "empedrado": 3.0, "rumbo": 186.0, "distancia": 46.0,
+	{"nombre": "Bancal", "empedrado": 3.0, "rumbo": 186.0, "distancia": 40.0,
 		"radio": 6.0, "piezas": [
 			{"pieza": "banco_parque", "en": Vector2(0.0, 1.8), "mirar": "centro"},
 			{"pieza": "maceta", "en": Vector2(-1.7, 1.6)},
@@ -308,7 +308,7 @@ const RINCONES: Array[Dictionary] = [
 			{"pieza": "seto_bajo", "en": Vector2(-1.2, 3.2)},
 			{"pieza": "seto_bajo", "en": Vector2(1.2, 3.2)},
 		]},
-	{"nombre": "Corro", "empedrado": 4.2, "rumbo": 326.0, "distancia": 60.0,
+	{"nombre": "Corro", "empedrado": 4.2, "rumbo": 326.0, "distancia": 50.0,
 		"radio": 7.0, "piezas": [
 			{"pieza": "guirnalda", "en": Vector2(0.0, 0.0), "giro": 90.0},
 			{"pieza": "seto_bajo", "en": Vector2(-2.6, 2.8), "giro": 20.0},
@@ -508,7 +508,7 @@ const FONDO: Array[Dictionary] = [
 ## justo para que el agua tenga orilla y no acabe en un canto.
 @export var calado: float = 0.35
 ## Dónde va, en metros desde el centro de lo construido y en grados.
-@export var distancia_estanque: float = 62.0
+@export var distancia_estanque: float = 50.0
 @export var rumbo_estanque: float = 206.0
 
 @export_group("Ajustes")

@@ -30,12 +30,16 @@ const RECORRIDO: Array[Dictionary] = [
 	# nueve metros el sitio se lee como un laberinto, y estando pegada al borde
 	# lo primero que apetece es salirse. Con una pradera de treinta metros
 	# alrededor, el parque empieza abriéndose.
-	# Treinta y cuatro metros, no cincuenta y dos. Con los cincuenta el parque
-	# entero se desplazaba tanto que se salía de la zona llana del terreno y
-	# media mitad acababa metida en las faldas de las montañas, y de camino a la
-	# primera arena se hacía largo. Treinta y cuatro siguen dando la sensación de
-	# abrirse sin convertir el arranque en una caminata.
-	{"tipo": "pradera", "largo": 34.0, "ancho": 46.0, "nodo": "PraderaInicio"},
+	# Una PLACITA, no una explanada. Se probó a 52×54 y luego a 34×46, y las dos
+	# veces el problema fue el mismo: una losa cuadrada de ese tamaño en mitad
+	# del campo se lee como un bloque puesto encima del mapa, borra el relieve
+	# que tenga debajo y desplaza el parque entero lo bastante como para tapar
+	# lo que hubiera cerca —el estanque y su puente, entre otras cosas—.
+	#
+	# Veinte por veintiséis es sitio de sobra para aparecer sin tener el canto
+	# del mundo a la espalda, y la siembra de carril la amuebla sola con sus
+	# bancos y sus faroles.
+	{"tipo": "pradera", "largo": 20.0, "ancho": 26.0, "nodo": "PraderaInicio"},
 	# Y el pasillo que sale de ella va abierto por un lado: un camino con muro a
 	# ambos lados es un corredor. Con uno solo, es un sendero que bordea un seto.
 	{"tipo": "pasillo", "largo": 20.0, "ancho": 9.0, "muros": "derecha"},
@@ -226,7 +230,7 @@ func construir() -> void:
 	# Bien DENTRO de la pradera, no en su primer metro. Apareciendo al principio
 	# del tramo, por mucho que la pradera sea grande, lo que se tiene detrás es
 	# el canto — y lo primero que hace cualquiera al empezar es girarse.
-	punto_inicio = Vector3(0.0, grosor_suelo * 0.5 + 0.8, -13.0)
+	punto_inicio = Vector3(0.0, grosor_suelo * 0.5 + 0.8, -8.5)
 
 	# Se recorre con índice, no con `for`, porque una arena necesita mirar el
 	# paso siguiente: si detrás viene un giro, su salida va en la dirección YA

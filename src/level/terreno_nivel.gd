@@ -53,15 +53,23 @@ class_name TerrenoNivel
 
 @export_group("Relieve")
 ## Hasta aquí el terreno es plano y liso: es donde se apoya el escenario.
-## El parque creció —la pradera de arranque son cincuenta metros más— y con 46
-## los rincones del campo caían todos fuera del llano: la plaza de la fuente
-## acabó en una ladera con los bancos desperdigados cuesta abajo. El llano tiene
-## que cubrir TODO lo que se construye encima.
-@export var radio_llano: float = 62.0
+## Hasta dónde el terreno es plano de verdad.
+##
+## Tiene que cubrir TODO lo que se construye encima —el recorrido y los rincones
+## del campo—, porque un banco en una cuesta se ve torcido y una plaza en una
+## ladera no es una plaza. Fuera de aquí manda `altura_campo`, y ahí sí interesa
+## que haya bulto.
+@export var radio_llano: float = 60.0
 ## Desde aquí mandan las colinas que cierran el mapa.
 @export var radio_colinas: float = 86.0
 ## Cuánto ondula el campo abierto entre el parque y las colinas.
-@export var altura_campo: float = 1.2
+## Cuánto sube y baja el campo entre el llano y las colinas.
+##
+## A 1,2 el campo era una mesa: se veía plano y sin gracia en todo el trecho
+## entre el parque y las montañas. A 3,4 hay lomas de verdad —se sube y se baja
+## al cruzarlo, y de espaldas a una loma no se ve lo que hay detrás—, que es lo
+## que le da volumen al sitio sin necesidad de más props.
+@export var altura_campo: float = 3.4
 ## Cuánto levantan las colinas del borde.
 @export var altura_colinas: float = 22.0
 ## Desde aquí arranca la cordillera del fondo, que ya no se pisa nunca.

@@ -518,6 +518,23 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     no es lo que uno supone al escribir el número. Con `mirar: "centro"` el giro
     se calcula (`atan2(en.x, en.y)`) y además sigue valiendo si se mueve la
     pieza.
+63. **Bajar la resolución de render se nota MÁS en cel shading, no menos.** Se
+    probó `scaling_3d/scale = 0.8` —la palanca de rendimiento más fuerte que hay
+    en un móvil— y la imagen queda emborronada: el filtro que estira el
+    resultado deja los contornos duros, que son justo lo que define el estilo,
+    con un halo blando que canta muchísimo. **En este proyecto el rendimiento se
+    saca de dibujar menos mundo, no de dibujarlo peor.**
+64. **Una losa grande del blockout borra el relieve que tenga debajo.** La
+    pradera de arranque se probó a 52×54 y a 34×46, y las dos veces se leyó como
+    un bloque cuadrado puesto encima del mapa. Además desplaza el parque entero,
+    y con él todo lo que se coloca por rumbo y distancia desde su centro: el
+    estanque y su puente acabaron tapados. Las losas de suelo, pequeñas.
+65. **En el `SpringArm3D` del jugador, el pitch NEGATIVO sube la cámara.** Es al
+    revés de lo que parece al leer el número, y comprobarlo con una captura
+    puede engañar: si el personaje está cayendo cuando se mide, la cámara está
+    en transición y sale al revés. Medir `cam.global_position.y` contra
+    `jugador.global_position.y` tras dejar asentar la física: −32° pone la
+    cámara 3,3 m por encima, +32° la pone por debajo.
 
 ---
 
