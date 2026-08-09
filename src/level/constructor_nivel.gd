@@ -683,6 +683,49 @@ func carriles() -> Array[Dictionary]:
 	return lista
 
 
+## Las partes del escenario que NO están a ras de suelo.
+##
+## Cada zona es un círculo en el plano con una altura: `{centro, radio, altura}`.
+## El terreno las usa para levantarse por debajo y que un camino en cuesta no
+## quede flotando.
+##
+## Se calculan de la geometría que este nodo acaba de construir, y no midiendo
+## el mundo con rayos como se intentó primero. Aquello daba el valor correcto en
+## el vértice equivocado —el final del primer pasillo subía a la altura de la
+## arena del guardián, a setenta metros de allí— y localizar el cruce costaba
+## más que quitar el problema de en medio. Aquí no hay rejilla, ni índices, ni
+## física: solo los sitios que este código ya sabe que están altos.
+func zonas_elevadas() -> Array[Dictionary]:
+	var zonas: Array[Dictionary] = []
+	for indice in tramos.size():
+		var tramo: Dictionary = tramos[indice]
+		var arranca: float = tramo["origen"].y
+		var sube: float = tramo["subida"]
+		if arranca <= 0.05 and sube <= 0.05:
+			continue
+		# Un tramo en cuesta se trocea: cada trozo aporta su propia altura, y
+		# entre todos dibujan la rampa.
+		var trozos := maxi(int(tramo["largo"] / 3.0), 1)
+		for i in trozos + 1:
+			var t := float(i) / float(trozos)
+			var punto := punto_en_tramo(indice, t, 0.0, 0.0)
+			zonas.append({
+				"centro": punto,
+				"radio": tramo["ancho"] * 0.5 + ancho_borde,
+				"altura": punto.y - grosor_suelo * 0.5,
+			})
+	for nombre: String in centros_arena:
+		var centro: Vector3 = centros_arena[nombre]
+		if centro.y <= 0.05:
+			continue
+		zonas.append({
+			"centro": centro,
+			"radio": float(radios_arena.get(nombre, 11.0)) + margen_arena,
+			"altura": centro.y,
+		})
+	return zonas
+
+
 ## Centro y radio de todo lo construido, en el plano. El decorador lo usa para
 ## saber a qué distancia poner el fondo lejano sin que se meta en el nivel.
 func extension() -> Dictionary:
