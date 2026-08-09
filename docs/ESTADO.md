@@ -4,8 +4,8 @@
 > retoma tras un tiempo, lee esto primero y luego el documento específico que
 > necesites.
 >
-> **Última actualización:** 2026-08-07 · Reparto de 11 personajes procesado y
-> limpio de objetos añadidos
+> **Última actualización:** 2026-08-09 · Nivel 1 decorado, poblado y
+> optimizado. Fases A-D del plan maestro cerradas
 
 ---
 
@@ -30,49 +30,66 @@ DTO, signals ≈ event bus).
 
 | Fase | Estado |
 |---|---|
-| **Fase 0 — Cimientos** | ✅ **Cerrada.** APK corriendo en el móvil real |
-| **Fase 1 — Combate** | ✅ **Cerrada.** Los tres enemigos terminados: Peluchín, Cofrecito y Hadita |
-| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Serena jugable, reparto de 11 montado con física, y **blockout del Nivel 1 jugado de principio a fin**. Falta decorarlo (skybox y props) |
+| **Fase 0 — Cimientos** | ✅ Cerrada. APK corriendo en el móvil real |
+| **Fase 1 — Combate** | ✅ Cerrada. Peluchín, Cofrecito y Hadita terminados |
+| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** El escenario está terminado: construido, decorado, poblado y optimizado. Falta el movimiento nuevo, la conversación viva, el menú y la cinemática |
 | Fases 3–5 | ⬜ Sin empezar |
+
+El trabajo se organiza por el **plan maestro**
+([`15-PLAN-MAESTRO.md`](15-PLAN-MAESTRO.md)), en fases A–H:
+
+| Fase | Qué | Estado |
+|---|---|---|
+| **A** | Que el mundo sea sólido | ✅ |
+| **B** | Texturas reciclables | ✅ |
+| **C** | Mundo abierto, límites naturales | ✅ |
+| **C bis** | Objetivos, portal y rincones | ✅ (falta el mapa de escenarios) |
+| **D** | Rendimiento | ✅ primera pasada, medida en el móvil |
+| **E** | Movimiento y combate | ⬜ **bloqueada:** faltan animaciones de Mixamo |
+| **F** | Conversación viva | ⬜ |
+| **G** | Menú, guardado, vidas | ⬜ |
+| **H** | Historia y cinemática | ⬜ guion escrito, sin montar |
 
 ### Lo que funciona hoy
 
-Prototipo jugable en `scenes/prototypes/test_combat.tscn` (es la escena
-principal del proyecto):
+**Combate** (prototipo en `scenes/prototypes/test_combat.tscn`):
 
 - Movimiento 3D con cámara orbital, *coyote time* y *jump buffer*
-- Combo de 3 golpes (daño 1/1/2) con ventana de 0,8 s, encadenable machacando
-- Auto-orientación al enemigo más cercano
-- Ataque especial con barra de carga, zoom, invulnerabilidad y área amplia
+- Combo de 3 golpes encadenable, auto-orientación al enemigo más cercano
+- Especial con barra de carga, zoom, invulnerabilidad y área amplia
 - `CombatFeel`: hit stop, screen shake, partículas, flash y SFX
-- Enemigo Peluchín con FSM de 7 estados
-- **Sistema de fichas: nunca más de 4 enemigos atacando a la vez** (verificado)
-- Enemigos con modelo real, animación procedural y eliminación al derrotarlos
-- **Cofrecito con escudo frontal**: hay que rodearlo o romperle la guardia con
-  el especial. Oleadas mixtas de los dos arquetipos
-- Arena con barrera mágica y oleadas configurables
-- HUD por EventBus y controles táctiles (joystick flotante + botones)
-- 60 fps con 9 enemigos y partículas
-- **Serena como personaje jugable**, con las 15 animaciones de Mixamo, coletas
-  con física de inercia y cel shading MToon
+- Tres enemigos con FSM propia; el Cofrecito con escudo frontal de 130°
+- **Máximo 4 enemigos atacando a la vez** (fichas de `CombatDirector`)
+- HUD por EventBus y controles táctiles
+
+**Nivel 1 — el Parque de los Cerezos** (`scenes/levels/nivel_1_parque.tscn`,
+detalle en [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md)):
+
+- Recorrido completo generado por código: placita de arranque → pasillo →
+  arena → cruce de dos ramas → arena → cuesta → guardián → paseo de vuelta →
+  claro del portal
+- **Terreno por ruido** con llano, lomas y cordillera, y perspectiva aérea
+- **Estanque con agua animada**, vaso cavado en el terreno y pasarela de 14 m
+- **Nueve rincones compuestos**: kiosco de dulces, zona de juegos, plaza de la
+  fuente, merendero, altar del gato, vivero y tres rincones de paso. Con suelo
+  empedrado y senderos de losas que los unen al camino
+- ~2.000 props en multimalla, con reparto de sitio: nada se planta encima de
+  otra cosa ni dentro de un muro
+- 6 objetivos que abren el portal, 7 Estrellas, 3 faroles, 4 rincones baliza
+- Luna acompaña, con animación y cola por física. Mariposas y pajarillos
+- Plano aéreo de apertura, saltable
 
 ### Lo siguiente, en orden
 
-1. ~~Descargar las animaciones~~ ✅ Las 15 descargadas y consolidadas
-2. ~~Montar el `AnimationTree`~~ ✅ Verificado a 60 fps con pelo y cel shading
-3. ~~Sustituir la cápsula por Serena~~ ✅ **Serena ya es el jugador.**
-   Combo verificado con sus animaciones, física de pelo y cel shading, 60 fps
-4. ~~Cofrecito~~ ✅ **Terminado.** Escudo frontal de 130°, se rodea o se le
-   revienta la guardia con el especial
-5. **Mover la activación de la hitbox a *call method tracks* de la animación.**
-   Hoy la enciende un temporizador del estado; con la animación real conectaría
-   en el frame exacto del impacto
-6. **Riguear el reparto en Mixamo.** 6 personajes listos en `Models/mixamo/`.
-   Reutilizan la misma AnimationLibrary sin descargar nada
-   — ver [`12-REPARTO.md`](12-REPARTO.md)
-7. Escenario del Nivel 1 — especificación en [`07-ESCENARIOS.md`](07-ESCENARIOS.md)
-
----
+1. **Bajar las animaciones de Mixamo** — es lo único que bloquea la Fase E, y
+   depende del usuario. Ver [`17-ANIMACIONES.md`](17-ANIMACIONES.md): se sube
+   **`Models/rigged_originales/serena_rigged.fbx`** y **no se le hace rig**
+2. **Fase E** — salto nuevo, doble salto, trepar cornisas, y que al Cofrecito
+   se le pueda pegar por el costado
+3. **Fase F** — retratos en el diálogo, animación de hablar, audio de Mercury
+4. **Fase G** — menú, guardado, corazones de vida escondidos
+5. **Fase H** — cinemática de historieta y narrador
+6. **Mapa de escenarios** — el portal ya se abre pero no lleva a ninguna parte
 
 ## 3. Índice de documentación
 
@@ -90,14 +107,20 @@ principal del proyecto):
 | [`09-FISICA-PELO.md`](09-FISICA-PELO.md) | Coletas con inercia: cadenas de huesos + spring bones |
 | [`10-ANIMATION-TREE.md`](10-ANIMATION-TREE.md) | AnimationTree montado, TimeScale y el lío de reposos de Mixamo |
 | [`11-PLAN-ENEMIGOS.md`](11-PLAN-ENEMIGOS.md) | **Plan de enemigos:** plantilla, animación procedural y palancas de dificultad |
-| [`12-REPARTO.md`](12-REPARTO.md) | **Reparto de personajes:** 7 procesados, qué falta por cada uno |
+| [`12-REPARTO.md`](12-REPARTO.md) | **Reparto de personajes:** 11 procesados, qué falta por cada uno |
+| [`13-NIVEL-1.md`](13-NIVEL-1.md) | Diseño original del Nivel 1 |
+| [`14-VOCES.md`](14-VOCES.md) | Voces y audio |
+| [`15-PLAN-MAESTRO.md`](15-PLAN-MAESTRO.md) | ⭐ **El plan.** Fases A–H, ordenadas por lo que desbloquea cada una |
+| [`16-GUION.md`](16-GUION.md) | ⭐ **La historia completa**, escena por escena |
+| [`17-ANIMACIONES.md`](17-ANIMACIONES.md) | ⭐ **Qué archivo subir a Mixamo** y con qué ajustes. Bloquea la Fase E |
+| [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md) | ⭐ **Estado del Nivel 1:** cómo se monta, qué hay, qué falta, rendimiento |
 | [`CREDITOS.md`](CREDITOS.md) | Atribuciones de assets |
 
 ---
 
 ## 4. Mapa del código
 
-38 scripts, 8 escenas. Lo que hay que conocer:
+65 scripts, 17 escenas. Lo que hay que conocer:
 
 ```
 src/autoload/          Los "servicios". Orden en project.godot IMPORTA
@@ -119,12 +142,49 @@ src/core/
 
 src/player/            player.gd + camera_rig.gd + states/ (8 estados)
 src/enemies/           enemy.gd + blob_animator.gd + states/ (7 estados)
-src/level/arena.gd     Oleadas y barrera mágica
+src/level/             ⭐ TODO el escenario se genera por código
+  nivel.gd               Orquesta el montaje y coloca el terreno
+  constructor_nivel.gd   El blockout: por dónde se juega. `RECORRIDO` manda
+  decorador_nivel.gd     Qué se ve: props, rincones, senderos, estanque
+  terreno_nivel.gd       Heightmap por ruido, zonas elevadas y hondonadas
+  paleta_terreno.gd      Recetas de superficie (8 con un solo shader)
+  terreno.gdshader       Triplanar + posterizado + perspectiva aérea
+  agua.gdshader          Ondas, espuma de orilla y destellos
+  camara_apertura.gd     El plano aéreo del arranque
+  arena.gd               Oleadas y barrera mágica
+
+src/gameplay/          Lo que se hace en el nivel
+  objetivos_nivel.gd     Los 6 objetivos que abren el portal
+  estrella_sueno.gd, farol.gd, rincon.gd, portal_salida.gd
+  encuentro.gd           Personajes con los que se habla
+  companero.gd           Luna, que sigue a Serena
+  bichos.gd              Mariposas y pajarillos en multimalla
+
 src/ui/                hud.gd, touch_controls.gd, debug_overlay.gd
+src/core/modo_desarrollador.gd  ⭐ Panel de F1 con fps, draws y triángulos
 src/data/attack_data.gd
 
-tools/blender_preparar_modelo.py   ⭐ Reduce modelos de IA a presupuesto
+tools/blender_preparar_modelo.py   Reduce modelos de IA a presupuesto
+tools/blender_kit_parque.py        Kit 1: árboles, rocas, mobiliario
+tools/blender_kit_expansion.py     Kit 2: portal, puente, detalle de suelo
+tools/blender_kit_vida.py          Kit 3: puestos, materas, fuente, juegos
+tools/validar_scripts.sh           ⭐ Compila todo. Usar SIEMPRE antes de probar
 ```
+
+### Cómo se monta un nivel
+
+El orden importa y está en `nivel.gd`:
+
+1. **Constructor** — levanta el blockout desde `RECORRIDO` y decide por dónde
+   se juega. Se puede jugar en gris, sin nada más
+2. **Terreno** — se centra en el parque, se apoya en las zonas elevadas que le
+   dice el constructor y cava las hondonadas del estanque
+3. **Decorador** — posa los props con rayos sobre el suelo, así que el suelo
+   tiene que existir ya. Reparte el sitio: estanque → rincones → senderos →
+   camino → arenas → campo → detalle → linde
+
+**Ninguno conoce al siguiente.** Se puede borrar el decorador entero y el nivel
+se sigue jugando igual.
 
 ### Capas de colisión 3D
 
@@ -561,7 +621,7 @@ Objetivo 60 fps, aceptable 30.
 
 | Recurso | Presupuesto |
 |---|---|
-| Triángulos en pantalla | < 150.000 |
+| Triángulos por fotograma | < 150.000 **contando pantalla Y sombra** |
 | Personaje principal | 15–25k tris · textura 2048 |
 | Enemigo | 3–5k tris · textura 1024 |
 | Enemigos simultáneos | 8 activos |
@@ -570,6 +630,35 @@ Objetivo 60 fps, aceptable 30.
 
 Modelos actuales: los 11 personajes a 25.000 tris · Peluchín, Cofrecito y Hadita
 a 5.000 · props de escenario (coral 4.700, bonsái 9.750). ✅
+
+### Cómo se mide
+
+**Panel del modo desarrollador: F1**, o **tres toques en la esquina superior
+izquierda** en el móvil. Muestra fps, draw calls y triángulos, y **separa
+pantalla de sombra** — que es la cifra que importa: el pase de sombra llegó a
+costar el triple que la imagen y sumados no se veía (trampa 50).
+
+Medir SIEMPRE en el móvil. En el Mac todo va a 60 fps y el problema no aparece,
+y además la pantalla del teléfono es mucho más ancha que un 16:9: ve bastante
+más mundo de golpe y sube los draw calls.
+
+### Estado del Nivel 1, medido
+
+| | Antes de optimizar | Ahora |
+|---|---|---|
+| Triángulos de pantalla | 97.500 | ~82.000 |
+| Triángulos de sombra | 260.700 | ~62.000 |
+| **Total por fotograma** | **358.200** | **~144.000** |
+| Draw calls (móvil) | 156 | ~83 |
+| fps en el móvil | 28–35 | por medir |
+
+Las seis técnicas que lo bajaron están en
+[`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md) §Rendimiento.
+
+**Lo que NO se puede usar:** bajar la resolución de render
+(`scaling_3d/scale`). Es la palanca más fuerte que hay en móvil, pero con cel
+shading emborrona los contornos duros y se ve peor que en un juego fotográfico
+— ver trampa 63.
 
 ---
 

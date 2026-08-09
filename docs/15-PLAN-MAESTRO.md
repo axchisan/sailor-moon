@@ -14,16 +14,25 @@
 Ocho fases. El orden **no** es por dificultad ni por lo vistoso que quede: es
 por lo que desbloquea a lo demás.
 
-| Fase | Qué | Por qué va aquí |
-|---|---|---|
-| **A** | Que el mundo sea sólido | Atravesar a Mercury o caerse por un agujero rompe la ilusión más que cualquier textura fea |
-| **B** | Texturas reciclables | Todo lo que se construya después las usará. Hacerlo tarde obliga a repintar |
-| **C** | Mundo abierto, límites naturales | Necesita las texturas de B para que los taludes y las rocas se lean |
-| **D** | Rendimiento | Se mide cuando el escenario ya tiene su carga real, no antes |
-| **E** | Movimiento y combate | Depende de las animaciones de Mixamo, que se bajan en paralelo |
-| **F** | Conversación viva | Depende de E (librería de animaciones montada) |
-| **G** | Marco: menú, guardado, vidas | Necesita que el juego ya sea agradable de jugar |
-| **H** | Historia y cinemática | Lo último que se monta, lo primero que se ve |
+| Fase | Qué | Estado | Por qué va aquí |
+|---|---|---|---|
+| **A** | Que el mundo sea sólido | ✅ | Atravesar a Mercury o caerse por un agujero rompe la ilusión más que cualquier textura fea |
+| **B** | Texturas reciclables | ✅ | Todo lo que se construya después las usará. Hacerlo tarde obliga a repintar |
+| **C** | Mundo abierto, límites naturales | ✅ | Necesita las texturas de B para que los taludes y las rocas se lean |
+| **C bis** | Objetivos, portal y rincones | ✅ | El nivel necesitaba un cierre y sitios a los que ir |
+| **D** | Rendimiento | ✅ 1ª pasada | Se mide cuando el escenario ya tiene su carga real, no antes |
+| **E** | Movimiento y combate | ⬜ **bloqueada** | Depende de las animaciones de Mixamo, que las bajas tú |
+| **F** | Conversación viva | ⬜ | Depende de E (librería de animaciones montada) |
+| **G** | Marco: menú, guardado, vidas | ⬜ | Necesita que el juego ya sea agradable de jugar |
+| **H** | Historia y cinemática | ⬜ | Lo último que se monta, lo primero que se ve |
+
+> **Dónde estamos:** el escenario del Nivel 1 está terminado. De aquí en
+> adelante ya no se toca el mapa: se trabaja sobre el personaje, la
+> conversación, el marco del juego y la historia.
+>
+> **Lo único que bloquea:** las animaciones de Mixamo. Sin ellas la Fase E no
+> se puede empezar, y F depende de E. Ver
+> [`17-ANIMACIONES.md`](17-ANIMACIONES.md).
 
 **Lo que se puede hacer en paralelo:** bajar animaciones de Mixamo (A→E) y
 generar el arte de la cinemática (H). Ninguna de las dos me bloquea a mí, y las
@@ -262,23 +271,55 @@ silueta de cada nivel al construirlo, no después.
 
 ---
 
-## Fase D — Rendimiento
+## Fase D — Rendimiento ✅ primera pasada
 
-Hay tirones en zonas concretas. Antes de optimizar a ciegas, **medir**:
+**Medido en el móvil, no supuesto.** El punto de partida eran 28-35 fps con 156
+draw calls y 168.000 triángulos.
 
-1. Recorrido automático por todo el nivel, midiendo por tramo
-2. Tabla de FPS, draw calls y triángulos por zona
-3. Atacar solo lo que aparezca
+Lo primero fue **separar pantalla de sombra** en el contador: sumados no decían
+nada, y separados salió que el pase de sombra costaba casi el triple que la
+imagen. Ese fue el hallazgo que ordenó todo lo demás.
 
-Sospechosos, por probabilidad:
+Seis técnicas, de más a menos impacto:
 
-- **Sombras**: el mapa direccional cubre mucho y cada cerezo proyecta
-- **El contorno del cel shading**: duplica geometría de cada personaje
-- **Física del pelo**: cinco personajes con varias cadenas
-- **Enemigos**: instanciar en mitad de la pelea provoca el tirón justo al empezar
+1. **Sombras** — de cuatro cascadas a una, alcance de 55 a 24 m, y sin sombra
+   en el detalle menudo. Quitó 230.000 triángulos
+2. **Descarte por frustum** — las multimallas se trocean en parcelas de 70 m.
+   Antes cada una tenía una caja envolvente que cubría el mapa entero y **no se
+   descartaba nunca**: las 460 matas de hierba se dibujaban mirases a donde
+   mirases
+3. **Descarte por oclusión** — cada muro del blockout lleva su
+   `OccluderInstance3D`. Mirando al seto: 32 draw calls; al camino: 105
+4. **LOD por distancia** — `ALCANCE` apaga cada pieza cuando deja de aportar
+   (una piedrecita a 36 m, una brizna a 44), con desvanecido
+5. **LOD de malla** — el cerezo tiene dos versiones: 596 triángulos de cerca y
+   236 a partir de 44 m
+6. **Menos polígonos en origen** — `divisiones` en `_esfera()`. El decorado bajó
+   de 489.000 triángulos a 277.000
 
-Herramientas: LOD por distancia, apagar sombras lejanas, agrupar enemigos en
-una reserva creada al cargar en vez de en mitad del combate.
+Y en los shaders: el hash de ruido ya no usa `sin()` —eran más de treinta senos
+por píxel en una superficie que ocupa la pantalla entera, y era el tirón
+constante—, MSAA cambiado por FXAA, mapa de sombras a 2048 con filtro duro, y
+distancia de renderizado de 155 m con la niebla cerrando entre 78 y 148.
+
+**Resultado: de 358.200 triángulos por fotograma a ~144.000, y de 156 draw
+calls a ~83.**
+
+### Lo que NO se puede usar
+
+**Bajar la resolución de render** (`scaling_3d/scale`). Es la palanca más fuerte
+que hay en un móvil, pero con cel shading emborrona los contornos duros —que son
+justo lo que define el estilo— y se ve peor que en un juego fotográfico. Probado
+y descartado (trampa 63).
+
+### Si hace falta una segunda pasada
+
+Por orden de lo que queda por apretar:
+
+- Alcance de sombra de 24 a 18 m
+- Quitar la sombra a los cerezos (se pierde bastante, es el último recurso)
+- Menos props: `copias` en `CAMPO` y `LIMITE` de `decorador_nivel.gd`
+- Bajar el detalle menudo, que son ~1.100 de los 2.000 props
 
 ---
 

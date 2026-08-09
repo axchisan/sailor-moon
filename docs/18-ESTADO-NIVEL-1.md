@@ -30,8 +30,8 @@ Nivel1Parque (nivel.gd)
 
 | # | Paso | Qué es |
 |---|---|---|
-| 0 | `pradera` 30×34 | Arranque abierto, sin muros |
-| 1 | `pasillo` 20, muro derecho | Sendero de salida |
+| 0 | `pradera` 20×26 | Placita de arranque, sin muros. Se aparece a 8,5 m |
+| 1 | `pasillo` 20, muro derecho | Sendero de salida, abierto por un lado |
 | 2 | `arena` r11 | Arena 1 — dos oleadas |
 | 3 | `cruce` 30, sep. 16 | Dos ramas: directa y larga con plataformas |
 | 4 | `arena` r11 | Arena 2 — cofrecitos |
@@ -42,6 +42,16 @@ Nivel1Parque (nivel.gd)
 
 Tipos disponibles: `pradera`, `pasillo` (con `muros`: ambos/izquierda/derecha/
 ninguno, y `subida`), `cruce`, `arena`, `giro`.
+
+> **La placita del arranque, pequeña y punto.** Se probó a 52×54 y a 34×46, y
+> las dos veces una losa de ese tamaño se leyó como un bloque cuadrado puesto
+> encima del mapa: borra el relieve que tenga debajo y desplaza el parque
+> entero, y con él todo lo que se coloca por rumbo y distancia desde su centro
+> (el estanque acabó tapado las dos veces).
+>
+> **Cada vez que cambien las medidas del `RECORRIDO` hay que mirar la vista
+> aérea**, porque el centro del parque se mueve y con él el terreno, el
+> estanque, los nueve rincones y el fondo lejano.
 
 ## Qué hay montado
 
@@ -92,29 +102,37 @@ Seis técnicas, de más a menos impacto. Medido desde el punto de aparición:
 
 | | Antes | Después |
 |---|---|---|
-| Triángulos de pantalla | 97.500 | 69.400 |
-| Triángulos de sombra | 260.700 | 30.900 |
-| **Total por fotograma** | **358.200** | **100.300** |
-| Draw calls | 101 | 99 |
+| Triángulos de pantalla | 97.500 | ~82.000 |
+| Triángulos de sombra | 260.700 | ~62.000 |
+| **Total por fotograma** | **358.200** | **~144.000** |
+| Draw calls (en el móvil) | 156 | ~83 |
 
-1. **Descarte por frustum** — las multimallas se trocean en parcelas de 52 m
+Medido con la pantalla del móvil (1600×720), que es mucho más ancha que un 16:9
+y ve bastante más mundo de golpe. En 16:9 las cifras son menores.
+
+1. **Descarte por frustum** — las multimallas se trocean en parcelas de 70 m
    (`LADO_PARCELA`). Antes cada una tenía una caja envolvente que cubría el
    mapa entero y no se descartaba nunca
 2. **Descarte por oclusión** — cada muro del blockout lleva su
    `OccluderInstance3D`, así que lo que queda detrás de un seto no se dibuja.
    Mirando al muro: 32 draw calls; mirando al camino: 105
-3. **Sombras** — de cuatro cascadas a una, de 55 m a 30, y sin sombra en el
+3. **Sombras** — de cuatro cascadas a una, de 55 m a 24, y sin sombra en el
    detalle menudo. Es lo que quitó 230.000 triángulos
 4. **LOD por distancia** — `ALCANCE` apaga cada pieza cuando deja de aportar
-   (una piedrecita a 42 m, una brizna a 52), con desvanecido para que no haya
+   (una piedrecita a 36 m, una brizna a 44), con desvanecido para que no haya
    salto
 5. **LOD de malla** — el cerezo tiene dos versiones: 596 triángulos de cerca y
    236 a partir de 44 m
 6. **Menos polígonos en origen** — `divisiones` en `_esfera()`. El decorado bajó
    de 489.000 triángulos a 277.000
 
-Y en los shaders: el hash de ruido ya no usa `sin()` (ver trampa 52), MSAA
-cambiado por FXAA, y el mapa de sombras a 2048 con filtro duro.
+Y además: el hash de ruido de los shaders ya no usa `sin()` (trampa 52), MSAA
+cambiado por FXAA, mapa de sombras a 2048 con filtro duro, y **distancia de
+renderizado de 155 m** con la niebla cerrando entre los 78 y los 148 para que el
+corte no se vea.
+
+**Descartado:** bajar la resolución de render. Emborrona los contornos del cel
+shading — trampa 63.
 
 ### El reparto del sitio
 Nada se planta encima de otra cosa. Cada copia reserva un círculo (`HUECO`) en
@@ -165,6 +183,17 @@ terreno y el cálculo de por dónde cruza el puente.
 | Arranque al borde | Pradera de salida de 30×34 a 52×54, spawn movido a z = −18 |
 | Detalle del suelo | 520 matas, 190 piedrecitas, 130 ramitas, 160 hojarascas |
 | Animalitos | 22 mariposas y 9 pajarillos en `bichos.gd`, en multimalla |
+
+### Hecho en el bloque de pulido
+| Qué | Cómo quedó |
+|---|---|
+| La pradera de arranque no existía | El `match` de `construir()` no tenía el caso; llevaba desde que se escribió sin ejecutarse |
+| Bloques cuadrados sobre el mapa | Eran tres «manchas de tierra» rectangulares que se ponían en la pradera. Fuera |
+| El parque hundido en las montañas | El terreno se centraba en un punto fijo del editor; ahora sigue al parque |
+| Plaza de la fuente en una ladera | Los rincones exigen terreno llano (`_es_llano`, nueve puntos) |
+| Bancos de espaldas al agua | `mirar: "centro"` calcula el giro en vez de escribirlo a ojo |
+| Botas atravesando el camino | La franja de camino elevada no tenía colisión |
+| Cámara mirando desde abajo | El pitch del `SpringArm3D` estaba invertido: el negativo es el que sube |
 
 ### Hecho en el bloque de ambientación
 | Qué | Cómo quedó |
