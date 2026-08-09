@@ -219,6 +219,26 @@ const FONDO: Array[Dictionary] = [
 @export var decorar_arenas: bool = true
 @export var montar_fondo: bool = true
 
+## Cuántos metros de respeto se le dejan al recorrido antes de sembrar nada del
+## campo. Con poco, aparecen rocas pegadas al camino.
+@export var margen_recorrido: float = 6.0
+
+@export_group("Estanque")
+@export var radio_estanque: float = 9.0
+## A qué altura queda la lámina respecto del terreno.
+##
+## Va ligeramente POR ENCIMA, no hundida. Hundirla era la idea original —el agua
+## asomando solo por las hondonadas, con el borde irregular gratis— pero el
+## campo es demasiado llano ahí y la lámina desaparecía entera bajo la hierba.
+##
+## Hacerlo bien pide una hondonada de verdad en el terreno, que es la lista de
+## zonas hundidas que todavía no existe. Mientras tanto, apoyada y rodeada de
+## piedras, se lee como una charca.
+@export var hondura_estanque: float = -0.06
+## Dónde va, en metros desde el centro de lo construido y en grados.
+@export var distancia_estanque: float = 62.0
+@export var rumbo_estanque: float = 206.0
+
 @export_group("Ajustes")
 @export var semilla: int = 19920307
 ## Metros de hierba desde el borde de lo construido hacia fuera. Sin esto, los
@@ -238,6 +258,10 @@ var _cache: Dictionary = {}
 ## Grosor del muro del blockout. Lo dice el constructor: `fuera` se mide desde
 ## su eje, así que hay que saber cuánto ocupa.
 var _ancho_borde: float = 0.8
+## Copia de lo que construyó el constructor, para no sembrar encima.
+var _tramos: Array[Dictionary] = []
+var _centros_arena: Dictionary = {}
+var _radios_arena: Dictionary = {}
 ## A qué altura queda la cara pisable respecto del eje del tramo. Los tramos se
 ## registran por su eje, que cae a media losa de profundidad: sembrando ahí
 ## directamente, todo el parque aparece medio metro enterrado.
@@ -254,6 +278,9 @@ func decorar(constructor: ConstructorNivel) -> void:
 	_acumulado.clear()
 	_rng.seed = semilla
 	_ancho_borde = constructor.ancho_borde
+	_tramos = constructor.tramos
+	_centros_arena = constructor.centros_arena
+	_radios_arena = constructor.radios_arena
 	_alto_suelo = constructor.grosor_suelo * 0.5
 
 	var medida := constructor.extension()
@@ -269,6 +296,10 @@ func decorar(constructor: ConstructorNivel) -> void:
 				constructor.radios_arena.get(nombre, 11.0))
 	_puerta_de_entrada(constructor)
 	_poblar_campo(medida["centro"], medida["radio"])
+	if radio_estanque > 0.0:
+		var rumbo := deg_to_rad(rumbo_estanque)
+		_estanque(medida["centro"]
+			+ Vector3(cos(rumbo), 0.0, sin(rumbo)) * distancia_estanque)
 	if constructor.radio_limite > 0.0:
 		_vestir_limite(medida["centro"], constructor.radio_limite)
 	if montar_fondo:
@@ -352,7 +383,9 @@ func _puerta_de_entrada(constructor: ConstructorNivel) -> void:
 	var tramo: Dictionary = constructor.tramos[0]
 	var direccion: Vector3 = tramo["direccion"]
 	# Un poco por detrás del inicio, sobre el eje del camino.
-	var sitio := constructor.punto_inicio - direccion * 4.5
+	# Al fondo de la pradera, no a cuatro metros: si está encima del punto de
+	# aparición, la cámara arranca metida entre sus patas.
+	var sitio := constructor.punto_inicio - direccion * 16.0
 	sitio.y = 0.0
 	# El torii se modeló a lo ancho de su eje X, así que hay que atravesarlo al
 	# camino igual que la puerta del guardián: rumbo a secas, sin los 90°.
@@ -366,7 +399,7 @@ func _puerta_de_entrada(constructor: ConstructorNivel) -> void:
 ## En anillos con desvío al azar y no en rejilla: una cuadrícula se nota
 ## enseguida por muy grande que sea, y lo que se busca es que parezca que
 ## crecieron ahí.
-func _poblar_campo(centro: Vector3, radio_nivel: float) -> void:
+func _poblar_campo(centro: Vector3, _radio_nivel: float) -> void:
 	for receta in CAMPO:
 		var copias: int = receta["copias"]
 		for i in copias:
@@ -377,7 +410,114 @@ func _poblar_campo(centro: Vector3, radio_nivel: float) -> void:
 				+ _rng.randf_range(-0.25, 0.25)
 			var r: float = _rng.randf_range(receta["desde"], receta["hasta"])
 			var sitio := centro + Vector3(cos(theta), 0.0, sin(theta)) * r
+			# Nada del campo puede caer sobre el recorrido. El parque no es un
+			# círculo: la pradera del arranque se aleja del centro tanto como el
+			# campo, así que sembrar «a partir de tantos metros del centro»
+			# plantaba peñascos en mitad del camino de salida.
+			if _pisa_el_recorrido(sitio):
+				continue
 			_plantar(receta, sitio, 0.0, Vector3.ZERO)
+
+
+## ¿Este punto cae sobre alguna parte por la que se juega?
+##
+## Mira los tramos como rectángulos y las arenas como círculos, con un margen de
+## respeto. Es más barato y más predecible que consultar la física, y aquí lo
+## que importa es que **nunca** aparezca un peñasco en el camino.
+func _pisa_el_recorrido(sitio: Vector3) -> bool:
+	for tramo in _tramos:
+		var origen: Vector3 = tramo["origen"]
+		var direccion: Vector3 = tramo["direccion"]
+		var hacia := sitio - origen
+		var avance := hacia.dot(direccion)
+		if avance < -margen_recorrido or avance > float(tramo["largo"]) + margen_recorrido:
+			continue
+		var lateral := absf(hacia.dot(direccion.cross(Vector3.UP).normalized()))
+		var mitad: float = float(tramo["ancho"]) * 0.5 \
+			+ float(tramo.get("separacion", 0.0)) * 0.5 + margen_recorrido
+		if lateral <= mitad:
+			return true
+	for nombre: String in _radios_arena:
+		var centro_arena: Vector3 = _centros_arena[nombre]
+		var d := Vector2(sitio.x - centro_arena.x, sitio.z - centro_arena.z).length()
+		if d <= float(_radios_arena[nombre]) + margen_recorrido:
+			return true
+	return false
+
+
+## El estanque del campo, con su puente y sus nenúfares.
+##
+## Es el sitio que convierte el campo abierto en «un sitio con cosas» en vez de
+## una pradera grande. Un estanque se ve desde lejos, da una referencia para
+## orientarse, y el puente invita a cruzarlo aunque se pueda rodear — que es
+## exactamente lo que se busca en una zona opcional.
+##
+## El agua es un disco liso puesto **por debajo del terreno**: al haber ondulado
+## el campo, la lámina asoma solo por las hondonadas, y el borde del agua queda
+## irregular sin tener que recortar nada. Un disco a la altura del terreno se
+## vería como una moneda azul tirada en la hierba.
+func _estanque(centro: Vector3) -> void:
+	var sitio := _posar(centro)
+
+	var malla := CylinderMesh.new()
+	malla.top_radius = radio_estanque
+	malla.bottom_radius = radio_estanque
+	malla.height = 0.5
+	malla.radial_segments = 24
+
+	var lamina := MeshInstance3D.new()
+	lamina.name = "Estanque"
+	lamina.mesh = malla
+	lamina.material_override = PaletaTerreno.obtener("agua")
+	lamina.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# La malla tiene medio metro de grosor: se baja esa mitad para que la CARA
+	# de arriba quede justo donde toca.
+	lamina.position = sitio + Vector3.DOWN * (hondura_estanque + 0.25)
+	add_child(lamina)
+
+	# El puente cruza por el centro. Se gira al azar pero reproducible: da igual
+	# por dónde se cruce, pero que no esté siempre en el mismo eje.
+	var rumbo := _rng.randf_range(0.0, TAU)
+	var receta_puente := {"pieza": "puente_madera", "escala": [1.35, 1.35],
+		"alinear": true}
+	_plantar(receta_puente, sitio + Vector3.UP * 0.15, rumbo, Vector3.ZERO)
+
+	# Nenúfares flotando, apartados del puente para no atravesarlo.
+	for i in 9:
+		var angulo := TAU * float(i) / 9.0 + 0.4
+		var r := _rng.randf_range(radio_estanque * 0.30, radio_estanque * 0.78)
+		var punto := sitio + Vector3(cos(angulo), 0.0, sin(angulo)) * r
+		punto.y = sitio.y - hondura_estanque + 0.02
+		var pose := Transform3D(
+			Basis.from_euler(Vector3(0.0, _rng.randf_range(0.0, TAU), 0.0))
+				* Basis.from_scale(Vector3.ONE * _rng.randf_range(0.8, 1.4)),
+			punto)
+		_acumular("nenufar", pose, false)
+
+	# Piedras en la orilla: es lo que hace que el agua tenga un borde en vez de
+	# acabarse contra la hierba.
+	for i in 14:
+		var angulo := TAU * float(i) / 14.0 + 0.2
+		var punto := sitio + Vector3(cos(angulo), 0.0, sin(angulo)) \
+			* (radio_estanque + _rng.randf_range(0.2, 1.6))
+		_plantar({"pieza": "roca", "escala": [0.9, 1.9]},
+			_posar(punto), 0.0, Vector3.ZERO)
+
+
+## Apunta una copia ya colocada, saltándose el cálculo de pose de `_plantar`.
+func _acumular(pieza: String, pose: Transform3D, lejano: bool) -> void:
+	var partes := _partes(pieza)
+	if partes.is_empty():
+		return
+	var destino: Dictionary = _acumulado.get(pieza, {})
+	if destino.is_empty():
+		destino = {"lejano": lejano, "poses": {}, "base": []}
+		_acumulado[pieza] = destino
+	(destino["base"] as Array).append(pose)
+	for indice in partes.size():
+		var lista: Array = destino["poses"].get(indice, [])
+		lista.append(pose * partes[indice]["local"])
+		destino["poses"][indice] = lista
 
 
 ## Arboleda y pedregal alrededor de todo, al pie de la ladera.

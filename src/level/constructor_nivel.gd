@@ -26,7 +26,14 @@ class_name ConstructorNivel
 ## Un paso del recorrido. `nodo` enlaza un tramo de tipo `arena` con el nodo
 ## `Arena` que ya está en la escena, para colocarlo y darle su tamaño.
 const RECORRIDO: Array[Dictionary] = [
-	{"tipo": "pasillo", "largo": 20.0, "ancho": 9.0},
+	# Se empieza en una PRADERA, no en un pasillo. Apareciendo entre dos muros a
+	# nueve metros el sitio se lee como un laberinto, y estando pegada al borde
+	# lo primero que apetece es salirse. Con una pradera de treinta metros
+	# alrededor, el parque empieza abriéndose.
+	{"tipo": "pradera", "largo": 30.0, "ancho": 34.0, "nodo": "PraderaInicio"},
+	# Y el pasillo que sale de ella va abierto por un lado: un camino con muro a
+	# ambos lados es un corredor. Con uno solo, es un sendero que bordea un seto.
+	{"tipo": "pasillo", "largo": 20.0, "ancho": 9.0, "muros": "derecha"},
 	{"tipo": "arena", "radio": 11.0, "nodo": "Arena1"},
 	{"tipo": "giro", "grados": -90.0},
 	# El tramo B se parte en dos: por la derecha se va directo, por la
@@ -99,7 +106,7 @@ const RECORRIDO: Array[Dictionary] = [
 ## Va explícito y no como «el último»: al alargar el parque con el paseo de
 ## vuelta, el último tramo pasó a ser el que lleva al portal, y la barrera del
 ## jefe apareció cerrando la salida del nivel en vez de la entrada del jefe.
-@export var tramo_de_la_puerta: int = 2
+@export var tramo_de_la_puerta: int = 3
 
 ## Dónde va cada Estrella de Sueño, en coordenadas del recorrido y no del
 ## mundo: `tramo` es el índice del pasillo, `t` lo avanzado por él (0 a 1),
@@ -111,17 +118,17 @@ const RECORRIDO: Array[Dictionary] = [
 ## docena de estrellas flotando en el vacío.
 const ESTRELLAS: Array[Dictionary] = [
 	# En el camino: enseñan qué son, es imposible no cogerlas
-	{"tramo": 0, "t": 0.45, "lado": 0.0, "alto": 1.1},
-	{"tramo": 1, "t": 0.09, "lado": 0.0, "alto": 1.1},
-	{"tramo": 2, "t": 0.55, "lado": 0.0, "alto": 1.3},
+	{"tramo": 1, "t": 0.45, "lado": 0.0, "alto": 1.1},
+	{"tramo": 2, "t": 0.09, "lado": 0.0, "alto": 1.1},
+	{"tramo": 3, "t": 0.55, "lado": 0.0, "alto": 1.3},
 	# A la vista pero fuera del camino: hay que desviarse
-	{"tramo": 0, "t": 0.80, "lado": 0.72, "alto": 1.1},
+	{"tramo": 1, "t": 0.80, "lado": 0.72, "alto": 1.1},
 	# Una en la rama directa del cruce: irse por el camino corto no castiga
-	{"tramo": 1, "t": 0.50, "lado": 0.0, "alto": 1.1, "rama": 1.0},
+	{"tramo": 2, "t": 0.50, "lado": 0.0, "alto": 1.1, "rama": 1.0},
 	# Las dos secretas, sobre las plataformas de la rama larga. Son la razón de
 	# que exista el cruce: el que se desvía se lleva algo que el otro no ve.
-	{"tramo": 1, "t": 0.48, "lado": 0.44, "alto": 2.0, "rama": -1.0, "secreta": true},
-	{"tramo": 1, "t": 0.67, "lado": -0.44, "alto": 2.3, "rama": -1.0, "secreta": true},
+	{"tramo": 2, "t": 0.48, "lado": 0.44, "alto": 2.0, "rama": -1.0, "secreta": true},
+	{"tramo": 2, "t": 0.67, "lado": -0.44, "alto": 2.3, "rama": -1.0, "secreta": true},
 ]
 
 ## Los tres faroles del tramo antes del jefe. Mismo sistema de coordenadas.
@@ -130,9 +137,9 @@ const ESTRELLAS: Array[Dictionary] = [
 ## fijarse) y el tercero alto (hay que subir). Así el objetivo se entiende solo:
 ## el primero se enciende sin querer y ya sabes qué toca.
 const FAROLES: Array[Dictionary] = [
-	{"id": "farol_1", "tramo": 2, "t": 0.18, "lado": 0.0, "alto": 0.0},
-	{"id": "farol_2", "tramo": 2, "t": 0.52, "lado": -0.82, "alto": 0.0},
-	{"id": "farol_3", "tramo": 2, "t": 0.78, "lado": 0.80, "alto": 1.6},
+	{"id": "farol_1", "tramo": 3, "t": 0.18, "lado": 0.0, "alto": 0.0},
+	{"id": "farol_2", "tramo": 3, "t": 0.52, "lado": -0.82, "alto": 0.0},
+	{"id": "farol_3", "tramo": 3, "t": 0.78, "lado": 0.80, "alto": 1.6},
 ]
 
 ## Dónde espera cada personaje del reparto, en coordenadas del recorrido.
@@ -141,7 +148,7 @@ const FAROLES: Array[Dictionary] = [
 const ENCUENTROS: Array[Dictionary] = [
 	# Mercury, nada más salir de la Arena 2: se la encuentra escondida a un
 	# lado del camino que sube hacia el guardián.
-	{"nodo": "EncuentroMercury", "tramo": 2, "t": 0.30, "lado": 0.55, "alto": 0.0},
+	{"nodo": "EncuentroMercury", "tramo": 3, "t": 0.30, "lado": 0.55, "alto": 0.0},
 ]
 
 var _origen: Vector3 = Vector3.ZERO
@@ -276,7 +283,18 @@ func _pasillo(paso: Dictionary) -> void:
 		giro, inclinacion, false)
 
 	var lado := _direccion.cross(Vector3.UP).normalized()
-	for signo in [-1.0, 1.0]:
+	# Los muros son opcionales y por lado. Un camino encajonado entre dos setos
+	# es un corredor, y un nivel entero así se lee como un laberinto por muchos
+	# árboles que se le pongan encima. Dejando abierto un costado, el mismo
+	# camino pasa a ser un sendero que bordea algo.
+	var muros: String = paso.get("muros", "ambos")
+	for signo: float in [-1.0, 1.0]:
+		if muros == "ninguno":
+			continue
+		if muros == "izquierda" and signo > 0.0:
+			continue
+		if muros == "derecha" and signo < 0.0:
+			continue
 		_losa("Borde", centro + lado * signo * (ancho * 0.5 + ancho_borde * 0.5)
 			+ Vector3.UP * (alto_borde * 0.5 + grosor_suelo * 0.5),
 			Vector3(ancho_borde, alto_borde, largo_real), borde, giro, inclinacion)
@@ -292,6 +310,53 @@ func _pasillo(paso: Dictionary) -> void:
 
 	_origen += _direccion * largo
 	_altura += subida
+
+
+## Una extensión abierta de césped con el camino cruzándola.
+##
+## Es el antídoto contra el «laberinto de pasillos». Un parque no es una
+## sucesión de corredores: tiene explanadas donde se puede correr en cualquier
+## dirección, y son ellas las que dan la sensación de sitio. Aquí no hay muros
+## en los costados — quien quiera irse al campo, que se vaya.
+##
+## Se usa sobre todo para EMPEZAR. Apareciendo en un pasillo de nueve metros de
+## ancho, con muro a los dos lados y el borde del mundo a la espalda, lo primero
+## que apetece es salirse a ver qué hay fuera. Apareciendo en mitad de una
+## pradera, lo que apetece es mirar alrededor.
+func _pradera(paso: Dictionary) -> void:
+	var largo: float = paso["largo"]
+	var ancho: float = paso["ancho"]
+	var giro := _giro_actual()
+	var centro := _origen + _direccion * (largo * 0.5) + Vector3.UP * _altura
+
+	_losa("Suelo", centro, Vector3(ancho, grosor_suelo, largo + solape * 2.0),
+		suelo, giro)
+	# El camino la cruza de lado a lado, más estrecho que la pradera: se ve por
+	# dónde se va sin que el resto deje de ser pisable.
+	_losa("Camino", centro + Vector3.UP * (grosor_suelo * 0.5 + 0.02),
+		Vector3(ancho_camino, 0.08, largo + solape * 2.0), camino, giro, 0.0, false)
+
+	# Un par de manchas de tierra sueltas: una explanada de césped perfecto se
+	# lee como un campo de fútbol. Con calvas parece un sitio por el que pasa
+	# gente.
+	for ficha: Array in [[-0.30, 0.28, 7.0], [0.34, 0.68, 5.5], [0.16, 0.16, 4.0]]:
+		var lado := _direccion.cross(Vector3.UP).normalized()
+		_losa("Camino",
+			centro + lado * (ficha[0] * ancho * 0.5)
+				+ _direccion * ((ficha[1] - 0.5) * largo)
+				+ Vector3.UP * (grosor_suelo * 0.5 + 0.015),
+			Vector3(ficha[2], 0.06, ficha[2] * 0.8), camino, giro, 0.0, false)
+
+	if paso.get("nodo", "") != "":
+		centros_arena[paso["nodo"]] = centro
+		radios_arena[paso["nodo"]] = ancho * 0.5
+
+	tramos.append({
+		"origen": _origen + Vector3.UP * _altura,
+		"direccion": _direccion,
+		"largo": largo, "ancho": ancho, "subida": 0.0,
+	})
+	_origen += _direccion * largo
 
 
 ## Dos caminos que salen del mismo sitio y se vuelven a juntar.

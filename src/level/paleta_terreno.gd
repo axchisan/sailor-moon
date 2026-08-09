@@ -66,6 +66,11 @@ const RECETAS := {
 		"luz": Color(0.70, 0.53, 0.37), "escala": 1.2, "tonos": 4,
 		"fuerza": 0.5, "grano": 0.14, "vetas": 0.72,
 	},
+	"agua": {
+		"base": Color(0.38, 0.66, 0.80), "mancha": Color(0.28, 0.54, 0.72),
+		"luz": Color(0.62, 0.84, 0.92), "escala": 4.5, "tonos": 3,
+		"fuerza": 0.62, "grano": 0.10, "aspereza": 0.18,
+	},
 	"plataforma": {
 		"base": Color(0.68, 0.58, 0.45), "mancha": Color(0.56, 0.47, 0.36),
 		"luz": Color(0.78, 0.68, 0.54), "escala": 1.6, "tonos": 4,
