@@ -161,7 +161,6 @@ const FONDO: Array[Dictionary] = [
 ## disco acaba antes que las montañas, se ve su canto recortado contra el cielo
 ## a media altura y el mundo se lee como una maqueta sobre una mesa.
 @export var faldon: float = 210.0
-@export var color_faldon: Color = Color(0.38, 0.50, 0.35)
 
 var _rng := RandomNumberGenerator.new()
 ## Una lista de transformadas por cada trozo de malla, agrupadas por pieza.
@@ -501,14 +500,13 @@ func _faldon(centro: Vector3, radio: float) -> void:
 	malla.height = 1.0
 	malla.radial_segments = 32
 
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color_faldon
-	material.roughness = 1.0
-
 	var visual := MeshInstance3D.new()
 	visual.name = "Faldon"
 	visual.mesh = malla
-	visual.material_override = material
+	# Hierba de la misma familia que la del camino pero más apagada y de patrón
+	# más grande: separa lo jugable de lo que solo se mira, sin necesidad de una
+	# valla que lo diga.
+	visual.material_override = PaletaTerreno.obtener("hierba_lejos")
 	visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 	var cuerpo := StaticBody3D.new()

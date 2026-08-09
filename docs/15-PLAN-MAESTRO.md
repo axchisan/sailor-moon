@@ -110,7 +110,21 @@ Antes de tocar el sistema de daño hace falta poder probar sin morirse.
 
 ---
 
-## Fase B — Texturas que se puedan reciclar
+## Fase B — Texturas que se puedan reciclar ✅ hecha
+
+> [`terreno.gdshader`](../src/level/terreno.gdshader) y
+> [`paleta_terreno.gd`](../src/level/paleta_terreno.gd). Ocho superficies, un
+> solo shader, cero archivos de textura.
+>
+> La proyección sale de la **posición en el mundo**, no de las UV: el blockout
+> son cajas escaladas y multimallas sin desplegar, y así un metro de hierba mide
+> igual en todas las piezas por distinto que sea su tamaño. Se elige el eje
+> dominante de la normal en vez de mezclar tres muestras — cuesta un tercio y en
+> geometría de cajas no se nota.
+>
+> Para una superficie nueva se añade una receta con dos colores y tres números.
+> Para la plaza de piedra de una ciudad, `PaletaTerreno.tenida("piedra", …)` y
+> ya está.
 
 El problema no es que falten texturas: es que **hacer una por objeto no
 escala**. Van a venir plazas de piedra, interiores, un templo, y no puede haber

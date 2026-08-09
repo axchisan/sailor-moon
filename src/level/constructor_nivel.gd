@@ -44,13 +44,19 @@ const RECORRIDO: Array[Dictionary] = [
 ]
 
 @export_group("Aspecto")
-@export var color_suelo: Color = Color(0.42, 0.55, 0.38)
-## El camino va de otro color a propósito: a los 8 años, saber por dónde se va
+## Qué superficie de [`PaletaTerreno`](paleta_terreno.gd) usa cada parte.
+##
+## Antes eran colores planos y el escenario parecía una maqueta de plastilina:
+## una superficie de un solo color no se lee como dibujada por mucho que la
+## silueta acompañe. Ahora son nombres de la paleta, así que cambiar el aspecto
+## de todos los caminos del juego es cambiar una receta en un sitio.
+@export var suelo: String = "hierba"
+## El camino va distinto a propósito: a los 8 años, saber por dónde se va
 ## importa más que cualquier decoración.
-@export var color_camino: Color = Color(0.72, 0.68, 0.52)
-@export var color_arena: Color = Color(0.60, 0.52, 0.44)
-@export var color_borde: Color = Color(0.35, 0.42, 0.33)
-@export var color_plataforma: Color = Color(0.55, 0.48, 0.40)
+@export var camino: String = "tierra_camino"
+@export var arena: String = "tierra_arena"
+@export var borde: String = "muro_seto"
+@export var plataforma: String = "plataforma"
 
 @export_group("Medidas")
 ## Cuánto se mete cada losa de suelo dentro de la siguiente.
@@ -125,7 +131,7 @@ var _origen: Vector3 = Vector3.ZERO
 var _direccion: Vector3 = Vector3.FORWARD
 var _altura: float = 0.0
 var _piezas: int = 0
-## Poses de las cajas, agrupadas por color. Se vuelca al terminar de construir.
+## Poses de las cajas, agrupadas por superficie. Se vuelca al terminar.
 var _lotes: Dictionary = {}
 
 var punto_inicio: Vector3 = Vector3.ZERO
@@ -233,17 +239,17 @@ func _pasillo(paso: Dictionary) -> void:
 	var largo_real := sqrt(largo * largo + subida * subida)
 
 	_losa("Suelo", centro, Vector3(ancho, grosor_suelo, largo_real + solape * 2.0),
-		color_suelo, giro, inclinacion)
+		suelo, giro, inclinacion)
 	# Franja de camino, un pelo por encima para que no pelee con el suelo
 	_losa("Camino", centro + Vector3.UP * (grosor_suelo * 0.5 + 0.02),
-		Vector3(ancho_camino, 0.08, largo_real + solape * 2.0), color_camino,
+		Vector3(ancho_camino, 0.08, largo_real + solape * 2.0), camino,
 		giro, inclinacion, false)
 
 	var lado := _direccion.cross(Vector3.UP).normalized()
 	for signo in [-1.0, 1.0]:
 		_losa("Borde", centro + lado * signo * (ancho * 0.5 + ancho_borde * 0.5)
 			+ Vector3.UP * (alto_borde * 0.5 + grosor_suelo * 0.5),
-			Vector3(ancho_borde, alto_borde, largo_real), color_borde, giro, inclinacion)
+			Vector3(ancho_borde, alto_borde, largo_real), borde, giro, inclinacion)
 
 	if paso.get("plataformas", false):
 		_plataformas(largo, ancho)
@@ -286,36 +292,36 @@ func _cruce(paso: Dictionary) -> void:
 		var eje: float = boca[0]
 		var fondo: float = boca[1]
 		_losa("SueloCruce", _origen + _direccion * eje + Vector3.UP * _altura,
-			Vector3(ancho_boca, grosor_suelo, fondo + solape * 2.0), color_suelo, giro)
+			Vector3(ancho_boca, grosor_suelo, fondo + solape * 2.0), suelo, giro)
 		_losa("CaminoCruce", _origen + _direccion * eje
 			+ Vector3.UP * (_altura + grosor_suelo * 0.5 + 0.02),
-			Vector3(ancho_boca * 0.8, 0.08, fondo + solape * 2.0), color_camino,
+			Vector3(ancho_boca * 0.8, 0.08, fondo + solape * 2.0), camino,
 			giro, 0.0, false)
 		# Los costados de la boca dan al vacío: sin muro se cae por ellos justo
 		# en el punto donde hay que pararse a mirar por dónde tirar.
-		for borde: float in [-1.0, 1.0]:
+		for costado: float in [-1.0, 1.0]:
 			_losa("BordeCruce",
 				_origen + _direccion * eje
-					+ lado * borde * (ancho_boca * 0.5 + ancho_borde * 0.5)
+					+ lado * costado * (ancho_boca * 0.5 + ancho_borde * 0.5)
 					+ Vector3.UP * (_altura + alto_borde * 0.5 + grosor_suelo * 0.5),
-				Vector3(ancho_borde, alto_borde, fondo), color_borde, giro)
+				Vector3(ancho_borde, alto_borde, fondo), borde, giro)
 
 	# Las dos ramas
 	for signo: float in [1.0, -1.0]:
 		var centro_rama: Vector3 = _origen + _direccion * (entrada + ramas * 0.5) \
 			+ lado * signo * (separacion * 0.5) + Vector3.UP * _altura
 		_losa("SueloRama", centro_rama,
-			Vector3(ancho, grosor_suelo, ramas + solape * 2.0), color_suelo, giro)
+			Vector3(ancho, grosor_suelo, ramas + solape * 2.0), suelo, giro)
 		_losa("CaminoRama", centro_rama + Vector3.UP * (grosor_suelo * 0.5 + 0.02),
-			Vector3(ancho_camino, 0.08, ramas + solape * 2.0), color_camino,
+			Vector3(ancho_camino, 0.08, ramas + solape * 2.0), camino,
 			giro, 0.0, false)
 		# Bordes: solo el exterior y el interior de cada rama, para que el hueco
 		# del medio se lea como un vacío y no como un tercer camino.
-		for borde: float in [-1.0, 1.0]:
+		for costado: float in [-1.0, 1.0]:
 			_losa("BordeRama",
-				centro_rama + lado * borde * (ancho * 0.5 + ancho_borde * 0.5)
+				centro_rama + lado * costado * (ancho * 0.5 + ancho_borde * 0.5)
 					+ Vector3.UP * (alto_borde * 0.5 + grosor_suelo * 0.5),
-				Vector3(ancho_borde, alto_borde, ramas), color_borde, giro)
+				Vector3(ancho_borde, alto_borde, ramas), borde, giro)
 
 	# Tapones a la entrada y a la salida del hueco central. Sin ellos se cruza la
 	# boca en línea recta y se cae al vacío entre las dos ramas — que es
@@ -328,7 +334,7 @@ func _cruce(paso: Dictionary) -> void:
 				_origen + _direccion * extremo
 					+ Vector3.UP * (_altura + alto_borde * 0.5 + grosor_suelo * 0.5),
 				Vector3(hueco + ancho_borde, alto_borde, ancho_borde),
-				color_borde, giro)
+				borde, giro)
 
 	# La rama de la izquierda lleva plataformas: es la que cuesta y la que paga.
 	var base_izq := _origen + _direccion * entrada - lado * (separacion * 0.5)
@@ -337,7 +343,7 @@ func _cruce(paso: Dictionary) -> void:
 		var pos := base_izq + _direccion * (ramas * t) \
 			+ lado * (-1.0 if i % 2 == 0 else 1.0) * (ancho * 0.22) \
 			+ Vector3.UP * (alto_base + 0.55 + 0.3 * float(i))
-		_losa("Plataforma", pos, Vector3(2.8, 0.5, 2.8), color_plataforma, giro)
+		_losa("Plataforma", pos, Vector3(2.8, 0.5, 2.8), plataforma, giro)
 
 	# El origen se registra en el EJE del cruce, entre las dos ramas, no sobre
 	# ninguna de ellas: así `rama` −1/+1 elige una u otra y `rama` 0 sigue siendo
@@ -362,7 +368,7 @@ func _plataformas(largo: float, ancho: float) -> void:
 		var centro := _origen + _direccion * (largo * t) \
 			+ lado * signo * (ancho * 0.22) \
 			+ Vector3.UP * (_altura + 0.55 + 0.25 * float(i))
-		_losa("Plataforma", centro, Vector3(3.0, 0.5, 3.0), color_plataforma, giro)
+		_losa("Plataforma", centro, Vector3(3.0, 0.5, 3.0), plataforma, giro)
 
 
 func _arena(paso: Dictionary, salida_dir: Vector3) -> void:
@@ -370,7 +376,7 @@ func _arena(paso: Dictionary, salida_dir: Vector3) -> void:
 	var centro := _origen + _direccion * radio + Vector3.UP * _altura
 	var nombre: String = paso.get("nodo", "")
 
-	_disco("SueloArena", centro, radio + margen_arena, color_arena)
+	_disco("SueloArena", centro, radio + margen_arena, arena)
 
 	# Anillo con dos huecos: por donde se entra y por donde se sale. El ángulo
 	# es el POLAR del anillo (posición `(cos θ, 0, sin θ)`), no una rotación:
@@ -420,14 +426,14 @@ func _colocar_arena(nombre: String, centro: Vector3, radio: float) -> void:
 ##
 ## La colisión sí sigue siendo un cuerpo por pieza: un `MultiMesh` no colisiona,
 ## y de todas formas los `StaticBody3D` sin malla no cuestan dibujado.
-func _losa(nombre: String, centro: Vector3, tam: Vector3, color: Color,
+func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 		giro: float, inclinacion: float = 0.0, con_colision: bool = true) -> void:
 	var pose := Transform3D(
 		Basis.from_euler(Vector3(inclinacion, giro, 0.0)) * Basis.from_scale(tam),
 		centro)
-	var lote: Array = _lotes.get(color, [])
+	var lote: Array = _lotes.get(superficie, [])
 	lote.append(pose)
-	_lotes[color] = lote
+	_lotes[superficie] = lote
 	_piezas += 1
 
 	if not con_colision:
@@ -457,8 +463,8 @@ func _volcar_lotes() -> int:
 	cubo.size = Vector3.ONE
 
 	var hechos := 0
-	for color: Color in _lotes:
-		var poses: Array = _lotes[color]
+	for superficie: String in _lotes:
+		var poses: Array = _lotes[superficie]
 		if poses.is_empty():
 			continue
 		var multi := MultiMesh.new()
@@ -469,15 +475,15 @@ func _volcar_lotes() -> int:
 			multi.set_instance_transform(i, poses[i])
 
 		var nodo := MultiMeshInstance3D.new()
-		nodo.name = "Cajas_%s" % color.to_html(false)
+		nodo.name = "Cajas_%s" % superficie
 		nodo.multimesh = multi
-		nodo.material_override = _material(color)
+		nodo.material_override = PaletaTerreno.obtener(superficie)
 		add_child(nodo)
 		hechos += 1
 	return hechos
 
 
-func _disco(nombre: String, centro: Vector3, radio: float, color: Color) -> void:
+func _disco(nombre: String, centro: Vector3, radio: float, superficie: String) -> void:
 	var malla := CylinderMesh.new()
 	malla.top_radius = radio
 	malla.bottom_radius = radio
@@ -486,7 +492,7 @@ func _disco(nombre: String, centro: Vector3, radio: float, color: Color) -> void
 
 	var visual := MeshInstance3D.new()
 	visual.mesh = malla
-	visual.material_override = _material(color)
+	visual.material_override = PaletaTerreno.obtener(superficie)
 
 	var cuerpo := StaticBody3D.new()
 	cuerpo.name = nombre
@@ -528,7 +534,7 @@ func _anillo(centro: Vector3, radio: float, aberturas: Array) -> void:
 		# normal del círculo (cos θ, 0, sin θ) sale φ = 90° − θ. Con `−θ` a
 		# secas los paneles quedan radiales, como los radios de una rueda.
 		_losa("BordeArena", pos, Vector3(ancho_seg, alto_borde, ancho_borde),
-			color_borde, PI * 0.5 - angulo)
+			borde, PI * 0.5 - angulo)
 
 
 # --- Sitios del recorrido -------------------------------------------------------
@@ -604,7 +610,7 @@ func _peana(cima: Vector3, sobre_el_camino: float) -> void:
 			base = choque["position"].y
 	var alto := maxf(cima.y - base, 0.4)
 	_losa("Peana", Vector3(cima.x, base + alto * 0.5, cima.z),
-		Vector3(2.2, alto, 2.2), color_plataforma, 0.0)
+		Vector3(2.2, alto, 2.2), plataforma, 0.0)
 
 
 ## Siembra las Estrellas de Sueño. Devuelve cuántas colocó.
@@ -676,13 +682,6 @@ func extension() -> Dictionary:
 	centro.y = 0.0
 	var radio := maxf((maximo - minimo).length() * 0.5, 20.0)
 	return {"centro": centro, "radio": radio}
-
-
-func _material(color: Color) -> StandardMaterial3D:
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	material.roughness = 0.95
-	return material
 
 
 func _giro_actual() -> float:

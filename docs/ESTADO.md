@@ -362,7 +362,19 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     mucho cuerpo que estos tuvieran. Un `Area3D` como el de `Encuentro` no da
     bulto ninguno: para que no se atraviese a un personaje hace falta un
     `StaticBody3D` aparte del área que escucha.
-38. **El blockout también cuenta para el presupuesto de draw calls.** 84 cajas
+38. **En `fragment()` todo viene en espacio de VISTA, y no existe
+    `NORMAL_WORLD`.** Hay que pasar `VERTEX` y `NORMAL` por `INV_VIEW_MATRIX`
+    —la posición con `w = 1`, la normal con `w = 0`—. Inventarse un
+    `NORMAL_WORLD` deja el material en **blanco liso** sin más pista que una
+    línea de `SHADER ERROR` perdida entre los avisos del arranque: el shader no
+    compila y Godot cae al material por defecto, que parece un problema de
+    iluminación y no de código.
+39. **Cuidado con las variables de bucle que se llaman como una propiedad.** Al
+    pasar los colores del blockout a nombres de superficie, la propiedad `borde`
+    quedó ensombrecida por un `for borde: float in [-1.0, 1.0]`, y se colaba un
+    número donde iba el nombre del material. GDScript sí lo detecta, pero el
+    mensaje habla del argumento de `_losa()` y no de la variable culpable.
+40. **El blockout también cuenta para el presupuesto de draw calls.** 84 cajas
     como `MeshInstance3D` sueltos son 84 draw calls, más de la mitad de los 150
     del §8. Agrupadas en un `MultiMeshInstance3D` por color son 4, y los
     `StaticBody3D` se quedan solo con la colisión, que no cuesta dibujado. El
