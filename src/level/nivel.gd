@@ -29,6 +29,8 @@ class_name Nivel
 var _jugador: Node3D = null
 var _constructor: ConstructorNivel = null
 var _terreno: TerrenoNivel = null
+var _objetivos: ObjetivosNivel = null
+var _portal: PortalSalida = null
 var _limpias: int = 0
 var _ultimo_suelo: Vector3 = Vector3.ZERO
 var _camara_plano: Camera3D = null
@@ -47,13 +49,8 @@ func _ready() -> void:
 	# El terreno va PRIMERO de todo lo que se genera: los props se posan con un
 	# rayo sobre el suelo, así que el suelo tiene que existir ya.
 	#
-	# Pero él a su vez mide el blockout con rayos para apoyarlo, así que antes
-	# hay que dejar que la física registre los cuerpos que el constructor acaba
-	# de crear. Sin esta espera los rayos salen al vacío y el terreno se queda
-	# plano bajo el camino elevado, que es justo lo que se quería arreglar.
 	_terreno = get_node_or_null("Terreno") as TerrenoNivel
 	if _terreno != null:
-		await get_tree().physics_frame
 		_terreno.construir()
 		if _constructor != null:
 			_constructor.radio_limite = _terreno.radio_colinas
@@ -80,10 +77,18 @@ func _ready() -> void:
 			(nodo as Farol).encendido.connect(_al_encender_farol)
 		print("[Nivel] %d faroles colocados" % _faroles_totales)
 
+	_montar_objetivos()
+
 	EventBus.arena_cleared.connect(_al_limpiar_arena)
 	EventBus.star_collected.connect(_al_coger_estrella)
 	if mensajes:
 		EventBus.arena_started.connect(_al_empezar_arena)
+
+	# El plano de apertura, al final de todo: la escena ya está montada y la
+	# cámara puede tomar como destino la posición definitiva de la jugadora.
+	var apertura := get_node_or_null("CamaraApertura") as CamaraApertura
+	if apertura != null and _constructor != null:
+		apertura.arrancar(_constructor.extension()["centro"])
 
 
 func _physics_process(_delta: float) -> void:
@@ -100,6 +105,46 @@ func _physics_process(_delta: float) -> void:
 	var cuerpo := _jugador as CharacterBody3D
 	if cuerpo != null and cuerpo.is_on_floor():
 		_ultimo_suelo = _jugador.global_position
+
+
+## Enchufa la lista de objetivos con lo que la va cumpliendo.
+##
+## Los faroles, los rincones y los encuentros no tienen señal propia en el
+## `EventBus`, así que se conectan aquí uno a uno. Las arenas y las Estrellas sí
+## la tienen y se enteran solas.
+func _montar_objetivos() -> void:
+	_objetivos = get_node_or_null("Objetivos") as ObjetivosNivel
+	if _objetivos == null:
+		return
+
+	for nodo in get_tree().get_nodes_in_group("faroles"):
+		(nodo as Farol).encendido.connect(func(_f: Farol) -> void:
+			_objetivos.anotar("faroles"))
+
+	for nodo in find_children("*", "Encuentro", true, false):
+		(nodo as Encuentro).encuentro_terminado.connect(func(_id: String) -> void:
+			_objetivos.anotar("mercury"))
+
+	for nodo in find_children("*", "Rincon", true, false):
+		(nodo as Rincon).visitado.connect(func(_id: String) -> void:
+			_objetivos.anotar("rincones"))
+
+	_portal = get_node_or_null("PortalSalida") as PortalSalida
+	if _portal != null:
+		_objetivos.todos_cumplidos.connect(_portal.activar)
+		_portal.usado.connect(_al_usar_portal)
+		# El portal va en el torii, que el decorador coloca detrás del arranque.
+		if _constructor != null and not _constructor.tramos.is_empty():
+			var direccion: Vector3 = _constructor.tramos[0]["direccion"]
+			_portal.global_position = _constructor.punto_inicio - direccion * 4.5
+
+
+func _al_usar_portal(destino: String) -> void:
+	EventBus.level_completed.emit(level_id)
+	if destino.is_empty():
+		EventBus.show_message.emit("Aquí acaba lo que hay construido, por ahora", 3.0)
+		return
+	SceneLoader.change_scene(destino)
 
 
 ## Red de seguridad del límite del mapa.

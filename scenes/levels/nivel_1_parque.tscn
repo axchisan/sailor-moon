@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/prototypes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/peluchin.tscn" id="2_peluchin"]
@@ -21,6 +21,10 @@
 [ext_resource type="Script" path="res://src/level/decorador_nivel.gd" id="19_decorador"]
 [ext_resource type="Script" path="res://src/core/modo_desarrollador.gd" id="20_dev"]
 [ext_resource type="Script" path="res://src/level/terreno_nivel.gd" id="21_terreno"]
+[ext_resource type="Script" path="res://src/level/camara_apertura.gd" id="22_apertura"]
+[ext_resource type="Script" path="res://src/gameplay/objetivos_nivel.gd" id="23_objetivos"]
+[ext_resource type="Script" path="res://src/gameplay/rincon.gd" id="24_rincon"]
+[ext_resource type="Script" path="res://src/gameplay/portal_salida.gd" id="25_portal"]
 
 [sub_resource type="ShaderMaterial" id="SkyMat_1"]
 shader = ExtResource("9_cielo")
@@ -170,6 +174,35 @@ script = ExtResource("15_companero")
 id = "luna"
 modelo = ExtResource("18_luna")
 lado = -1.0
+
+[node name="Objetivos" type="Node" parent="."]
+script = ExtResource("23_objetivos")
+
+[node name="CamaraApertura" type="Node3D" parent="."]
+script = ExtResource("22_apertura")
+
+[node name="PortalSalida" type="Area3D" parent="."]
+script = ExtResource("25_portal")
+
+[node name="RinconNorte" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0, -98)
+script = ExtResource("24_rincon")
+id = "norte"
+
+[node name="RinconSur" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0, 28)
+script = ExtResource("24_rincon")
+id = "sur"
+
+[node name="RinconEste" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 0, -35)
+script = ExtResource("24_rincon")
+id = "este"
+
+[node name="RinconOeste" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 0, -35)
+script = ExtResource("24_rincon")
+id = "oeste"
 
 [node name="GameUI" parent="." instance=ExtResource("5_ui")]
 
