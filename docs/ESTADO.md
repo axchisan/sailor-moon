@@ -443,6 +443,45 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     once metros registrado en una celda de seis solo lo ven los props que caigan
     muy cerca. Por eso los rincones NO usan la rejilla: van en su propia lista
     (`_sitios_rincon` + `_en_un_rincon()`).
+50. **El pase de sombra puede costar MÁS que la pantalla, y no se ve en el
+    total.** El contador de Godot suma los dos; mirándolo así, 358.000
+    triángulos no decían nada. Separados eran **97.000 de pantalla y 260.000 de
+    sombra**: cada objeto que proyecta sombra se dibuja otra vez por cada
+    cascada, y había cuatro. Una sola cascada, 30 m de alcance y quitarle la
+    sombra al detalle menudo lo dejó en 31.000. Mide siempre
+    `VIEWPORT_RENDER_INFO_TYPE_VISIBLE` y `_TYPE_SHADOW` por separado — el panel
+    de F1 ya los muestra.
+51. **Una multimalla es UN objeto para el motor, con UNA caja envolvente.** Las
+    460 matas de hierba iban todas en la misma, así que su caja cubría el mapa
+    entero y **nunca salía del campo de visión**: se dibujaban las 460 mirases a
+    donde mirases. Igual los 238 cerezos. Hay que **trocear por parcelas**
+    (`LADO_PARCELA` en `decorador_nivel.gd`) para que el descarte por frustum y
+    por distancia sirvan de algo. Cuesta más nodos; un nodo descartado no cuesta
+    nada y un triángulo dibujado sí.
+52. **`sin()` en un shader que cubre la pantalla es carísimo en un móvil.** El
+    hash de ruido del terreno era el clásico `fract(sin(dot(p,k))*43758.5)`, y
+    entre la proyección triplanar y el grano salían **más de treinta senos por
+    píxel**. En una GPU de móvil el seno es una operación transcendental, a una
+    fracción del ritmo de una multiplicación: era el tirón constante, el que se
+    notaba «en todo el mapa» y no en una zona. Sustituido por un hash de
+    multiplicaciones y `fract`.
+53. **`hundir` positivo dejó las losas del empedrado EXACTAMENTE al ras.** El
+    modelo va de −0,05 a +0,05, así que hundirlo 5 cm ponía su cara de arriba a
+    la altura justa del terreno: coplanar, y parpadeando en cuanto giraba la
+    cámara. El valor tiene que ser negativo (levantar).
+54. **Dos superficies del blockout a la misma altura se pelean, y el solape
+    existe a propósito.** El disco de la arena y la losa del pasillo se montan
+    uno sobre otro para que no queden agujeros en la junta (trampa 3), pero se
+    construían a la misma cota: dos caras coplanares justo en la zona de solape.
+    Ahora hay un `desnivel` de 10 cm — se sube andando sin enterarse y se lee
+    como un cambio de pavimento.
+55. **`cortes` era un parámetro muerto en `_esfera()`.** Muchas piezas lo
+    pasaban (`cortes=4`, `cortes=5`) creyendo que bajaban la resolución, y la
+    función lo ignoraba: **todas las esferas del proyecto salían a 320 caras**.
+    Una piedrecita de siete centímetros costaba lo mismo que la copa de un
+    árbol. El parámetro de verdad es `divisiones` (0 → 20 caras, 1 → 80, 2 →
+    320); el decorado pasó de 489.000 triángulos a 277.000 solo con ponerlo bien
+    donde no se nota.
 
 ---
 

@@ -59,7 +59,37 @@ func _process(delta: float) -> void:
 	_texto.text = _informe()
 
 
+## Toques seguidos en la esquina, para abrir el panel sin teclado.
+##
+## En el móvil no hay F1, y las cifras de rendimiento hacen falta JUSTO ahí: en
+## el escritorio todo va a sesenta y el problema no se ve. Tres toques en un
+## rincón que no usa ningún control del juego bastan y no se dan sin querer.
+const ESQUINA_DEV := Vector2(96.0, 96.0)
+const TOQUES_PARA_ABRIR := 3
+const VENTANA_TOQUES := 1.6
+
+var _toques: int = 0
+var _ultimo_toque: float = 0.0
+
+
+func _atajo_tactil(evento: InputEvent) -> void:
+	var toque := evento as InputEventScreenTouch
+	if toque == null or not toque.pressed:
+		return
+	if toque.position.x > ESQUINA_DEV.x or toque.position.y > ESQUINA_DEV.y:
+		return
+	var ahora := Time.get_ticks_msec() / 1000.0
+	_toques = 1 if ahora - _ultimo_toque > VENTANA_TOQUES else _toques + 1
+	_ultimo_toque = ahora
+	if _toques >= TOQUES_PARA_ABRIR:
+		_toques = 0
+		_panel.visible = not _panel.visible
+
+
 func _unhandled_input(evento: InputEvent) -> void:
+	if evento is InputEventScreenTouch:
+		_atajo_tactil(evento)
+		return
 	if not (evento is InputEventKey) or not evento.pressed or evento.echo:
 		return
 	match (evento as InputEventKey).keycode:
@@ -138,6 +168,17 @@ func _informe() -> String:
 		RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
 		RenderingServer.get_rendering_info(
 			RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME) / 1000.0])
+	# Pantalla y sombra por separado. Es LA cifra para saber por dónde se va el
+	# rendimiento: el pase de sombra llegó a costar el triple que la pantalla, y
+	# mirando solo el total no había forma de verlo.
+	var vp := get_viewport().get_viewport_rid()
+	lineas.append("  pantalla %.1f k · sombra %.1f k" % [
+		RenderingServer.viewport_get_render_info(vp,
+			RenderingServer.VIEWPORT_RENDER_INFO_TYPE_VISIBLE,
+			RenderingServer.VIEWPORT_RENDER_INFO_PRIMITIVES_IN_FRAME) / 1000.0,
+		RenderingServer.viewport_get_render_info(vp,
+			RenderingServer.VIEWPORT_RENDER_INFO_TYPE_SHADOW,
+			RenderingServer.VIEWPORT_RENDER_INFO_PRIMITIVES_IN_FRAME) / 1000.0])
 	lineas.append("Vida %d/%d · Estrellas %d · Especial %d%%" % [
 		GameManager.health, GameManager.MAX_HEALTH, GameManager.stars_this_level,
 		int(GameManager.get_special_ratio() * 100.0)])
@@ -151,6 +192,7 @@ func _informe() -> String:
 	lineas.append("Invulnerable: %s" % ("SÍ" if _invulnerable else "no"))
 	lineas.append("F1 panel · F2 invuln · F3 vida · F4 especial")
 	lineas.append("F5 tramo · F6 colisiones · F7 matar")
+	lineas.append("(en el móvil: 3 toques en esta esquina)")
 	return "\n".join(lineas)
 
 

@@ -43,8 +43,12 @@ uniform sampler2D fondo_profundidad : hint_depth_texture, filter_linear_mipmap;
 
 varying vec3 mundo;
 
+// Mismo hash sin `sin()` que el terreno, y por el mismo motivo: el agua pide
+// cuatro muestras de ruido por píxel y en móvil los senos se pagan caros.
 float picotazo(vec2 p) {
-	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+	vec3 p3 = fract(vec3(p.x, p.y, p.x) * 0.1031);
+	p3 += dot(p3, vec3(p3.y, p3.z, p3.x) + 33.33);
+	return fract((p3.x + p3.y) * p3.z);
 }
 
 float ruido(vec2 p) {

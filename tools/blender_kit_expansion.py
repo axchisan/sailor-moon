@@ -160,16 +160,18 @@ def puente_madera():
 def roca_grande():
     """Peñasco. Para los cúmulos que cierran rincones del campo."""
     bm = bmesh.new()
-    _esfera(bm, Vector((0, 0, 0.85)), 1.35, achatado=0.72, ruido=0.34, cortes=7)
-    _esfera(bm, Vector((0.85, 0.35, 0.45)), 0.70, achatado=0.75, ruido=0.36, cortes=6)
-    _esfera(bm, Vector((-0.70, -0.40, 0.38)), 0.58, achatado=0.78, ruido=0.38, cortes=6)
+    _esfera(bm, Vector((0, 0, 0.85)), 1.35, achatado=0.72, ruido=0.34, divisiones=1)
+    _esfera(bm, Vector((0.85, 0.35, 0.45)), 0.70, achatado=0.75, ruido=0.36,
+            divisiones=1)
+    _esfera(bm, Vector((-0.70, -0.40, 0.38)), 0.58, achatado=0.78, ruido=0.38,
+            divisiones=1)
     return _pieza("roca_grande", "piedra", bm)
 
 
 def macizo_flores():
     """Mancha de flores de campo. Va en multimalla, así que muy pocos tris."""
     bm = bmesh.new()
-    _esfera(bm, Vector((0, 0, 0.16)), 0.34, achatado=0.55, ruido=0.28, cortes=6)
+    _esfera(bm, Vector((0, 0, 0.16)), 0.34, achatado=0.55, ruido=0.28, divisiones=1)
     verde = _pieza("flores_mata", "musgo", bm)
 
     bm = bmesh.new()
@@ -179,7 +181,7 @@ def macizo_flores():
         angulo = math.tau * i / 7.0
         r = 0.10 + (i % 3) * 0.08
         _esfera(bm, Vector((math.cos(angulo) * r, math.sin(angulo) * r,
-                            0.30 + (i % 2) * 0.06)), 0.075, cortes=4)
+                            0.30 + (i % 2) * 0.06)), 0.075, divisiones=0)
     flores = _pieza("flores_corolas", "flor_campo", bm)
 
     return _unir("macizo_flores", [verde, flores])
@@ -194,7 +196,7 @@ def tocon():
 
     bm = bmesh.new()
     _cilindro(bm, (0, 0, 0.655), 0.44, 0.44, 0.05, lados=9)
-    _esfera(bm, Vector((0.34, 0.18, 0.60)), 0.20, achatado=0.5, ruido=0.3, cortes=5)
+    _esfera(bm, Vector((0.34, 0.18, 0.60)), 0.20, achatado=0.5, ruido=0.3, divisiones=1)
     tapa = _pieza("tocon_musgo", "musgo", bm)
 
     return _unir("tocon", [madera, tapa])
@@ -221,7 +223,7 @@ def nenufar():
     hoja = _pieza("nenufar_hoja", "hoja", bm)
 
     bm = bmesh.new()
-    _esfera(bm, Vector((0.10, 0.06, 0.14)), 0.13, achatado=0.9, cortes=5)
+    _esfera(bm, Vector((0.10, 0.06, 0.14)), 0.13, achatado=0.9, divisiones=1)
     flor = _pieza("nenufar_flor", "flor_campo_alt", bm)
 
     return _unir("nenufar", [hoja, flor])
@@ -264,7 +266,7 @@ def piedrecitas():
         angulo = math.tau * i / 5.0
         r = 0.12 + (i % 2) * 0.10
         _esfera(bm, Vector((math.cos(angulo) * r, math.sin(angulo) * r, 0.04)),
-                0.07 + (i % 3) * 0.025, achatado=0.5, ruido=0.3, cortes=4)
+                0.07 + (i % 3) * 0.025, achatado=0.5, ruido=0.3, divisiones=0)
     return _pieza("piedrecitas", "piedra", bm)
 
 
@@ -285,7 +287,7 @@ def hojarasca():
         angulo = math.tau * i / 7.0 + 0.9
         r = 0.08 + (i % 3) * 0.07
         _esfera(bm, Vector((math.cos(angulo) * r, math.sin(angulo) * r, 0.015)),
-                0.09, achatado=0.16, ruido=0.25, cortes=4)
+                0.09, achatado=0.16, ruido=0.25, divisiones=0)
     return _pieza("hojarasca", "flor_alt", bm)
 
 
@@ -299,9 +301,9 @@ def mariposa():
     # Alas planas y anchas, una a cada lado. Achatadas casi a cero: a esta
     # escala una forma de ala de verdad no se distingue de un rombo.
     for signo in (-1, 1):
-        _esfera(bm, Vector((signo * 0.10, 0.02, 0.02)), 0.11,
+        _esfera(bm, Vector((signo * 0.10, 0.02, 0.02)), 0.11, divisiones=0,
                 achatado=0.10, cortes=4)
-        _esfera(bm, Vector((signo * 0.08, -0.06, 0.0)), 0.075,
+        _esfera(bm, Vector((signo * 0.08, -0.06, 0.0)), 0.075, divisiones=0,
                 achatado=0.10, cortes=4)
     alas = _pieza("mariposa_alas", "flor", bm)
 
@@ -311,8 +313,8 @@ def mariposa():
 def pajarillo():
     """Pájaro rechoncho, del tamaño de un gorrión."""
     bm = bmesh.new()
-    _esfera(bm, Vector((0, 0, 0.11)), 0.115, achatado=0.85, cortes=6)
-    _esfera(bm, Vector((0, -0.10, 0.17)), 0.070, cortes=5)
+    _esfera(bm, Vector((0, 0, 0.11)), 0.115, achatado=0.85, divisiones=0)
+    _esfera(bm, Vector((0, -0.10, 0.17)), 0.070, divisiones=0)
     # Cola: una cuña hacia atrás
     _caja(bm, (0, 0.14, 0.10), (0.10, 0.14, 0.03))
     cuerpo = _pieza("pajarillo_cuerpo", "flor_campo_alt", bm)

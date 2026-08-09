@@ -87,6 +87,35 @@ merendero, altar del gato, vivero, y tres rincones pequeños de paso.
 - Un **sendero de losas** los une con el camino principal, y el arranque se
   elige de forma que no cruce ningún muro
 
+### Rendimiento
+Seis técnicas, de más a menos impacto. Medido desde el punto de aparición:
+
+| | Antes | Después |
+|---|---|---|
+| Triángulos de pantalla | 97.500 | 69.400 |
+| Triángulos de sombra | 260.700 | 30.900 |
+| **Total por fotograma** | **358.200** | **100.300** |
+| Draw calls | 101 | 99 |
+
+1. **Descarte por frustum** — las multimallas se trocean en parcelas de 52 m
+   (`LADO_PARCELA`). Antes cada una tenía una caja envolvente que cubría el
+   mapa entero y no se descartaba nunca
+2. **Descarte por oclusión** — cada muro del blockout lleva su
+   `OccluderInstance3D`, así que lo que queda detrás de un seto no se dibuja.
+   Mirando al muro: 32 draw calls; mirando al camino: 105
+3. **Sombras** — de cuatro cascadas a una, de 55 m a 30, y sin sombra en el
+   detalle menudo. Es lo que quitó 230.000 triángulos
+4. **LOD por distancia** — `ALCANCE` apaga cada pieza cuando deja de aportar
+   (una piedrecita a 42 m, una brizna a 52), con desvanecido para que no haya
+   salto
+5. **LOD de malla** — el cerezo tiene dos versiones: 596 triángulos de cerca y
+   236 a partir de 44 m
+6. **Menos polígonos en origen** — `divisiones` en `_esfera()`. El decorado bajó
+   de 489.000 triángulos a 277.000
+
+Y en los shaders: el hash de ruido ya no usa `sin()` (ver trampa 52), MSAA
+cambiado por FXAA, y el mapa de sombras a 2048 con filtro duro.
+
 ### El reparto del sitio
 Nada se planta encima de otra cosa. Cada copia reserva un círculo (`HUECO`) en
 una rejilla espacial y la siguiente que caiga ahí se descarta. Los muros y
@@ -145,11 +174,13 @@ terreno y el cálculo de por dónde cruza el puente.
 | Hierba atravesando el suelo | El rayo de `_posar()` iba de +4 a −8 m y no llegaba al terreno de las faldas |
 | Baranda del puente sin colisión | `CUERPO` admite varias formas por pieza |
 | Zonas planas desaprovechadas | Nueve rincones compuestos con empedrado y senderos |
+| Parpadeos en el empedrado y en el camino | Z-fighting: la losa quedaba al ras del terreno y el disco de arena a la misma cota que el pasillo |
+| Tirones en todo el mapa | 358.000 → 100.300 triángulos por fotograma (ver Rendimiento) |
 
 ### En curso
 | Qué | Por qué |
 |---|---|
-| **Optimización por zonas** | 54 draw calls y ~2.100 props: toca medir en el móvil |
+| **Comprobar el rendimiento en el móvil** | En el Mac va a 60 fps siempre; las cifras hay que verlas allí. Panel: F1, o **tres toques en la esquina superior izquierda** |
 | **Mapa de escenarios** | El portal ya abre, pero no lleva a ninguna parte todavía |
 
 ### Del plan maestro

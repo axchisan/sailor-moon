@@ -89,7 +89,7 @@ def _mata_de_flores(bm, centro, radio, alto, cuantas=9):
         r = radio * (0.35 + 0.55 * ((i * 7) % 5) / 4.0)
         z = alto + 0.04 * ((i * 3) % 3)
         _esfera(bm, Vector((math.cos(angulo) * r, math.sin(angulo) * r, z)),
-                0.09, achatado=0.8, cortes=6)
+                0.09, achatado=0.8, divisiones=0)
 
 
 # --- Puestos y mobiliario -------------------------------------------------------
@@ -175,14 +175,14 @@ def matera():
     for i in range(7):
         x = -largo * 0.36 + i * (largo * 0.72 / 6.0)
         _esfera(bm, Vector((x, 0.06 * (1 if i % 2 else -1), alto + 0.14)),
-                0.16, achatado=0.75, cortes=6)
+                0.16, achatado=0.75, divisiones=1)
     mata = _pieza("matera_mata", "hoja", bm)
 
     bm = bmesh.new()
     for i in range(9):
         x = -largo * 0.34 + i * (largo * 0.68 / 8.0)
         _esfera(bm, Vector((x, 0.10 * (1 if i % 2 else -1), alto + 0.24)),
-                0.08, achatado=0.8, cortes=5)
+                0.08, achatado=0.8, divisiones=0)
     flores = _pieza("matera_flores", "flor_campo_alt", bm)
 
     return _unir("matera", [cajon, tierra, mata, flores])
@@ -196,8 +196,8 @@ def maceta():
     tiesto = _pieza("maceta_tiesto", "barro", bm)
 
     bm = bmesh.new()
-    _esfera(bm, Vector((0, 0, 0.66)), 0.30, achatado=0.72, cortes=6)
-    _esfera(bm, Vector((0.14, 0.10, 0.80)), 0.19, achatado=0.8, cortes=5)
+    _esfera(bm, Vector((0, 0, 0.66)), 0.30, achatado=0.72, divisiones=1)
+    _esfera(bm, Vector((0.14, 0.10, 0.80)), 0.19, achatado=0.8, divisiones=1)
     mata = _pieza("maceta_mata", "hoja_alt", bm)
 
     bm = bmesh.new()
@@ -253,7 +253,7 @@ def fuente_piedra():
 
     bm = bmesh.new()
     _cilindro(bm, (0, 0, 0.40), radio - 0.14, radio - 0.14, 0.04, lados=16)
-    _esfera(bm, Vector((0, 0, 1.30)), 0.16, achatado=0.9, cortes=6)
+    _esfera(bm, Vector((0, 0, 1.30)), 0.16, achatado=0.9, divisiones=1)
     agua = _pieza("fuente_agua", "agua", bm)
 
     return _unir("fuente_piedra", [pilon, agua])
@@ -386,7 +386,7 @@ def guirnalda():
         # la luz, y lo que hace «fiesta» es la comba.
         comba = 2.62 - 0.34 * math.sin(math.pi * t)
         _cilindro(bm, (0, y, comba), 0.02, 0.02, 0.10, lados=4)
-        _esfera(bm, Vector((0, y, comba - 0.18)), 0.13, achatado=1.25, cortes=6)
+        _esfera(bm, Vector((0, y, comba - 0.18)), 0.13, achatado=1.25, divisiones=0)
     luces = _pieza("guirnalda_luces", "farol", bm)
 
     return _unir("guirnalda", [postes, luces])
@@ -406,8 +406,8 @@ def estatua_gato():
 
     bm = bmesh.new()
     # Cuerpo sentado, cabeza, orejas, pata levantada y cola enroscada.
-    _esfera(bm, Vector((0, 0, 0.78)), 0.28, achatado=1.15, cortes=6)
-    _esfera(bm, Vector((0, 0, 1.14)), 0.22, achatado=0.95, cortes=6)
+    _esfera(bm, Vector((0, 0, 0.78)), 0.28, achatado=1.15, divisiones=1)
+    _esfera(bm, Vector((0, 0, 1.14)), 0.22, achatado=0.95, divisiones=1)
     for signo in (-1, 1):
         _caja(bm, (signo * 0.13, 0, 1.34), (0.13, 0.05, 0.16),
               giro=signo * 0.3)
@@ -429,8 +429,8 @@ def seto_bajo():
     largo = 1.90
     for i in range(4):
         x = -largo * 0.5 + (i + 0.5) * (largo / 4.0)
-        _esfera(bm, Vector((x, 0, 0.34)), 0.34, achatado=0.85, cortes=6)
-        _esfera(bm, Vector((x, 0, 0.52)), 0.24, achatado=0.75, cortes=5)
+        _esfera(bm, Vector((x, 0, 0.34)), 0.34, achatado=0.85, divisiones=1)
+        _esfera(bm, Vector((x, 0, 0.52)), 0.24, achatado=0.75, divisiones=1)
     return _pieza("seto_bajo", "hoja_alt", bm)
 
 

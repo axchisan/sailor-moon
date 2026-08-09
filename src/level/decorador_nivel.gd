@@ -552,6 +552,77 @@ var _sin_suelo: int = 0
 var _por_encima: int = 0
 var _dentro_de_muro: int = 0
 
+
+## Lado de la parcela en la que se trocea cada multimalla, en metros.
+##
+## ## Por qué se trocea
+##
+## Una multimalla es UN objeto para el motor, con UNA caja envolvente. Las
+## cuatrocientas sesenta matas de hierba iban todas en la misma, así que esa
+## caja cubría el mapa entero: **nunca salía del campo de visión**, y el motor
+## dibujaba las cuatrocientas sesenta mirases a donde mirases. Lo mismo con los
+## doscientos treinta y ocho cerezos y con todo lo demás. Cuatrocientas ochenta
+## y nueve mil triángulos, todos, en todos los fotogramas.
+##
+## Troceando por parcelas, cada multimalla tiene una caja pequeña y el motor
+## descarta de golpe las que quedan detrás o demasiado lejos. Cuesta más nodos,
+## pero un nodo descartado no cuesta nada y un triángulo dibujado sí.
+##
+## Cincuenta y dos metros es el compromiso: más pequeñas afinan el descarte pero
+## multiplican los nodos, y más grandes vuelven al problema de siempre.
+const LADO_PARCELA := 52.0
+
+## Hasta qué distancia se ve cada pieza. Sin entrada, se ve siempre.
+##
+## Es el otro medio ahorro. Una brizna de hierba a sesenta metros ocupa menos de
+## un píxel: no se ve, pero se dibuja igual. Cortándola por distancia se quita
+## de encima el grueso del detalle sin que se note nada — y lo que se nota, el
+## `margen` lo desvanece en vez de hacerlo desaparecer de golpe.
+##
+## Los números están escogidos por TAMAÑO, no por importancia: cuanto más
+## pequeña es la pieza, antes deja de aportar.
+const ALCANCE := {
+	"piedrecitas": 42.0, "hojarasca": 44.0, "ramitas": 46.0,
+	"mata_hierba": 52.0, "nenufar": 60.0, "macizo_flores": 68.0,
+	"maceta": 80.0, "tocon": 82.0, "papelera": 82.0,
+	"losa_sendero": 92.0, "seto_bajo": 92.0, "matera": 92.0,
+	"valla_madera": 92.0, "farolillo": 95.0, "banco_parque": 95.0,
+	"arbusto": 100.0, "roca": 105.0, "farol_piedra": 100.0,
+}
+## Cuántos metros dura el desvanecido al llegar al límite.
+const MARGEN_ALCANCE := 11.0
+
+## Piezas con DOS niveles de detalle: la buena de cerca, una barata de lejos.
+##
+## `ALCANCE` quita del todo lo que ya no aporta; esto es lo otro: lo que sigue
+## haciendo falta a lo lejos —un árbol no puede desaparecer— pero no con la
+## resolución de cerca.
+##
+## El cerezo es el único que lo merece, y lo merece mucho: hay doscientos
+## treinta y ocho en el nivel a 596 triángulos cada uno, casi la tercera parte
+## del escenario. La versión lejana baja la copa a 80 caras por bola y se queda
+## en 236. De cerca se le notarían las facetas; a cuarenta metros no.
+##
+## Los dos niveles se encadenan por distancia con un solape (`MARGEN_ALCANCE`)
+## en el que uno se desvanece mientras el otro aparece, así que no hay salto.
+const LOD := {
+	"arbol_cerezo": {"lejos": "arbol_cerezo_lejos", "cambio": 44.0},
+}
+
+## Lo que NO proyecta sombra.
+##
+## Cada objeto que da sombra se dibuja DOS veces: una para la pantalla y otra
+## para el mapa de sombras. En una brizna de hierba eso es pagar el doble por
+## una manchita de tres píxeles que nadie va a echar de menos.
+##
+## Lo que sí la proyecta es lo que tiene silueta reconocible y sombra con
+## sentido: árboles, muebles, peñascos, el puesto.
+const SIN_SOMBRA := {
+	"mata_hierba": true, "piedrecitas": true, "ramitas": true,
+	"hojarasca": true, "macizo_flores": true, "nenufar": true,
+	"losa_sendero": true, "arbusto": true, "seto_bajo": true,
+}
+
 ## Lado de la celda de la rejilla de ocupación, en metros. Tiene que ser mayor
 ## que el hueco más grande que reserve una pieza, o un peñasco puede solaparse
 ## con otro dos celdas más allá sin que nadie lo vea.
@@ -1226,8 +1297,12 @@ func _empedrar(centro: Vector3, radio: float) -> void:
 				continue
 			if not _sitio_libre(punto, 0.34):
 				continue
+			# `hundir` NEGATIVO: la losa se levanta. El modelo va de −0,05 a
+			# +0,05, así que hundiéndola cinco centímetros su cara de arriba
+			# quedaba EXACTAMENTE al ras del terreno — coplanar, y parpadeando
+			# en todo el empedrado en cuanto giraba la cámara.
 			_plantar({"pieza": "losa_sendero", "escala": [1.35, 1.95],
-				"libre": true, "reserva": false, "hundir": 0.05},
+				"libre": true, "reserva": false, "hundir": -0.03},
 				punto, _rng.randf_range(0.0, TAU), Vector3.ZERO)
 		anillo += 1.02
 
@@ -1340,7 +1415,7 @@ func _sendero(desde: Vector3, hasta: Vector3, margen_final: float) -> void:
 		if _moja(punto, BORDE_AGUA, 0.4) or _en_un_rincon(punto, -0.5):
 			continue
 		var receta := {"pieza": "losa_sendero", "escala": [1.2, 1.7],
-			"libre": true, "reserva": false, "hundir": 0.05}
+			"libre": true, "reserva": false, "hundir": -0.03}
 		_plantar(receta, punto, _rng.randf_range(0.0, TAU), Vector3.ZERO)
 		# El andén se reserva para que no le crezca un árbol encima. Reserva el
 		# EJE, no cada losa: son piedras planas y se pisan, lo que no puede
@@ -1437,36 +1512,99 @@ func _posar(sitio: Vector3) -> Vector3:
 ## copias se plantaron en total.
 func _volcar() -> int:
 	var total := 0
+	var nodos := 0
 	for pieza in _acumulado:
 		var ficha: Dictionary = _acumulado[pieza]
 		var partes := _partes(pieza)
 		var lejano: bool = ficha["lejano"]
+		var alcance: float = ALCANCE.get(pieza, 0.0)
+		var sin_sombra: bool = lejano or SIN_SOMBRA.has(pieza)
+		# Si la pieza tiene versión lejana, la de cerca deja de dibujarse en el
+		# punto de cambio y la barata toma el relevo desde ahí.
+		var reemplazo: Dictionary = LOD.get(pieza, {})
+		var partes_lejos: Array = _partes(reemplazo["lejos"]) \
+			if not reemplazo.is_empty() else []
+		if not partes_lejos.is_empty():
+			alcance = float(reemplazo["cambio"])
 		for indice in ficha["poses"]:
 			var poses: Array = ficha["poses"][indice]
 			if poses.is_empty():
 				continue
-			var multi := MultiMesh.new()
-			multi.transform_format = MultiMesh.TRANSFORM_3D
-			multi.mesh = partes[indice]["mesh"]
-			multi.instance_count = poses.size()
-			for i in poses.size():
-				multi.set_instance_transform(i, poses[i])
+			# El fondo lejano NO se trocea: son dieciséis piezas repartidas por
+			# el horizonte, y trocearlas daría una multimalla de una copia cada
+			# una — todo nodos y ningún ahorro.
+			var parcelas := {Vector2i.ZERO: poses} if lejano \
+				else _repartir_en_parcelas(poses)
+			for clave: Vector2i in parcelas:
+				var lote: Array = parcelas[clave]
+				var multi := MultiMesh.new()
+				multi.transform_format = MultiMesh.TRANSFORM_3D
+				multi.mesh = partes[indice]["mesh"]
+				multi.instance_count = lote.size()
+				for i in lote.size():
+					multi.set_instance_transform(i, lote[i])
 
-			var nodo := MultiMeshInstance3D.new()
-			nodo.name = "%s_%d" % [pieza, indice]
-			nodo.multimesh = multi
-			# Sin `material_override`: cada malla ya trae el suyo del `.glb`, y
-			# forzar uno solo le pondría la corteza a las flores del cerezo.
-			if lejano:
-				# El fondo no proyecta ni recibe sombra: no aporta nada a 100 m
-				# y el mapa de sombras se gastaría entero en montañas.
-				nodo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-				nodo.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-			add_child(nodo)
+				var nodo := MultiMeshInstance3D.new()
+				nodo.name = "%s_%d_%d_%d" % [pieza, indice, clave.x, clave.y]
+				nodo.multimesh = multi
+				# Sin `material_override`: cada malla ya trae el suyo del
+				# `.glb`, y forzar uno solo le pondría la corteza a las flores
+				# del cerezo.
+				if sin_sombra:
+					nodo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				if lejano:
+					nodo.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+				if alcance > 0.0:
+					nodo.visibility_range_end = alcance
+					nodo.visibility_range_end_margin = MARGEN_ALCANCE
+					# Se desvanece en vez de desaparecer de golpe: el «pop» de
+					# una mata de hierba apareciendo delante de las narices se
+					# ve más que la mata.
+					nodo.visibility_range_fade_mode = \
+						GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+				add_child(nodo)
+				nodos += 1
+
+				# La gemela barata, para cuando la de cerca se apague.
+				if indice >= partes_lejos.size():
+					continue
+				var lejos := MultiMeshInstance3D.new()
+				var multi_lejos := MultiMesh.new()
+				multi_lejos.transform_format = MultiMesh.TRANSFORM_3D
+				multi_lejos.mesh = partes_lejos[indice]["mesh"]
+				multi_lejos.instance_count = lote.size()
+				for i in lote.size():
+					multi_lejos.set_instance_transform(i, lote[i])
+				lejos.name = "%s_lejos_%d_%d_%d" % [pieza, indice, clave.x, clave.y]
+				lejos.multimesh = multi_lejos
+				# La copia lejana NO da sombra: a más de cuarenta metros la
+				# sombra ya está fuera del alcance del mapa de sombras.
+				lejos.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				lejos.visibility_range_begin = alcance
+				lejos.visibility_range_begin_margin = MARGEN_ALCANCE
+				lejos.visibility_range_fade_mode = \
+					GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+				add_child(lejos)
+				nodos += 1
 		if not lejano:
 			_dar_cuerpo(pieza, ficha["base"])
 		total += _copias(ficha)
+	print("[Nivel] %d multimallas troceadas en parcelas de %d m" % [
+		nodos, int(LADO_PARCELA)])
 	return total
+
+
+## Reparte las poses por parcelas cuadradas. Devuelve `{celda: [poses]}`.
+static func _repartir_en_parcelas(poses: Array) -> Dictionary:
+	var parcelas := {}
+	for pose: Transform3D in poses:
+		var clave := Vector2i(
+			int(floor(pose.origin.x / LADO_PARCELA)),
+			int(floor(pose.origin.z / LADO_PARCELA)))
+		var lote: Array = parcelas.get(clave, [])
+		lote.append(pose)
+		parcelas[clave] = lote
+	return parcelas
 
 
 ## Un `StaticBody3D` por tipo de pieza, con una forma primitiva por copia.

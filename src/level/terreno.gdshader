@@ -66,10 +66,25 @@ uniform float desde : hint_range(10.0, 400.0) = 70.0;
 uniform float hasta : hint_range(20.0, 600.0) = 190.0;
 
 // Ruido de valor clásico. Va en el shader y no en una textura para no gastar
-// memoria ni un archivo por variante: a esta escala se calcula más barato de
-// lo que costaría muestrear.
+// memoria ni un archivo por variante.
+//
+// EL HASH NO USA `sin()`, Y ES LA DIFERENCIA ENTRE QUE VAYA Y QUE NO
+//
+// La versión de libro es `fract(sin(dot(p, k)) * 43758.5453)`. Se lee muy bien
+// y en un PC da igual, pero aquí cada píxel del terreno pide **ocho** hashes
+// por muestra de ruido, y hay tres muestras por la proyección triplanar más una
+// del grano: más de treinta senos por píxel, en una superficie que ocupa la
+// pantalla entera. En una GPU de móvil el seno es una operación transcendental,
+// que va a una fracción del ritmo de una multiplicación — de ahí venía el tirón
+// constante, el que se notaba «en todo el mapa» y no en una zona concreta.
+//
+// Este hash da un ruido equivalente con multiplicaciones y `fract`, que es lo
+// que una GPU hace deprisa. El patrón sale distinto —otras manchas— pero del
+// mismo tipo, y a la escala a la que se ve no se distingue.
 float picotazo(vec2 p) {
-	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+	vec3 p3 = fract(vec3(p.x, p.y, p.x) * 0.1031);
+	p3 += dot(p3, vec3(p3.y, p3.z, p3.x) + 33.33);
+	return fract((p3.x + p3.y) * p3.z);
 }
 
 float ruido(vec2 p) {

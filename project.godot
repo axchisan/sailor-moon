@@ -161,4 +161,22 @@ pointing/emulate_touch_from_mouse=true
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
 textures/vram_compression/import_etc2_astc=true
-anti_aliasing/quality/msaa_3d=1
+; MSAA fuera, FXAA dentro. El multisample de 2x cuesta ancho de banda en cada
+; fotograma, y en un móvil el ancho de banda es LO caro. FXAA es un filtro de
+; pantalla que vale una fracción, y con cel shading —masas planas de color y
+; contornos duros— la diferencia se ve poco.
+anti_aliasing/quality/msaa_3d=0
+anti_aliasing/quality/screen_space_aa=1
+; Sombras: mapa de 2048 y filtro duro. 4096 con filtro suave es calidad de PC.
+lights_and_shadows/directional_shadow/size=2048
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
+lights_and_shadows/positional_shadow/atlas_size=1024
+lights_and_shadows/positional_shadow/soft_shadow_filter_quality=0
+; Oclusión: lo que queda TAPADO por un muro no se dibuja.
+;
+; Godot lo hace por software — rasteriza una escena diminuta en la CPU con los
+; `OccluderInstance3D` de la escena y descarta lo que quede detrás. Cuesta un
+; poco de CPU y ahorra mucha GPU, que es justo el cambio que interesa en un
+; móvil. Los occluders los pone `constructor_nivel.gd` en cada muro y talud.
+occlusion_culling/use_occlusion_culling=true
+occlusion_culling/occlusion_rays_per_thread=256

@@ -93,6 +93,17 @@ const RECORRIDO: Array[Dictionary] = [
 ## losa las cubre y de paso el anillo parece apoyado en una plaza en vez de
 ## flotar sobre el canto.
 @export var margen_arena: float = 1.6
+## Cuánto se levanta una superficie sobre la que tiene debajo.
+##
+## Es EL número contra el z-fighting. El disco de arena y la losa del pasillo
+## se solapan a propósito para que no queden agujeros en la junta, pero se
+## construían a la misma altura: dos caras exactamente coplanares, que el
+## z-buffer no puede ordenar y que parpadean en cuanto se mueve la cámara. La
+## franja de camino tenía dos centímetros, que a treinta metros tampoco bastan.
+##
+## Diez centímetros se suben andando sin enterarse y se ven desde cualquier
+## distancia como lo que son: un cambio de pavimento.
+@export var desnivel: float = 0.10
 @export var grosor_suelo: float = 1.0
 
 @export var alto_borde: float = 2.2
@@ -289,9 +300,11 @@ func _pasillo(paso: Dictionary) -> void:
 
 	_losa("Suelo", centro, Vector3(ancho, grosor_suelo, largo_real + solape * 2.0),
 		suelo, giro, inclinacion)
-	# Franja de camino, un pelo por encima para que no pelee con el suelo
-	_losa("Camino", centro + Vector3.UP * (grosor_suelo * 0.5 + 0.02),
-		Vector3(ancho_camino, 0.08, largo_real + solape * 2.0), camino,
+	# Franja de camino, por encima del suelo lo justo para que no pelee con él.
+	# La caja es más gruesa que el desnivel para que su cara de abajo siga
+	# enterrada: si asoma, se ve el canto flotando sobre la hierba.
+	_losa("Camino", centro + Vector3.UP * (grosor_suelo * 0.5 + desnivel * 0.5),
+		Vector3(ancho_camino, desnivel + 0.06, largo_real + solape * 2.0), camino,
 		giro, inclinacion, false)
 
 	var lado := _direccion.cross(Vector3.UP).normalized()
@@ -345,8 +358,9 @@ func _pradera(paso: Dictionary) -> void:
 		suelo, giro)
 	# El camino la cruza de lado a lado, más estrecho que la pradera: se ve por
 	# dónde se va sin que el resto deje de ser pisable.
-	_losa("Camino", centro + Vector3.UP * (grosor_suelo * 0.5 + 0.02),
-		Vector3(ancho_camino, 0.08, largo + solape * 2.0), camino, giro, 0.0, false)
+	_losa("Camino", centro + Vector3.UP * (grosor_suelo * 0.5 + desnivel * 0.5),
+		Vector3(ancho_camino, desnivel + 0.06, largo + solape * 2.0), camino,
+		giro, 0.0, false)
 
 	# Un par de manchas de tierra sueltas: una explanada de césped perfecto se
 	# lee como un campo de fútbol. Con calvas parece un sitio por el que pasa
@@ -483,7 +497,12 @@ func _arena(paso: Dictionary, salida_dir: Vector3) -> void:
 	var centro := _origen + _direccion * radio + Vector3.UP * _altura
 	var nombre: String = paso.get("nodo", "")
 
-	_disco("SueloArena", centro, radio + margen_arena, arena)
+	# La arena va un escalón por encima del pasillo. Con los dos a la misma
+	# altura, la zona de solape —que existe para que no haya agujeros— son dos
+	# caras coplanares peleándose, y es justo donde se veían los parpadeos al
+	# entrar en la primera arena.
+	_disco("SueloArena", centro + Vector3.UP * desnivel, radio + margen_arena,
+		arena)
 
 	# Anillo con dos huecos: por donde se entra y por donde se sale. El ángulo
 	# es el POLAR del anillo (posición `(cos θ, 0, sin θ)`), no una rotación:
@@ -573,6 +592,19 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 			"mitad": Vector2(tam.x * 0.5, tam.z * 0.5),
 			"giro": giro,
 		})
+		# Y hace de TAPADERA: lo que queda detrás de este muro no se dibuja.
+		#
+		# Un seto de dos metros y pico tapa medio parque cuando se mira desde el
+		# camino, y sin esto el motor dibujaba igualmente los cien árboles del
+		# otro lado. Solo los muros: los suelos son planos y desde arriba no
+		# tapan nada, y cada tapadera cuesta CPU al rasterizarse.
+		var tapadera := OccluderInstance3D.new()
+		var bulto := BoxOccluder3D.new()
+		bulto.size = tam
+		tapadera.occluder = bulto
+		tapadera.position = centro
+		tapadera.rotation = Vector3(inclinacion, giro, peralte)
+		add_child(tapadera)
 
 
 ## Crea los `MultiMeshInstance3D` de las cajas, uno por color. Devuelve cuántos.

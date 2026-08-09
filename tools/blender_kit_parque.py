@@ -198,12 +198,26 @@ def _pieza(nombre, material, malla_bm, suavizar=True):
     return objeto
 
 
-def _esfera(bm, centro, radio, achatado=1.0, cortes=8, ruido=0.0, suave=True):
-    # 2 subdivisiones (320 caras) en vez de 1 (80): con 80 la copa de un árbol
-    # se ve como un cristal tallado. Sigue siendo baratísimo y el sombreado
-    # suave remata el resto.
+def _esfera(bm, centro, radio, achatado=1.0, cortes=8, ruido=0.0, suave=True,
+            divisiones=None):
+    """Una esfera. `divisiones` manda sobre `suave` cuando se pasa.
+
+    0 → 20 caras, 1 → 80, 2 → 320. Por defecto van a 2, que es lo que pide la
+    copa de un árbol: con 80 se ve como un cristal tallado.
+
+    Pero **el detalle de suelo no necesita nada de eso**. Una piedrecita de
+    siete centímetros con 320 caras cuesta lo mismo que la copa entera de un
+    cerezo, y con 20 se ve exactamente igual porque nunca ocupa más de unos
+    pocos píxeles. Ahí estaba buena parte del medio millón de triángulos del
+    escenario: no en lo grande, sino en cientos de cosas diminutas modeladas
+    como si fueran a verse de cerca.
+
+    `cortes` no se usa: quedó de una versión anterior y varias piezas lo pasan.
+    """
+    if divisiones is None:
+        divisiones = 2 if suave else 1
     temporal = bmesh.new()
-    bmesh.ops.create_icosphere(temporal, subdivisions=2 if suave else 1,
+    bmesh.ops.create_icosphere(temporal, subdivisions=divisiones,
                                radius=radio)
     for vertice in temporal.verts:
         vertice.co.z *= achatado
@@ -256,13 +270,20 @@ def _cilindro(bm, centro, radio_inf, radio_sup, alto, lados=8):
 
 # --- Las piezas ----------------------------------------------------------------
 
-def cerezo():
+def cerezo(lejos=False):
     """Tronco que se abre en dos ramas y cuatro masas de flor.
 
     Las copas van en bolas separadas y de dos tonos a propósito: una sola bola
     lisa parece un chupa-chups, y con el contorno del cel shading el recorte
     entre masas es lo que le da la silueta de árbol.
+
+    Con `lejos`, la copa baja a 80 caras por bola y el árbol pasa de 596
+    triángulos a 236. De cerca se nota —se convierte en un cristal tallado— pero
+    a más de cuarenta metros no, y ahí es donde están la mayoría de los
+    doscientos treinta y ocho cerezos del nivel. El juego elige una u otra
+    versión por distancia (`LOD` en `decorador_nivel.gd`).
     """
+    div = 1 if lejos else None
     bm = bmesh.new()
     # Tronco fino y cónico: uno grueso convierte al árbol en una seta. Las
     # ramas arrancan altas y con poca inclinación para que la copa se apoye en
@@ -279,19 +300,36 @@ def cerezo():
     bm = bmesh.new()
     # Masas bien solapadas. Separadas se ve el interior de las bolas y aparece
     # un agujero en mitad de la copa.
-    _esfera(bm, Vector((0.0, 0.0, 2.75)), 1.30, achatado=0.62, ruido=0.16)
-    _esfera(bm, Vector((-0.78, 0.22, 2.55)), 0.86, achatado=0.66, ruido=0.18)
-    _esfera(bm, Vector((0.74, -0.26, 2.60)), 0.90, achatado=0.66, ruido=0.18)
-    _esfera(bm, Vector((0.10, 0.62, 2.62)), 0.80, achatado=0.66, ruido=0.18)
+    #
+    # La copa se queda a DOS divisiones aunque sea la pieza más cara del kit.
+    # Se probó a una (de 596 triángulos a 236, con doscientos treinta y ocho
+    # cerezos en el nivel) y el árbol se convierte en un cristal tallado: el
+    # `ruido` y el sombreado suave no salvan una silueta de 80 caras a este
+    # tamaño, y el cerezo es LA pieza que se ve todo el rato.
+    #
+    # El ahorro salió de las otras: arbusto 230→60, roca 89→20, macizo 654→160,
+    # matera 1469→404. Cosas que se ven de lejos o son diminutas, donde bajar
+    # la resolución no cuesta nada.
+    _esfera(bm, Vector((0.0, 0.0, 2.75)), 1.30, achatado=0.62, ruido=0.16,
+            divisiones=div)
+    _esfera(bm, Vector((-0.78, 0.22, 2.55)), 0.86, achatado=0.66, ruido=0.18,
+            divisiones=div)
+    _esfera(bm, Vector((0.74, -0.26, 2.60)), 0.90, achatado=0.66, ruido=0.18,
+            divisiones=div)
+    _esfera(bm, Vector((0.10, 0.62, 2.62)), 0.80, achatado=0.66, ruido=0.18,
+            divisiones=div)
     copa = _pieza("cerezo_copa", "flor", bm)
 
     bm = bmesh.new()
     # Segundo tono encima: es lo que da el volumen sin depender de la luz.
-    _esfera(bm, Vector((0.20, 0.05, 3.25)), 0.72, achatado=0.60, ruido=0.20)
-    _esfera(bm, Vector((-0.45, -0.35, 3.05)), 0.58, achatado=0.60, ruido=0.20)
+    _esfera(bm, Vector((0.20, 0.05, 3.25)), 0.72, achatado=0.60, ruido=0.20,
+            divisiones=div)
+    _esfera(bm, Vector((-0.45, -0.35, 3.05)), 0.58, achatado=0.60, ruido=0.20,
+            divisiones=div)
     copa_clara = _pieza("cerezo_copa2", "flor_alt", bm)
 
-    return _unir("arbol_cerezo", [tronco, copa, copa_clara])
+    nombre = "arbol_cerezo_lejos" if lejos else "arbol_cerezo"
+    return _unir(nombre, [tronco, copa, copa_clara])
 
 
 def toro():
@@ -313,13 +351,18 @@ def toro():
 
 
 def arbusto():
+    # A una división (80 caras por bola). Hay ciento cuarenta arbustos en el
+    # nivel y ninguno se mira de cerca: son masa verde para romper el borde de
+    # un muro. A 320 caras costaban treinta y dos mil triángulos ellos solos.
     bm = bmesh.new()
-    _esfera(bm, Vector((0, 0, 0.42)), 0.55, achatado=0.78, ruido=0.22)
-    _esfera(bm, Vector((0.35, 0.18, 0.30)), 0.34, achatado=0.80, ruido=0.24)
+    _esfera(bm, Vector((0, 0, 0.42)), 0.55, achatado=0.78, ruido=0.22, divisiones=1)
+    _esfera(bm, Vector((0.35, 0.18, 0.30)), 0.34, achatado=0.80, ruido=0.24,
+            divisiones=1)
     verde = _pieza("arbusto_a", "hoja", bm)
 
     bm = bmesh.new()
-    _esfera(bm, Vector((-0.32, -0.20, 0.32)), 0.36, achatado=0.80, ruido=0.24)
+    _esfera(bm, Vector((-0.32, -0.20, 0.32)), 0.36, achatado=0.80, ruido=0.24,
+            divisiones=1)
     verde2 = _pieza("arbusto_b", "hoja_alt", bm)
 
     return _unir("arbusto", [verde, verde2])
@@ -357,8 +400,10 @@ def papelera():
 
 
 def roca():
+    # Una piedra con el canto quebrado se lee MEJOR a pocas caras: a 320 sale
+    # un guijarro liso, y a 80 sale un pedrusco.
     bm = bmesh.new()
-    _esfera(bm, Vector((0, 0, 0.28)), 0.45, achatado=0.62, ruido=0.30)
+    _esfera(bm, Vector((0, 0, 0.28)), 0.45, achatado=0.62, ruido=0.30, divisiones=1)
     return _pieza("roca", "piedra", bm)
 
 
