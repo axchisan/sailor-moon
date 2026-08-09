@@ -142,6 +142,14 @@ var centros_arena: Dictionary = {}
 var radios_arena: Dictionary = {}
 ## Un registro por pasillo, en orden, para poder situar cosas encima después.
 var tramos: Array[Dictionary] = []
+## Los cuerpos que forman el SUELO pisable, apuntados al crearlos.
+##
+## Hace falta una lista explícita porque **por nombre no se puede**: al añadir
+## varios hijos con el mismo nombre, Godot los renombra a `@StaticBody3D@N`, y
+## de ochenta y un cuerpos del blockout solo cuatro conservaban un nombre
+## reconocible. Filtrar con `begins_with("Suelo")` daba un resultado
+## impredecible, y el terreno acababa apoyándose en lo que no debía.
+var cuerpos_suelo: Array[StaticBody3D] = []
 ## Dónde empiezan las colinas que cierran el mundo. Lo pone el nivel a partir
 ## del terreno; el decorador lo usa para plantar la arboleda de la linde.
 var radio_limite: float = 0.0
@@ -160,6 +168,7 @@ func construir() -> void:
 	_piezas = 0
 	_lotes.clear()
 	tramos.clear()
+	cuerpos_suelo.clear()
 	radio_limite = 0.0
 	centros_arena.clear()
 	radios_arena.clear()
@@ -462,6 +471,8 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 	cuerpo.add_child(forma)
 
 	add_child(cuerpo)
+	if nombre.begins_with("Suelo"):
+		cuerpos_suelo.append(cuerpo)
 
 
 ## Crea los `MultiMeshInstance3D` de las cajas, uno por color. Devuelve cuántos.
@@ -518,6 +529,8 @@ func _disco(nombre: String, centro: Vector3, radio: float, superficie: String) -
 	cuerpo.add_child(forma)
 
 	add_child(cuerpo)
+	if nombre.begins_with("Suelo"):
+		cuerpos_suelo.append(cuerpo)
 	_piezas += 1
 
 

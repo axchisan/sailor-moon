@@ -70,19 +70,37 @@ class_name TerrenoNivel
 @export_group("Apoyo del escenario")
 ## Levanta el terreno bajo las partes altas del blockout, para que un camino en
 ## cuesta no quede flotando sobre un llano.
-@export var seguir_al_escenario: bool = true
+##
+## **DESACTIVADO.** Tiene un fallo sin resolver: el apoyo aparece en vértices
+## que no corresponden al sitio medido. El síntoma exacto es que el final del
+## primer pasillo —a 70 m de la arena del guardián— sube justo a 2,95 m, que es
+## la altura que le tocaría a la arena del guardián (cara superior 3,5 menos el
+## hundido de 0,55). O sea, el valor correcto en el vértice equivocado: un cruce
+## de índices entre el barrido que mide y la rejilla que se dibuja.
+##
+## Se deja apagado porque el fallo entierra el parque en montañas y eso rompe el
+## nivel entero, mientras que lo único que se pierde teniéndolo apagado es que
+## el tramo elevado del guardián se ve un poco despegado del terreno.
+@export var seguir_al_escenario: bool = false
 ## Cuánto queda el terreno por debajo de la losa que apoya. Lo justo para no
 ## asomar por encima del suelo pisable.
 @export var hundido_bajo_losa: float = 0.55
 ## Más pasadas = la loma sube más lejos y más suave. Con pocas, el terreno copia
 ## el escalón de las losas y sale un muro de tierra.
-@export_range(0, 40) var pasadas_suavizado: int = 14
+@export_range(0, 40) var pasadas_suavizado: int = 10
+## Pendiente de la falda que baja desde una zona elevada hasta el terreno. Marca
+## cuánto se aleja la loma: cuanto más tendida, más lejos llega.
+@export var pendiente_falda: float = 34.0
 
 @export_group("Aspecto")
 @export var superficie: String = "hierba_lejos"
 ## A qué color tira lo lejano. El morado azulado no es capricho: es el color del
 ## aire acumulado, y es lo que hace que una montaña se lea como lejana.
 @export var color_lejania: Color = Color(0.63, 0.62, 0.80)
+
+## Marca de «aquí no hay nada que apoyar». Va muy abajo para que nunca gane al
+## comparar con la altura del terreno.
+const SIN_APOYO := -9999.0
 
 var _alturas: PackedFloat32Array = PackedFloat32Array()
 var _lado: int = 0
@@ -105,6 +123,11 @@ func construir() -> void:
 			var z := -alcance + float(j) * paso
 			_alturas[j * _lado + i] = altura_en(x, z)
 
+	# Se comprueba ANTES del apoyo: el relieve que mete el apoyo bajo un camino
+	# elevado es intencionado, y contarlo como invasión escondería el problema
+	# de verdad, que es el relieve del terreno colándose donde se juega.
+	_avisar_si_invade(radio_llano)
+
 	if seguir_al_escenario:
 		_apoyar_el_escenario()
 
@@ -112,6 +135,32 @@ func construir() -> void:
 	_montar_colision()
 	print("[Terreno] %dx%d celdas (%.0f m de lado), colinas desde %.0f m" % [
 		_lado, _lado, alcance * 2.0, radio_colinas])
+
+
+## Comprueba que no ha quedado relieve dentro de la zona jugable.
+##
+## Mira las alturas **finales**, después del apoyo. Es importante: comprobarlo
+## sobre `altura_en()` no sirve de nada, porque esa función devuelve el relieve
+## procedural y no sabe nada de lo que el apoyo haya podido cambiar. Esa
+## comprobación mal hecha dio por bueno un terreno que tenía el parque enterrado
+## en montañas.
+func _avisar_si_invade(radio: float) -> void:
+	var invasores := 0
+	var peor := 0.0
+	for j in _lado:
+		for i in _lado:
+			var x := -alcance + float(i) * paso
+			var z := -alcance + float(j) * paso
+			if sqrt(x * x + z * z) > radio:
+				continue
+			var h := _alturas[j * _lado + i]
+			if h > 1.0:
+				invasores += 1
+				peor = maxf(peor, h)
+	if invasores > 0:
+		push_warning("TerrenoNivel: %d vértices con relieve dentro de la zona jugable (hasta %.1f m). El parque va a quedar enterrado." % [invasores, peor])
+	else:
+		print("[Terreno] zona jugable limpia: sin relieve dentro de %.0f m" % radio)
 
 
 func _preparar_ruido() -> void:
@@ -154,19 +203,27 @@ func _preparar_ruido() -> void:
 ## es exactamente lo que no puede pasar.
 func _distancia_deformada(x: float, z: float) -> float:
 	var recta := sqrt(x * x + z * z)
-	if recta <= radio_llano * 0.75:
+	if recta <= radio_llano:
 		return recta
-	var entrada := clampf((recta - radio_llano * 0.75) / (radio_llano * 0.45), 0.0, 1.0)
+	# Crece desde el borde del llano, no desde antes. Y nunca puede devolver
+	# menos que `radio_llano`: si pudiera, un punto a 40 m de distancia real
+	# entraría en la franja de colinas y le saldría un monte encima **dentro del
+	# parque**. Fue exactamente lo que pasó — el llano se decidía con la
+	# distancia ya deformada, y la deformación metía cerros en mitad del mapa.
+	var entrada := clampf((recta - radio_llano) / 45.0, 0.0, 1.0)
 	var forma := _ruido_forma.get_noise_2d(x, z) * deformacion * entrada
-	return maxf(recta + forma, 0.0)
+	return maxf(recta + forma, radio_llano)
 
 
 ## Altura del terreno en un punto. Es la única fuente de verdad: la usan la
 ## malla, la colisión y cualquiera que necesite posar algo encima.
 func altura_en(x: float, z: float) -> float:
-	var distancia := _distancia_deformada(x, z)
-	if distancia <= radio_llano:
+	# El llano se decide con la distancia REAL. Es la garantía de que nada del
+	# relieve puede entrar en la zona donde se juega, pase lo que pase con la
+	# deformación del contorno.
+	if sqrt(x * x + z * z) <= radio_llano:
 		return 0.0
+	var distancia := _distancia_deformada(x, z)
 
 	# Cuánto se ha salido del llano, de 0 a 1, con curva suave. `smoothstep` es
 	# lo que evita el pliegue: con una rampa lineal se ve la línea exacta donde
@@ -223,22 +280,39 @@ func _apoyar_el_escenario() -> void:
 	#
 	# Sin filtrar, el rayo choca con lo primero que encuentra, y eso son los
 	# MUROS: dos metros y medio de seto que el terreno tomaba por «escenario
-	# alto» y subía a apoyar. Con el suavizado extendiendo cada subida a su
-	# alrededor, el resultado fue un parque relleno de montañas por dentro.
+	# alto» y subía a apoyar. Con la falda extendiendo cada subida, el resultado
+	# fue un parque relleno de montañas por dentro.
 	#
-	# El terreno solo tiene que seguir aquello sobre lo que se anda.
+	# El filtro va contra la lista que el constructor apunta al crear cada
+	# cuerpo, **no contra los nombres**: Godot renombra los hijos duplicados a
+	# `@StaticBody3D@N`, y de ochenta y un cuerpos solo cuatro conservaban un
+	# nombre reconocible. Filtrar por nombre parecía funcionar y no funcionaba.
+	var suelos := {}
+	for cuerpo in _cuerpos_de_suelo():
+		suelos[cuerpo.get_rid()] = true
 	var excluir: Array[RID] = []
 	for cuerpo in _cuerpos_del_escenario():
-		if not cuerpo.name.begins_with("Suelo"):
-			excluir.append(cuerpo.get_rid())
+		var rid := cuerpo.get_rid()
+		if not suelos.has(rid):
+			excluir.append(rid)
 
+	# El campo de apoyo va SEPARADO de las alturas, y empieza vacío.
+	#
+	# Antes se inicializaba con las alturas del terreno y se suavizaba encima. Eso
+	# era el error que enterró el parque: el promedio de cada vértice incluía a
+	# sus vecinos, y como los vecinos de fuera son colinas de veinte metros, cada
+	# pasada empujaba esa altura una celda hacia dentro. Con catorce pasadas, las
+	# montañas entraban treinta y cinco metros en el parque y se lo comían.
+	#
+	# Aquí solo se apunta lo que hay que apoyar de verdad, y el resto queda a
+	# `SIN_APOYO`. Lo que no tiene escenario encima no participa.
 	var apoyo := PackedFloat32Array()
 	apoyo.resize(_lado * _lado)
+	apoyo.fill(SIN_APOYO)
 	var encontrados := 0
 	for j in _lado:
 		for i in _lado:
 			var k := j * _lado + i
-			apoyo[k] = _alturas[k]
 			var x := global_position.x - alcance + float(i) * paso
 			var z := global_position.z - alcance + float(j) * paso
 			var desde := Vector3(x, global_position.y + 60.0, z)
@@ -252,27 +326,55 @@ func _apoyar_el_escenario() -> void:
 			# La cara de abajo de la losa: el terreno tiene que llegar hasta
 			# ahí, no hasta la de arriba, o taparía el suelo por el que se anda.
 			var bajo_la_losa: float = choque["position"].y - global_position.y - hundido_bajo_losa
-			if bajo_la_losa > apoyo[k]:
+			# Solo cuenta si de verdad está ALTO. El parque llano está a ras de
+			# cero, y apoyarlo no aporta nada más que trabajo.
+			if bajo_la_losa > 0.4 and bajo_la_losa > apoyo[k]:
 				apoyo[k] = bajo_la_losa
 				encontrados += 1
 
-	# Suavizado: sin él, el terreno copia el escalón de las losas y queda un
-	# muro vertical de tierra. Con unas cuantas pasadas de promedio, la subida
-	# se convierte en una loma que sale del llano y sube hasta el camino, que es
-	# lo que hace que el tramo alto parezca estar en una colina.
+	if encontrados == 0:
+		return
+
+	# La falda: en vez de promediar, el apoyo se **derrama** hacia fuera
+	# perdiendo altura en cada paso. Un vértice sin apoyo mira a sus vecinos y
+	# toma el más alto menos lo que baje el talud en un paso de rejilla.
+	#
+	# Así la loma sale del sitio elevado y muere sola a los pocos metros, en vez
+	# de contagiarse por todo el mapa como hacía el promedio.
+	var caida := paso * tan(deg_to_rad(pendiente_falda))
 	for _pasada in pasadas_suavizado:
 		var copia := apoyo.duplicate()
 		for j in range(1, _lado - 1):
 			for i in range(1, _lado - 1):
 				var k := j * _lado + i
-				var suma := copia[k] + copia[k - 1] + copia[k + 1] \
-					+ copia[k - _lado] + copia[k + _lado]
-				var media := suma / 5.0
-				# Solo se suaviza hacia ARRIBA: bajar aquí volvería a despegar
-				# el terreno de las losas que acaba de apoyar.
-				apoyo[k] = maxf(_alturas[k], maxf(apoyo[k], media))
-	_alturas = apoyo
-	print("[Terreno] %d vértices apoyados en el escenario" % encontrados)
+				var mejor := copia[k]
+				for vecino in [k - 1, k + 1, k - _lado, k + _lado]:
+					var derrame: float = copia[vecino] - caida
+					if derrame > mejor:
+						mejor = derrame
+				apoyo[k] = mejor
+
+	# Y ahora sí, se mezcla: el terreno se queda con lo más alto de las dos
+	# cosas, su relieve natural o el apoyo. Donde no hubo apoyo, `SIN_APOYO` es
+	# tan bajo que no puede ganar nunca.
+	var subidos := 0
+	for k in _alturas.size():
+		if apoyo[k] > _alturas[k]:
+			_alturas[k] = apoyo[k]
+			subidos += 1
+	print("[Terreno] %d vértices apoyados, %d levantados" % [encontrados, subidos])
+
+
+## Los cuerpos sobre los que se anda, tal como los apuntó el constructor.
+func _cuerpos_de_suelo() -> Array[StaticBody3D]:
+	var vacio: Array[StaticBody3D] = []
+	var padre := get_parent()
+	if padre == null:
+		return vacio
+	var blockout := padre.get_node_or_null("Blockout") as ConstructorNivel
+	if blockout == null:
+		return vacio
+	return blockout.cuerpos_suelo
 
 
 ## Los cuerpos que forman el escenario construido, para poder filtrarlos.
