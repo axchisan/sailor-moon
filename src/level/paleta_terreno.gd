@@ -90,6 +90,45 @@ const RECETAS := {
 ## por pieza y se perdería el agrupado de llamadas de dibujado.
 static var _cache: Dictionary = {}
 
+## El contraste y la saturación del `Environment`, para poder hornearlos.
+##
+## Tienen que ser LOS MISMOS que los del `WorldEnvironment` de la escena, o el
+## móvil y el PC dejan de verse igual.
+const CONTRASTE := 1.08
+const SATURACION := 1.25
+
+
+## Aplica el ajuste de color al color de origen, en vez de a cada píxel.
+##
+## POR QUÉ EXISTE
+##
+## El ajuste del `Environment` es lo que hace que el parque se vea vivo y con
+## tono de anime en vez de pálido — quitarlo no era una opción. Pero es de lo
+## más caro que había en el móvil, y no por la cuenta: contraste y saturación
+## son cuatro operaciones. Lo caro es **cuándo** se hace. Al aplicarse sobre el
+## fotograma ya terminado, hay que releer la pantalla entera; y una GPU de móvil
+## trabaja por tiles, así que eso la obliga a volcar el búfer de color a memoria
+## y traérselo de vuelta. El ancho de banda es justo su recurso escaso.
+##
+## La cuenta, en cambio, se puede hacer UNA VEZ al cargar el nivel sobre los
+## colores de las recetas, que es de donde sale casi todo lo que se ve. El
+## resultado es el mismo y no cuesta nada por fotograma.
+##
+## Es la misma fórmula que aplica Godot en su paso de tonemap, en el mismo
+## orden: primero el contraste alrededor del gris medio, después la saturación
+## hacia la luminancia. Los pesos de luminancia son los suyos.
+##
+## Solo se hornea en el móvil: en el PC el `Environment` sigue haciéndolo como
+## siempre, y hornearlo además lo aplicaría dos veces.
+static func vivo(color: Color) -> Color:
+	if not OS.has_feature("mobile"):
+		return color
+	var c := Vector3(color.r, color.g, color.b)
+	c = Vector3(0.5, 0.5, 0.5).lerp(c, CONTRASTE)
+	var luz := c.dot(Vector3(0.2125, 0.7154, 0.0721))
+	c = Vector3(luz, luz, luz).lerp(c, SATURACION)
+	return Color(maxf(c.x, 0.0), maxf(c.y, 0.0), maxf(c.z, 0.0), color.a)
+
 
 ## Devuelve el material de una superficie. Siempre el mismo objeto.
 static func obtener(nombre: String) -> ShaderMaterial:
@@ -116,9 +155,9 @@ static func _crear(receta: Dictionary, base: Color, mancha: Color,
 	var material := ShaderMaterial.new()
 	material.shader = SHADER
 	material.set_shader_parameter("ruido_tex", RUIDO)
-	material.set_shader_parameter("color_base", base)
-	material.set_shader_parameter("color_mancha", mancha)
-	material.set_shader_parameter("color_luz", luz)
+	material.set_shader_parameter("color_base", vivo(base))
+	material.set_shader_parameter("color_mancha", vivo(mancha))
+	material.set_shader_parameter("color_luz", vivo(luz))
 	material.set_shader_parameter("escala", receta.get("escala", 3.0))
 	material.set_shader_parameter("tonos", receta.get("tonos", 3))
 	material.set_shader_parameter("fuerza", receta.get("fuerza", 0.55))

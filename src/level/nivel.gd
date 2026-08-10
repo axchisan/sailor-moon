@@ -80,6 +80,42 @@ func _ajustar_para_el_movil() -> void:
 	if sol != null:
 		sol.directional_shadow_max_distance = MOVIL_SOMBRA_ALCANCE
 
+	# 4. El ajuste de color NO se quita: se hornea.
+	#
+	#    Es lo que hace que el parque se vea vivo en vez de pálido, así que
+	#    apagarlo y ya está no valía. Pero aplicado sobre el fotograma terminado
+	#    obliga a releer la pantalla entera, y una GPU de móvil trabaja por
+	#    tiles: eso la hace volcar el búfer de color a memoria y traérselo de
+	#    vuelta, que es de lo más caro que puede pedírsele.
+	#
+	#    La cuenta es la misma, solo cambia cuándo se hace: `PaletaTerreno.vivo()`
+	#    la aplica a los colores de las recetas al cargar, una vez. Aquí se hace
+	#    lo propio con los del cielo, que no pasan por la paleta.
+	if entorno != null and entorno.environment != null:
+		entorno.environment.adjustment_enabled = false
+		_avivar_el_cielo(entorno.environment)
+
+
+## Hornea el ajuste de color en el cielo y en el tinte de la lejanía.
+##
+## El cielo tiene sus colores como parámetros del shader en la escena, y el
+## terreno su `color_lejania`: ninguno pasa por las recetas de la paleta, así
+## que hay que avivarlos aquí o el suelo saldría vivo y el cielo apagado.
+func _avivar_el_cielo(env: Environment) -> void:
+	var cielo := env.sky
+	if cielo != null and cielo.sky_material is ShaderMaterial:
+		var mat := cielo.sky_material as ShaderMaterial
+		for nombre in ["color_cenit", "color_medio", "color_horizonte",
+				"color_nube", "color_nube_sombra", "color_sol"]:
+			var valor = mat.get_shader_parameter(nombre)
+			if valor is Color:
+				mat.set_shader_parameter(nombre, PaletaTerreno.vivo(valor))
+
+	var mat_terreno := _terreno_visual_material()
+	if mat_terreno != null and _terreno != null:
+		mat_terreno.set_shader_parameter("color_lejania",
+			PaletaTerreno.vivo(_terreno.color_lejania))
+
 	print("[Nivel] perfil de móvil: sin FXAA, sin niebla, sombra a %.0f m"
 		% MOVIL_SOMBRA_ALCANCE)
 
