@@ -24,18 +24,37 @@ const NOMBRE_LIBRERIA := "serena"
 
 ## Estados de la máquina. El primero es el de arranque.
 const ESTADOS := [
-	"locomocion", "jump", "fall", "land",
+	"locomocion", "jump", "fall", "land", "double_jump",
+	"ledge_grab", "ledge_climb",
 	"attack_1", "attack_2", "attack_3", "special",
 	"hurt", "dizzy", "victory", "transform",
+	"talk", "talk_gesture", "nod", "shake_head", "point", "surprised",
+	"thinking",
 ]
 
 ## Qué animación reproduce cada estado (locomocion es un blend space aparte).
 const ANIMACION_DE := {
 	"jump": "jump_start", "fall": "jump_loop", "land": "land",
+	"double_jump": "double_jump",
+	"ledge_grab": "ledge_grab", "ledge_climb": "ledge_climb",
 	"attack_1": "attack_1", "attack_2": "attack_2", "attack_3": "attack_3",
 	"special": "special", "hurt": "hurt", "dizzy": "dizzy",
 	"victory": "victory", "transform": "transform_pose",
+	"talk": "talk_idle", "talk_gesture": "talk_gesture",
+	"nod": "nod", "shake_head": "shake_head", "point": "point",
+	"surprised": "surprised", "thinking": "thinking",
 }
+
+## Estados de conversación, que se mezclan más despacio.
+##
+## Un gesto de hablar que entra en 0,12 s parece un tic. Lo que se dijo del
+## encuentro con Mercury —«salta a la de alerta de golpe»— es exactamente esto:
+## no era la animación, era el tiempo de mezcla.
+const FUNDIDO_CONVERSACION := 0.3
+const ESTADOS_CONVERSACION := [
+	"talk", "talk_gesture", "nod", "shake_head", "point", "surprised",
+	"thinking",
+]
 
 ## Transición por defecto entre estados, en segundos.
 @export var fundido: float = 0.12
@@ -168,7 +187,14 @@ func _construir_arbol() -> AnimationNodeBlendTree:
 			var t := AnimationNodeStateMachineTransition.new()
 			t.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_IMMEDIATE
 			t.advance_mode = AnimationNodeStateMachineTransition.ADVANCE_MODE_DISABLED
-			t.xfade_time = fundido_golpe if destino.begins_with("attack") else fundido
+			# Los golpes entran secos y la conversación despacio: un gesto de
+			# hablar con la mezcla corta de un puñetazo se lee como un tic.
+			if destino.begins_with("attack"):
+				t.xfade_time = fundido_golpe
+			elif destino in ESTADOS_CONVERSACION:
+				t.xfade_time = FUNDIDO_CONVERSACION
+			else:
+				t.xfade_time = fundido
 			maquina.add_transition(origen, destino, t)
 
 	var arbol := AnimationNodeBlendTree.new()

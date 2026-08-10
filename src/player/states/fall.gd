@@ -6,6 +6,12 @@ extends State
 ## sin que se note.
 
 
+## Desde qué velocidad de caída se enseña el aterrizaje. Tiene que coincidir con
+## el criterio de `land.gd`; se repite aquí porque los estados no se conocen
+## entre sí y no merece la pena una clase global por un número.
+const CAIDA_PARA_ATERRIZAR := 9.0
+
+
 func enter(_msg: Dictionary = {}) -> void:
 	(actor as Player).play("fall")
 
@@ -19,10 +25,19 @@ func physics_update(delta: float) -> String:
 
 	if p.wants_attack():
 		return "Attack"
+	# El salto normal primero: durante el coyote time todavía cuenta como saltar
+	# desde el suelo, y gastar ahí el segundo salto sería robárselo.
 	if p.wants_jump():
 		return "Jump"
+	if p.wants_double_jump():
+		return "DoubleJump"
 
 	if p.is_on_floor():
+		# Aterrizaje solo si se venía cayendo de verdad. Cada bordillo de diez
+		# centímetros disparando la animación entera deja al personaje dando
+		# respingos por todo el parque.
+		if p.caida_al_tocar >= CAIDA_PARA_ATERRIZAR:
+			return "Land"
 		if p.get_move_direction().length_squared() > 0.0001:
 			return "Move"
 		return "Idle"

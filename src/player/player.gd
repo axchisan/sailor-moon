@@ -61,6 +61,13 @@ var invuln_timer: float = 0.0
 
 var _coyote_timer: float = 0.0
 var _jump_buffer_timer: float = 0.0
+## Si queda el segundo salto por usar. Se repone al pisar suelo.
+var doble_salto_disponible: bool = true
+## Lo deprisa que se venía cayendo, mientras se cae.
+var caida_maxima: float = 0.0
+## Y lo deprisa que se venía cayendo AL TOCAR suelo, que es lo que se consulta
+## para decidir si el aterrizaje merece animación.
+var caida_al_tocar: float = 0.0
 var _was_on_floor: bool = true
 
 
@@ -167,8 +174,21 @@ func set_control_enabled(activo: bool) -> void:
 func _tick_timers(delta: float) -> void:
 	if is_on_floor():
 		_coyote_timer = coyote_time
+		# Tocar suelo repone el segundo salto y borra la cuenta de la caída.
+		doble_salto_disponible = true
+		# Pero antes se guarda cuánto se venía cayendo, porque quien tiene que
+		# decidir si enseñar el aterrizaje es el estado de caída y se ejecuta
+		# DESPUÉS que esto: leyendo `caida_maxima` se encontraba siempre un cero
+		# recién puesto y el aterrizaje no se veía nunca.
+		if caida_maxima > 0.0:
+			caida_al_tocar = caida_maxima
+		caida_maxima = 0.0
 	else:
 		_coyote_timer = maxf(0.0, _coyote_timer - delta)
+		# Lo deprisa que se venía cayendo, para que el aterrizaje sepa si vale
+		# la pena enseñarse. Se mide aquí y no en el estado de caída porque
+		# también se cae desde un ataque en el aire o desde un empujón.
+		caida_maxima = maxf(caida_maxima, -velocity.y)
 
 	if Input.is_action_just_pressed("jump"):
 		_jump_buffer_timer = jump_buffer_time
@@ -213,6 +233,22 @@ func wants_jump() -> bool:
 func consume_jump() -> void:
 	_jump_buffer_timer = 0.0
 	_coyote_timer = 0.0
+
+
+## ¿Se puede saltar OTRA VEZ, estando ya en el aire?
+##
+## El coyote time no vale aquí: ese existe para perdonar el salto pedido justo
+## después de dejar el suelo, y el segundo salto es lo contrario — se pide a
+## propósito estando en el aire. Basta con que se haya pulsado el botón y con
+## que quede el salto por gastar.
+func wants_double_jump() -> bool:
+	return _jump_buffer_timer > 0.0 and doble_salto_disponible
+
+
+## Gasta el segundo salto. Se recupera al tocar suelo.
+func gasto_doble_salto() -> void:
+	doble_salto_disponible = false
+	_jump_buffer_timer = 0.0
 
 
 ## El ratón se mira APARTE y solo en escritorio.

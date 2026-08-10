@@ -366,15 +366,31 @@ Por orden de lo que queda por apretar:
 
 ## Fase E — Movimiento y combate
 
-### E1. Salto
+> **Las animaciones ya están dentro** (2026-08-10): 25 en la librería
+> compartida. Ver [`17-ANIMACIONES.md`](17-ANIMACIONES.md).
 
-El actual es raro. Se sustituye la animación y se separan las tres partes:
-impulso, caída y aterrizaje, con transiciones cortas.
+### E1. Salto ✅ hecho
 
-### E2. Doble salto
+Las tres partes separadas: impulso (`jump_start`), caída (`jump_loop`) y
+**aterrizaje**, que era el que faltaba. La animación de aterrizaje llevaba
+tiempo en la librería y en la máquina de animación, pero no la pedía nadie: al
+tocar suelo se pasaba directo a `Idle`.
 
-Segundo impulso en el aire, con giro. Además de que se siente bien, **abre el
-diseño de nivel**: se pueden poner sitios altos con recompensa.
+Ahora hay un estado `Land` propio, porque reproducirla sin él no funciona — el
+`enter()` del estado siguiente pide `locomocion` en el mismo fotograma y se la
+come. Dura 0,22 s (la de Mixamo dura más de un segundo, y un segundo sin
+control después de cada salto es una eternidad), se puede cancelar moviéndose,
+saltando o pegando, y **solo sale si se venía cayendo de verdad**: con cada
+bordillo de diez centímetros disparándola, el personaje iba dando respingos.
+
+### E2. Doble salto ✅ hecho
+
+Segundo impulso en el aire, con voltereta. Al 85 % del primero —si fuera igual
+o mayor, el primero sobra— y **anulando la velocidad vertical antes**, así que
+sube lo mismo tanto si se pide arriba del todo como cayendo a plomo. Sin eso,
+encadenarlo tarde no levantaba del suelo y parecía que el botón no respondía.
+
+Se repone al tocar suelo, y durante la voltereta se sigue teniendo control.
 
 ### E3. Trepar cornisas
 

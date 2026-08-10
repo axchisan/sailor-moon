@@ -25,6 +25,10 @@ func physics_update(delta: float) -> String:
 	# Atacar en el aire vale: machacar mientras saltas es lo natural a los 8 años.
 	if p.wants_attack():
 		return "Attack"
+	# Y encadenar el segundo salto sin esperar a empezar a caer: pulsando deprisa
+	# se sube más, que es lo que uno intenta la primera vez que lo descubre.
+	if p.wants_double_jump():
+		return "DoubleJump"
 	if p.velocity.y <= 0.0:
 		return "Fall"
 

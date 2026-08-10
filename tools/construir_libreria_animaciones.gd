@@ -12,13 +12,24 @@ const ORIGEN := "res://assets/animations/serena/%s.fbx"
 const DESTINO := "res://assets/animations/serena/serena_animaciones.res"
 
 ## nombre -> ¿es bucle?
+##
+## Es bucle lo que tiene que poder durar indefinidamente: estar de pie, andar,
+## caer, colgarse de una cornisa, pensar. NO lo son los gestos que empiezan y
+## acaban — un golpe, un asentimiento, subir a un saliente. Poner en bucle algo
+## que acaba deja al personaje repitiendo el gesto como un tic.
 const ANIMACIONES := {
+	# Locomoción y aire
 	"idle": true,
 	"walk": true,
 	"run": true,
 	"jump_start": false,
 	"jump_loop": true,
 	"land": false,
+	"double_jump": false,
+	# Trepar cornisas
+	"ledge_grab": true,
+	"ledge_climb": false,
+	# Combate
 	"attack_1": false,
 	"attack_2": false,
 	"attack_3": false,
@@ -26,8 +37,17 @@ const ANIMACIONES := {
 	"hurt": false,
 	"dizzy": true,
 	"victory": false,
+	# Transformación
+	"transform_start": false,
 	"transform_pose": false,
+	# Conversación
 	"talk_idle": true,
+	"talk_gesture": false,
+	"nod": false,
+	"shake_head": false,
+	"point": false,
+	"surprised": false,
+	"thinking": true,
 }
 
 

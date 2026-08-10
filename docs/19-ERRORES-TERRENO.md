@@ -39,6 +39,24 @@ escalones invisibles no se ven, pero un rayo sí los mide.
 | Muros del cruce sin conectar con la arena | El alargue contra arenas solo estaba en `_pasillo`; ahora también en `_cruce`, que es quien desemboca en la Arena 2 |
 | Los setos se leían como cajas | Un **remate más estrecho** los corona (`muro_cresta`). Un prisma tiene la cara de arriba lisa y cuatro esquinas rectas; un seto recortado no. Va en la misma multimalla: cero llamadas de dibujado |
 
+## Para más adelante: las zonas vacías
+
+Hay explanadas grandes, llanas y con casi nada — hierba y poco más. No es un
+fallo, es sitio desaprovechado: se cruzan corriendo y no invitan a pararse.
+
+Lo que pidió el usuario para ellas:
+
+- **Más decoración**, sin miedo a poblarlas
+- **Senderillos** que las crucen, aunque no lleven a ningún objetivo
+- **Suelos de otra piedra**: gris, de canto rodado, redondeada — otra receta de
+  `PaletaTerreno` y otra textura de máscara, que ya está montado para eso
+- Cositas sueltas que den motivo a acercarse
+
+Hay que hacerlo **después** de cerrar lo que está en marcha: el usuario no
+quiere quedarse atascado en el terreno. Cuando toque, el sitio es
+`decorador_nivel.gd` — probablemente una siembra nueva parecida a los rincones,
+pero de relleno y sin composición fija.
+
 ## Lo que queda pendiente
 
 - **Los cantos de los setos.** Siguen siendo cajas: se les ve la cara de arriba

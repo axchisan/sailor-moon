@@ -151,6 +151,46 @@ parecen buenas.
 Con la tanda 1 y 2 dentro ya puedo montar la Fase E entera. Las otras dos van
 con la Fase F.
 
+---
+
+## ✅ Integradas (2026-08-10)
+
+Las 15 están dentro, con los nombres de las tablas de arriba. La librería
+compartida tiene **25 animaciones** y se reconstruye con:
+
+```bash
+godot --headless --path . --script tools/construir_libreria_animaciones.gd
+```
+
+Mapeo de lo que bajó de Mixamo a los nombres del proyecto:
+
+| Archivo de Mixamo | Nombre en el proyecto |
+|---|---|
+| `Jump` | `jump_start` (sustituye al anterior, guardado como `jump_start_viejo`) |
+| `Falling To Landing` | `land` |
+| `Front Flip` / `Front Flip-2` | `double_jump` / `double_jump_alt` |
+| `Hanging Idle` | `ledge_grab` |
+| `Climbing` | `ledge_climb` |
+| `Talking` | `talk_gesture` |
+| `Head Nod Yes` | `nod` |
+| `Shaking Head No` | `shake_head` |
+| `Pointing` | `point` |
+| `Reacting` | `surprised` |
+| `Thinking` | `thinking` |
+| `Praying` | `transform_start` |
+| `Standing Idle To Action Idle` | `transform_start_alt` |
+| `Standing 2H Cast Spell 01` | `transform_pose_alt` |
+
+Las `_alt` son candidatas para comparar en marcha, no entran en la librería.
+Cuando se decida cuál se queda, se renombra y se reconstruye.
+
+### Pendiente: el APK engordó
+
+De 85 MB a 132. Se probó a excluir los `.fbx` con `exclude_filter` y solo bajan
+14 MB, así que el peso está en otro sitio — los `.scn` importados de animación
+son pequeños (876 KB el mayor). Hay que mirarlo con calma: no bloquea nada
+porque se instala por cable, pero 130 MB para un parque es mucho.
+
 ## Cuando las tengas
 
 Déjalas en `assets/animations/serena/` y dímelo. Yo me encargo de:
