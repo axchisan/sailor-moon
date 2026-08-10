@@ -4,9 +4,9 @@
 > retoma tras un tiempo, lee esto primero y luego el documento específico que
 > necesites.
 >
-> **Última actualización:** 2026-08-09 · Segunda pasada de rendimiento (esta vez
-> sobre el coste POR PÍXEL, que era el cuello de verdad) y el blockout deja de
-> verse: el terreno absorbe el camino
+> **Última actualización:** 2026-08-10 · Fase E arrancada: las 25 animaciones
+> integradas, con salto en tres partes y doble salto. Antes: dos pasadas de
+> rendimiento y el blockout dejando de verse
 
 ---
 
@@ -47,7 +47,7 @@ El trabajo se organiza por el **plan maestro**
 | **C bis** | Objetivos, portal y rincones | ✅ (falta el mapa de escenarios) |
 | **C ter** | Que el nivel EXPLIQUE lo que pide | ⬜ **nueva.** Avisos en las puertas, cinemática del portal, panel de objetivos y el jefe guardián del portal |
 | **D** | Rendimiento | ✅ dos pasadas. 60 fps en el móvil |
-| **E** | Movimiento y combate | 🟡 **desbloqueada**: el usuario bajó las animaciones, están en su carpeta de Descargas y hay que moverlas a `assets/animations/serena/` |
+| **E** | Movimiento y combate | 🟡 **en curso.** E1 salto y E2 doble salto hechos. Falta E3 trepar cornisas y E4 Cofrecito |
 | **F** | Conversación viva | ⬜ |
 | **G** | Menú, guardado, vidas | ⬜ |
 | **H** | Historia y cinemática | ⬜ guion escrito, sin montar |
@@ -83,12 +83,9 @@ detalle en [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md)):
 
 ### Lo siguiente, en orden
 
-1. **Mover las animaciones de Mixamo** desde la carpeta de Descargas a
-   `assets/animations/serena/`, con los nombres de
-   [`17-ANIMACIONES.md`](17-ANIMACIONES.md), y reconstruir la librería con
-   `tools/construir_libreria_animaciones.gd`. Ya están bajadas
-2. **Fase E** — salto nuevo, doble salto, trepar cornisas, y que al Cofrecito
-   se le pueda pegar por el costado
+1. **Fase E3** — trepar cornisas. Las dos animaciones ya están
+   (`ledge_grab`, `ledge_climb`); falta la detección de borde
+2. **Fase E4** — que al Cofrecito se le pueda pegar por el costado
 3. **Fase F** — retratos en el diálogo, animación de hablar, audio de Mercury
 4. **Fase G** — menú, guardado, corazones de vida escondidos
 5. **Fase H** — cinemática de historieta y narrador
@@ -724,6 +721,31 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     aparecía como «339°→360°» y «0°→22°», o sea dos agujeros donde solo había
     una boca perfectamente normal. Cualquier medida angular alrededor de un
     círculo tiene que volver a juntar los extremos antes de contar.
+84. **Mixamo no exporta siempre con la misma jerarquía, y eso deja al personaje
+    en POSE T.** Las animaciones viejas traían sus pistas como
+    `Skeleton3D:mixamorig_Hips`; las bajadas meses después vienen con un nodo de
+    más: `Armature/Skeleton3D:mixamorig_Hips`. El `AnimationPlayer` cuelga del
+    padre del esqueleto y busca `Skeleton3D` justo debajo, así que con el
+    `Armature/` delante no encuentra nada — y **una pista que no encuentra su
+    hueso no se queja**: simplemente no mueve nada. Las 56 fallaban a la vez y
+    el personaje se quedaba en la pose de reposo del modelo, que en un rigueado
+    de Mixamo es la T. Es de la familia de la trampa 16: el hueso está, el
+    esqueleto está, y lo que no cuadra es cómo se le llama desde la pista.
+    `construir_libreria_animaciones.gd` recorta ahora todo lo que haya antes de
+    `Skeleton3D:`, así que da igual cómo venga el FBX.
+85. **«In Place» de Mixamo quita el avance horizontal, NO el vertical.** Y la
+    altura ya la lleva la física, así que las dos cosas se suman: midiendo la
+    pista de posición de la cadera, `double_jump` subía el modelo hasta 2,15 m
+    (de pie está a 0,91) y `land` lo bajaba a 0,57. En el salto subía de más y
+    al aterrizar **atravesaba el suelo**. La cadera se ancla a su altura de pie
+    (`_anclar_la_cadera()`), dejándole bajar 30 cm para que el amortiguado del
+    aterrizaje no se pierda, pero sin dejarle subir: de subir se encarga
+    `velocity.y`.
+86. **Un `pkill -f "Godot.*sailor-moon"` no mata el juego si se lanzó con
+    `--path .`** — en la línea de órdenes no aparece el nombre del proyecto por
+    ningún lado. Se estuvo midiendo contra una instancia vieja y las
+    propiedades nuevas salían `null`, que parecía un fallo del código. Para
+    matarlo de verdad: `kill -9 $(lsof -nP -iTCP:9090 -sTCP:LISTEN -t)`.
 ---
 
 ## 7. Decisiones tomadas y por qué
