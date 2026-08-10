@@ -720,7 +720,22 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 		_lotes[superficie] = lote
 		_piezas += 1
 
-	if not con_colision:
+	# EL SUELO YA NO COLISIONA. Manda el terreno.
+	#
+	# Se le había dejado el cuerpo «porque da una superficie plana exacta», y
+	# resultó ser justo lo que sobraba: el terreno sube hasta la cara de arriba
+	# de la losa, pero lo hace con vértices cada tres metros y pico, así que en
+	# el BORDE se queda corto. Ahí la losa asomaba por debajo del terreno
+	# visible como un escalón invisible — medido en la entrada de la arena del
+	# portal: 48 cm en un sitio y 1,14 m en otro. La jugadora tenía que saltar
+	# contra nada, o se quedaba parada contra aire.
+	#
+	# No se puede arreglar afinando el aplanado: una rejilla de tres metros no
+	# puede reproducir el canto de una losa, por bien que se ajuste. Lo que sí
+	# se puede es tener UNA sola superficie mandando, y esa tiene que ser la que
+	# se ve. El terreno es continuo por construcción —es un heightmap— así que
+	# tampoco puede tener agujeros.
+	if not con_colision or nombre.begins_with("Suelo"):
 		return
 
 	var cuerpo := StaticBody3D.new()
@@ -795,26 +810,29 @@ func _volcar_lotes() -> int:
 
 
 func _disco(nombre: String, centro: Vector3, radio: float, superficie: String) -> void:
+	# El suelo de una arena ni se dibuja ni colisiona: el terreno sube hasta él,
+	# lo tapa y pinta su tierra. Su cilindro de colisión hacía lo mismo que las
+	# losas de los tramos — asomar por el borde como un escalón invisible — y en
+	# la arena del portal era justo lo que obligaba a entrar saltando.
+	if nombre.begins_with("Suelo"):
+		return
+
 	var cuerpo := StaticBody3D.new()
 	cuerpo.name = nombre
 	cuerpo.position = centro
 	cuerpo.collision_layer = 1
 	cuerpo.collision_mask = 0
 
-	# El suelo de una arena tampoco se dibuja: es el terreno el que sube hasta
-	# él y el que pinta su tierra. Lo que queda es el cuerpo, que da una
-	# superficie perfectamente plana para pelear encima.
-	if not nombre.begins_with("Suelo"):
-		var malla := CylinderMesh.new()
-		malla.top_radius = radio
-		malla.bottom_radius = radio
-		malla.height = grosor_suelo
-		malla.radial_segments = 24
+	var malla := CylinderMesh.new()
+	malla.top_radius = radio
+	malla.bottom_radius = radio
+	malla.height = grosor_suelo
+	malla.radial_segments = 24
 
-		var visual := MeshInstance3D.new()
-		visual.mesh = malla
-		visual.material_override = PaletaTerreno.obtener(superficie)
-		cuerpo.add_child(visual)
+	var visual := MeshInstance3D.new()
+	visual.mesh = malla
+	visual.material_override = PaletaTerreno.obtener(superficie)
+	cuerpo.add_child(visual)
 
 	var forma := CollisionShape3D.new()
 	var cilindro := CylinderShape3D.new()

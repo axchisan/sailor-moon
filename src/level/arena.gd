@@ -28,6 +28,13 @@ class_name Arena
 @export_group("Barrera mágica")
 @export var barrier_radius: float = 11.0
 @export var barrier_height: float = 3.5
+## Cuánto sube la COLISIÓN de la barrera por encima de lo que se ve.
+##
+## La barrera es una cortina translúcida de tres metros y medio, y se saltaba —
+## y saltándola se sale de la pelea, que es justo lo que impide. Subir el panel
+## de verdad taparía el escenario con una pared rosa en el momento en que más
+## falta hace ver a los enemigos, así que sube solo lo que choca.
+@export var barrier_extra_collision: float = 4.5
 ## Más segmentos = círculo más redondo y más draw calls. 16 es buen equilibrio.
 @export var barrier_segments: int = 16
 @export var barrier_color: Color = Color(1.0, 0.55, 0.85, 0.28)
@@ -71,8 +78,19 @@ func _build_barrier() -> void:
 
 	var mesh := BoxMesh.new()
 	mesh.size = size
+
+	# LA BARRERA CHOCA MÁS ALTO DE LO QUE SE VE.
+	#
+	# Los tres metros y medio de panel rosa se saltaban, y saltando la barrera
+	# se sale de la pelea — que es exactamente lo que la barrera existe para
+	# impedir. Subir el panel de verdad no vale: la barrera es una cortina
+	# translúcida y hacerla más alta la convierte en un muro que tapa el
+	# escenario justo cuando hay que ver a los enemigos.
+	#
+	# Así que la malla se queda como está y solo crece la caja de choque, hacia
+	# arriba. Se ve lo mismo y no hay por dónde escaparse.
 	var shape := BoxShape3D.new()
-	shape.size = size
+	shape.size = Vector3(size.x, size.y + barrier_extra_collision, size.z)
 
 	for i in barrier_segments:
 		var angle := TAU * float(i) / float(barrier_segments)
@@ -94,6 +112,10 @@ func _build_barrier() -> void:
 
 		var collider := CollisionShape3D.new()
 		collider.shape = shape
+		# La caja de choque es más alta que el panel, así que hay que subirla
+		# media diferencia: si no, crecería también hacia abajo y dejaría un
+		# bloque enterrado que estorba al andar por el borde de la arena.
+		collider.position.y = barrier_extra_collision * 0.5
 		body.add_child(collider)
 
 		_barrier.add_child(body)

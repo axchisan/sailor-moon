@@ -18,6 +18,17 @@
 | 6 | Props en el aire | El rayo que los posa **aparta el blockout** y solo puede encontrar el terreno |
 | 7 | Pasillos que no cierran contra las arenas | Contra una arena el muro se **alarga** hasta solaparse |
 
+## Segunda tanda (2026-08-10, tarde)
+
+| Qué era | Cómo se arregló |
+|---|---|
+| **Colisiones invisibles que paraban a la jugadora** y obligaban a saltar para entrar en la arena del portal | El suelo del blockout **ya no colisiona**. El terreno sube hasta su cara de arriba, pero con vértices cada 3,2 m se queda corto en el BORDE, y ahí la losa asomaba como un escalón invisible: medidos **48 cm** en la entrada de la arena del portal y **1,14 m** en el pasillo. No se arregla afinando el aplanado —una rejilla de tres metros no puede reproducir el canto de una losa—: manda una sola superficie, y es la que se ve |
+| La barrera **rosada** de las arenas se saltaba | Su caja de choque sube 4,5 m más que el panel (`barrier_extra_collision` en `arena.gd`). Era esto lo que se había pedido; por error se le había hecho a los muros verdes del blockout — que se quedan así porque también hacía falta |
+
+**Cómo se encontró:** barriendo una línea con rayos y buscando saltos bruscos de
+altura, comparando el terreno solo contra el terreno más el blockout. Los
+escalones invisibles no se ven, pero un rayo sí los mide.
+
 ## Lo que queda pendiente
 
 - **Los cantos de los setos.** Siguen siendo cajas: se les ve la cara de arriba
@@ -25,6 +36,18 @@
   fallo de montaje, es que a la pieza le falta remate.
 - **Dos rincones no encuentran sitio** (`AltarGato` y `Vivero`). Salen por
   consola en cada carga. De nueve rincones se colocan siete.
+- **Props encima de Sailor Mercury**: un arbusto y alguna cosa más le caen
+  dentro. El `Encuentro` no reserva su hueco, igual que le pasaba al puente.
+- **El farol de al lado de Mercury flota.** Es el tercero del objetivo, el que
+  va alto a propósito (`FAROLES` en `constructor_nivel.gd` lo pone a 1,6 m),
+  pero se posa como si estuviera al ras.
+- **Un muro de pasillo que no conecta con el anillo de la arena** (foto 4, cerca
+  de `(45.6, 0.6, -60.9)`), por los dos lados. El alargue contra arenas se hace
+  cuando el paso vecino ES una arena; ahí debe de haber un giro de por medio y
+  no se aplica.
+- **`ClaroPortal` tiene 3 bocas** en la auditoría. No es nuevo: el cilindro del
+  suelo tapaba los rayos y lo ocultaba. Ahora que el suelo no colisiona, se ve
+  que su anillo tiene más aberturas de las previstas.
 
 ## La herramienta
 

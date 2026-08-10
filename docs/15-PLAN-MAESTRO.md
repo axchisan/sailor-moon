@@ -271,6 +271,47 @@ silueta de cada nivel al construirlo, no después.
 
 ---
 
+## Fase C ter — Que el nivel EXPLIQUE lo que pide
+
+> Pedido el 2026-08-10, después de recorrer el parque entero. Sin empezar.
+
+El nivel ya tiene objetivos, pero no los dice en ninguna parte: se llega a la
+puerta del guardián y no se abre, y no hay forma de saber por qué. Una niña de
+ocho años ahí se queda dando vueltas.
+
+### C ter 1. Avisos en las puertas
+
+Al acercarse a un sitio cerrado, un cartel dice **qué falta**, no que esté
+cerrado: «Faltan 2 faroles por encender», no «no puedes pasar». La diferencia es
+que uno manda a jugar y el otro manda a irse.
+
+- Puerta del guardián → los faroles que queden
+- Portal → la lista entera, con lo hecho tachado
+
+### C ter 2. La cinemática del portal
+
+La primera vez que se llega al portal, **antes** de que esté abierto: un plano
+corto que enseñe qué es y para qué sirve, y que deje claro que hay que reunir
+las cosas. Es lo que convierte una lista de tareas en un objetivo.
+
+### C ter 3. Un panel de objetivos que se pueda consultar
+
+Lo que hay que hacer, siempre a mano: estrellas, faroles, rincones, arenas,
+Mercury. Con lo conseguido marcado. No hace falta que sea un menú — puede ser
+Luna, que para eso acompaña.
+
+### C ter 4. El guardián del portal
+
+Cuando la lista está completa y se vuelve al portal, **no se abre sin más**:
+aparece el guardián del portal, un jefe de verdad, y el portal se abre al
+ganarle. Es el cierre del acto: la recompensa de haberlo recorrido todo no es
+una puerta que se abre, es la pelea que se ha ganado el derecho a tener.
+
+Va después de la Fase E (hace falta que el combate esté a punto) y encaja con
+la Fase H, que es cuando se monta lo narrativo.
+
+---
+
 ## Fase D — Rendimiento ✅ primera pasada
 
 **Medido en el móvil, no supuesto.** El punto de partida eran 28-35 fps con 156
