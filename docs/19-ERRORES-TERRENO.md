@@ -1,10 +1,48 @@
-# Errores de terreno tras la reforma — lista de trabajo
+# Errores de terreno tras la reforma — corregidos
 
 > Encontrados probando el Nivel 1 el 2026-08-10, después de que el terreno
-> absorbiera el camino. **Sin corregir todavía.** Cada uno lleva la coordenada
-> exacta donde se ve, para poder ir con `F5` y comprobarlo.
+> absorbiera el camino. **Todos corregidos y verificados** — la auditoría
+> (`tools/auditar_nivel.gd`) sale limpia y el estanque y el pasillo se han
+> mirado en marcha.
 >
 > Contexto de la reforma: [`ESTADO.md`](ESTADO.md) §6, trampas 69 a 72.
+
+## Cómo quedó cada uno
+
+| # | Qué era | Cómo se arregló |
+|---|---|---|
+| 1 | El parque sobre el estanque, puente colapsado, cerezo atravesándolo | El estanque **busca sitio** en vez de colgarse de un punto que se mueve, y el puente **reserva su paso** |
+| 2 | Muro saltable en la arena | La colisión del muro sube 4 m más que su malla: el límite se respeta sin que el parque parezca amurallado |
+| 3 y 4 | Muros de pasillo flotando | Se les entierra el pie 2 m |
+| 5 | Un muro cruzando el pasillo | En los giros, el muro del tramo nuevo se retira de la esquina |
+| 6 | Props en el aire | El rayo que los posa **aparta el blockout** y solo puede encontrar el terreno |
+| 7 | Pasillos que no cierran contra las arenas | Contra una arena el muro se **alarga** hasta solaparse |
+
+## Lo que queda pendiente
+
+- **Los cantos de los setos.** Siguen siendo cajas: se les ve la cara de arriba
+  y las esquinas, y eso es lo que aún hace que se lean como bloques. No es un
+  fallo de montaje, es que a la pieza le falta remate.
+- **Dos rincones no encuentran sitio** (`AltarGato` y `Vivero`). Salen por
+  consola en cada carga. De nueve rincones se colocan siete.
+
+## La herramienta
+
+`tools/auditar_nivel.gd` recorre el mapa y comprueba cinco cosas, cada aviso con
+su coordenada. **Hay que pasarla después de tocar el recorrido o el terreno**:
+
+```bash
+godot --headless --path . --script tools/auditar_nivel.gd
+```
+
+Dibuja además un plano del nivel en planta (`plano_nivel.png`), que es lo que
+enseña de un vistazo si algo se ha ido a montar encima de otra cosa. Los avisos
+de texto dicen qué pieza pisa a cuál; el plano da la vista de conjunto, que es
+justo lo que faltaba para ver que el estanque se había metido bajo el parque.
+
+---
+
+## El análisis original
 
 ## La causa común: el blockout se enterró y nadie avisó a lo que se apoyaba en él
 

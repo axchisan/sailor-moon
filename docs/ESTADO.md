@@ -672,6 +672,56 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     la esquina DERECHA porque el joystick flotante se queda con todo lo que se
     toque en la mitad izquierda.
 
+75. **Al dejar de dibujarse algo, todo lo que se apoyaba en ello se queda
+    huérfano.** El suelo del blockout pasó a ser invisible y lo que se ve es el
+    terreno — pero los muros y los props siguieron colocándose respecto al
+    blockout, que es un número exacto, mientras que el terreno tiene ruido y
+    faldas suavizadas. Según de qué lado cayeran los dos dedos de diferencia, el
+    muro flotaba o se hundía y se volvía saltable. **Cuando algo deja de ser la
+    referencia visual, hay que repasar quién se estaba midiendo contra ello.**
+76. **Enterrar es más barato que nivelar.** Se puede perseguir que el terreno
+    quede perfectamente plano bajo cada muro —contra el ruido, contra el
+    suavizado, contra la rejilla— o se le pueden dar dos metros de pie
+    enterrado y olvidarse. Lo que sobra no se ve porque queda dentro del
+    terreno. `muro_pie` en `constructor_nivel.gd`.
+77. **Lo que se ve y lo que choca no tienen por qué medir lo mismo.** El seto
+    quedaba bajo donde el terreno de al lado subía, y se saltaba. Subirlo de
+    verdad lo habría convertido en un paredón, que es justo lo contrario de lo
+    que se busca. La colisión sube cuatro metros más que la malla (`muro_tope`):
+    el límite se respeta y el parque sigue pareciendo un parque.
+78. **Un tramo no es una línea, tiene ancho — y en un giro ese ancho invade
+    hacia atrás.** El tramo nuevo arranca donde acabó el anterior, así que se
+    mete media anchura sobre él y sus muros aparecen cruzando el pasillo de
+    antes. Se veía como un muro puesto al azar en mitad del camino, con su fila
+    de vallas. Los muros se retiran en las esquinas
+    (`_recorte_de_esquina()`), y contra una arena hacen lo contrario y se
+    alargan — que es la trampa 35 otra vez, pero en los muros: recto contra
+    curvo deja una cuña por la que se cuela la jugadora.
+79. **Colocar por rumbo y distancia desde un punto que se mueve falla siempre,
+    tarde o temprano.** Es la trampa 64 por segunda vez: el estanque colgaba del
+    centro del parque, el centro se desplazó al agrandar la pradera, y el
+    estanque acabó debajo del parque con el puente colapsado. Ahora el rumbo es
+    una PREFERENCIA: se prueba, y si ahí no cabe se abre en abanico hasta
+    encontrar sitio libre (`sitio_del_estanque()`). Si cambia el recorrido, se
+    aparta solo.
+80. **Lo que no reserva su sitio, lo pierde.** El puente iba con
+    `reserva: false` y el arbolado se sembraba después: cerezo en mitad de la
+    pasarela. Reserva en varios círculos pequeños a lo largo del eje, no en uno
+    grande — un círculo más ancho que la celda de la rejilla no lo ve nadie
+    desde lejos (trampa 49).
+81. **`MultiMesh.get_instance_transform()` miente en `--headless`.** Pregunta al
+    servidor de render, y el driver de mentira devuelve la identidad para todas
+    las instancias. Se estuvo un rato creyendo que todos los muros del parque
+    medían un metro y estaban en el origen. Para auditar sin render hay que leer
+    los `StaticBody3D` y sus formas, que son nodos de verdad.
+82. **Un plano en planta encuentra lo que ninguna lista de avisos encuentra.**
+    Los textos dicen si una pieza pisa a otra; para ver que el estanque se ha
+    ido a parar debajo del parque hace falta MIRAR el mapa. Y desde dentro del
+    juego no se ve el nivel entero. Lo dibuja `tools/auditar_nivel.gd`.
+83. **Un arco que cruza el 0° sale partido en dos.** La entrada de la Arena 1
+    aparecía como «339°→360°» y «0°→22°», o sea dos agujeros donde solo había
+    una boca perfectamente normal. Cualquier medida angular alrededor de un
+    círculo tiene que volver a juntar los extremos antes de contar.
 ---
 
 ## 7. Decisiones tomadas y por qué

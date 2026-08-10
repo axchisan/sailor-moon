@@ -508,8 +508,16 @@ const FONDO: Array[Dictionary] = [
 ## justo para que el agua tenga orilla y no acabe en un canto.
 @export var calado: float = 0.35
 ## Dónde va, en metros desde el centro de lo construido y en grados.
+##
+## Es por dónde se EMPIEZA a buscar, no dónde acaba: si ahí no cabe, se busca
+## alrededor. Ver `sitio_del_estanque()`.
 @export var distancia_estanque: float = 50.0
 @export var rumbo_estanque: float = 206.0
+## Cuánta hierba tiene que quedar entre el borde del vaso y lo construido.
+##
+## No es solo estético: por la orilla se anda, y un estanque pegado al seto deja
+## un pasillo de un palmo entre el agua y el muro.
+@export var margen_estanque: float = 7.0
 
 @export_group("Ajustes")
 @export var semilla: int = 19920307
@@ -525,6 +533,13 @@ var _rng := RandomNumberGenerator.new()
 ## Dónde está el agua, para que el resto de la siembra la esquive.
 var _sitio_estanque := Vector3.ZERO
 var _hay_estanque := false
+## Dónde se decidió poner el estanque, y si ya se decidió.
+##
+## Se pregunta dos veces —el nivel para cavar el vaso, el decorador para poner
+## el agua— y las dos respuestas tienen que ser la misma. Si no, el hoyo acaba
+## en un sitio y el agua en otro.
+var _sitio_estanque_elegido := Vector3.ZERO
+var _estanque_buscado := false
 ## Dónde acabó cada rincón, para que el campo los respete y los senderos sepan
 ## a dónde ir: `{centro, radio}`.
 var _sitios_rincon: Array[Dictionary] = []
@@ -921,10 +936,92 @@ func _pisa_el_recorrido(sitio: Vector3) -> bool:
 ## Dónde va el estanque. Lo pregunta el nivel ANTES de construir el terreno,
 ## para cavarle el vaso, y luego lo usa el propio decorador para poner el agua.
 ## Un solo sitio decide, o el agua acaba en un sitio y el hoyo en otro.
+## EL RUMBO Y LA DISTANCIA SON UNA PREFERENCIA, NO UNA ORDEN
+##
+## Antes esto devolvía el punto y ya está: centro del parque, 206°, 50 metros.
+## El problema es que «el centro del parque» se mueve — basta alargar un tramo o
+## agrandar la pradera de arranque para que se desplace treinta metros—, y como
+## el estanque se cuelga de él, se fue a parar debajo del propio parque. El
+## puente quedó colapsado contra la orilla y con un cerezo atravesándolo.
+##
+## Es la trampa 64, que ya había pasado una vez. Colocar por rumbo y distancia
+## desde un punto móvil vuelve a fallar cada vez que se toca el recorrido, así
+## que ahora se BUSCA sitio: se prueba el rumbo preferido y, si ahí no cabe, se
+## abre en abanico y se aleja hasta encontrar un hueco donde el estanque no pise
+## nada construido. Si cambia el recorrido, el estanque se aparta solo.
 func sitio_del_estanque(constructor: ConstructorNivel) -> Vector3:
+	# Se calcula UNA vez: al nivel se lo pregunta antes de cavar el vaso y el
+	# decorador otra vez al poner el agua. Si las dos respuestas no coinciden al
+	# centímetro, el hoyo acaba en un sitio y el agua en otro.
+	if _estanque_buscado:
+		return _sitio_estanque_elegido
+
 	var medida := constructor.extension()
-	var rumbo := deg_to_rad(rumbo_estanque)
-	return medida["centro"] + Vector3(cos(rumbo), 0.0, sin(rumbo)) * distancia_estanque
+	var centro: Vector3 = medida["centro"]
+	# Lo que tiene que quedar libre: el vaso entero más un respiro para la
+	# orilla, que es por donde se anda.
+	var necesita: float = radio_estanque * 1.18 + margen_estanque
+
+	var elegido := centro + Vector3(cos(deg_to_rad(rumbo_estanque)), 0.0,
+		sin(deg_to_rad(rumbo_estanque))) * distancia_estanque
+	var encontrado := false
+	# Primero se aparta girando, y solo después se aleja: un estanque a la
+	# distancia pedida y un poco torcido se lee mucho mejor que uno en el rumbo
+	# exacto pero al final del mundo.
+	for alejar: float in [0.0, 10.0, 20.0, 30.0, 42.0]:
+		for desvio: float in [0.0, 14.0, -14.0, 28.0, -28.0, 42.0, -42.0,
+				56.0, -56.0, 70.0, -70.0, 90.0, -90.0, 120.0, -120.0, 180.0]:
+			var rumbo := deg_to_rad(rumbo_estanque + desvio)
+			var candidato := centro + Vector3(cos(rumbo), 0.0, sin(rumbo)) \
+				* (distancia_estanque + alejar)
+			if _lejos_de_lo_construido(constructor, candidato, necesita):
+				elegido = candidato
+				encontrado = true
+				break
+		if encontrado:
+			break
+
+	if not encontrado:
+		push_warning("DecoradorNivel: el estanque no encuentra sitio libre; "
+			+ "se queda en el rumbo pedido y puede pisar el parque")
+	_sitio_estanque_elegido = elegido
+	_estanque_buscado = true
+	print("[Decorado] estanque en (%.1f, %.1f) — %.0f m del centro del parque"
+		% [elegido.x, elegido.z, Vector2(elegido.x - centro.x,
+		elegido.z - centro.z).length()])
+	return elegido
+
+
+## ¿Cabe algo de este tamaño aquí sin pisar el recorrido ni una arena?
+##
+## Se mide contra el EJE de cada tramo y contra el centro de cada arena, que es
+## lo que el constructor sabe de verdad. Los `estorbos` no valen para esto: son
+## los muros, y un estanque puede pisar perfectamente el hueco entre dos muros
+## y estar igual de mal puesto.
+func _lejos_de_lo_construido(constructor: ConstructorNivel, sitio: Vector3,
+		holgura: float) -> bool:
+	var punto := Vector2(sitio.x, sitio.z)
+	for tramo: Dictionary in constructor.tramos:
+		var a: Vector3 = tramo["origen"]
+		var b: Vector3 = a + tramo["direccion"] * float(tramo["largo"])
+		var d := _distancia_al_segmento(punto, Vector2(a.x, a.z), Vector2(b.x, b.z))
+		if d < float(tramo["ancho"]) * 0.5 + constructor.ancho_borde + holgura:
+			return false
+	for nombre: String in constructor.centros_arena:
+		var c: Vector3 = constructor.centros_arena[nombre]
+		var r: float = float(constructor.radios_arena.get(nombre, 11.0))
+		if punto.distance_to(Vector2(c.x, c.z)) < r + constructor.margen_arena + holgura:
+			return false
+	return true
+
+
+func _distancia_al_segmento(p: Vector2, a: Vector2, b: Vector2) -> float:
+	var ab := b - a
+	var largo2 := ab.length_squared()
+	if largo2 < 0.0001:
+		return p.distance_to(a)
+	var t := clampf((p - a).dot(ab) / largo2, 0.0, 1.0)
+	return p.distance_to(a + ab * t)
 
 
 ## La hondonada que hay que cavar para este estanque.
@@ -987,6 +1084,22 @@ func _estanque(centro: Vector3) -> void:
 		"posar": false, "libre": true, "reserva": false}
 	# El modelo mira a lo largo de +Z, y el rumbo es un ángulo en el plano XZ.
 	_plantar(receta_puente, medio, rumbo + PI * 0.5, Vector3.ZERO)
+
+	# Y AHORA EL PUENTE RESERVA SU PASO.
+	#
+	# Iba con `reserva: false`, así que no apartaba a nadie: el arbolado se
+	# sembraba después y plantaba un cerezo en mitad de la pasarela. Un puente
+	# es de las pocas cosas del parque por las que hay que poder pasar, así que
+	# es de las que más derecho tiene a quedarse con su sitio.
+	#
+	# Se reserva en varios círculos pequeños a lo largo del eje en vez de en uno
+	# grande: la rejilla de ocupación solo mira las celdas vecinas, y un círculo
+	# más ancho que la celda no lo ve nadie desde lejos (trampa 49).
+	var mitad_puente: float = cruce * 0.5 + 1.5
+	var tramos_puente := 6
+	for i in tramos_puente + 1:
+		var t := (float(i) / float(tramos_puente) - 0.5) * 2.0 * mitad_puente
+		_apuntar_hueco(medio + eje_puente * t, 2.6)
 
 	# Nenúfares flotando, apartados del pasillo del puente para no atravesarlo.
 	var ancho_libre := 2.2 * escala_puente

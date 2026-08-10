@@ -20,3 +20,7 @@ Models/rigged_originales/
 # Artefactos de compilación: el APK se regenera con
 #   ./tools/configurar_android.sh && Godot --headless --path . --export-debug "Android" build/sailor-moon.apk
 build/
+
+# El plano que dibuja tools/auditar_nivel.gd — se regenera en cada auditoría
+plano_nivel.png
+plano_nivel.png.import

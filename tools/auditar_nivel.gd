@@ -86,6 +86,7 @@ func _auditar() -> void:
 	_revisar_invasion_del_camino()
 	_revisar_cierre_de_arenas()
 	_revisar_props()
+	_dibujar_plano()
 	print("\n---------------------------------------------------")
 	if _avisos == 0:
 		print("Sin avisos. El escenario está bien montado.")
@@ -366,6 +367,163 @@ func _revisar_props() -> void:
 			% [peor, peor_pieza, peor_sitio.x, peor_sitio.y, peor_sitio.z])
 
 
+# --- El plano en planta --------------------------------------------------------
+
+## Dibuja el nivel visto desde arriba y lo guarda como PNG.
+##
+## Es la comprobación que faltaba. Los avisos de texto dicen si una pieza pisa a
+## otra, pero no dan la vista de conjunto: para ver que el estanque se ha ido a
+## parar debajo del parque, o que un tramo cruza otro, hace falta MIRAR el mapa.
+## Y una captura del juego no sirve: desde dentro no se ve el nivel entero, y
+## ponerse a volar la cámara para comprobarlo es media hora cada vez.
+##
+##   gris   el suelo de los tramos          rojo   los muros
+##   arena  las arenas                      azul   el estanque
+##   verde  el arranque
+const PLANO := "res://plano_nivel.png"
+const PLANO_LADO := 900
+
+
+func _dibujar_plano() -> void:
+	var tramos: Array = _blockout.get("tramos")
+	if tramos == null or tramos.is_empty():
+		return
+
+	# El encuadre sale de lo que hay, no de un número a mano: si el nivel crece,
+	# el plano lo sigue.
+	var minimo := Vector2(INF, INF)
+	var maximo := Vector2(-INF, -INF)
+	for tramo: Dictionary in tramos:
+		var a: Vector3 = tramo["origen"]
+		var b: Vector3 = a + tramo["direccion"] * float(tramo["largo"])
+		for p in [Vector2(a.x, a.z), Vector2(b.x, b.z)]:
+			minimo = minimo.min(p)
+			maximo = maximo.max(p)
+	var centros: Dictionary = _blockout.get("centros_arena")
+	for nombre: String in centros:
+		var c: Vector3 = centros[nombre]
+		minimo = minimo.min(Vector2(c.x, c.z) - Vector2(18, 18))
+		maximo = maximo.max(Vector2(c.x, c.z) + Vector2(18, 18))
+	var decorador := _nivel.get_node_or_null("Decorado")
+	var sitio_agua := Vector3.ZERO
+	var radio_agua := 0.0
+	if decorador != null:
+		sitio_agua = decorador.get("_sitio_estanque_elegido")
+		radio_agua = float(decorador.get("radio_estanque"))
+		minimo = minimo.min(Vector2(sitio_agua.x, sitio_agua.z) - Vector2(20, 20))
+		maximo = maximo.max(Vector2(sitio_agua.x, sitio_agua.z) + Vector2(20, 20))
+
+	minimo -= Vector2(14, 14)
+	maximo += Vector2(14, 14)
+	var extension := maximo - minimo
+	var escala := float(PLANO_LADO) / maxf(extension.x, extension.y)
+
+	var img := Image.create(PLANO_LADO, PLANO_LADO, false, Image.FORMAT_RGB8)
+	img.fill(Color(0.11, 0.13, 0.11))
+
+	# El suelo de cada tramo, como rectángulo orientado.
+	for tramo: Dictionary in tramos:
+		var a: Vector3 = tramo["origen"]
+		var dir: Vector3 = tramo["direccion"]
+		var largo: float = float(tramo["largo"])
+		var ancho: float = float(tramo["ancho"])
+		var costado := Vector2(-dir.z, dir.x)
+		for paso in int(largo / 0.4) + 1:
+			var t := float(paso) * 0.4
+			var eje := Vector2(a.x, a.z) + Vector2(dir.x, dir.z) * t
+			for lado in int(ancho / 0.4) + 1:
+				var u := (float(lado) * 0.4 - ancho * 0.5)
+				_punto(img, eje + costado * u, minimo, escala, Color(0.45, 0.45, 0.45))
+
+	# Las arenas.
+	for nombre: String in centros:
+		var c: Vector3 = centros[nombre]
+		var r: float = float(_blockout.get("radios_arena").get(nombre, 11.0))
+		_disco(img, Vector2(c.x, c.z), r, minimo, escala, Color(0.62, 0.55, 0.40))
+
+	# Los muros, por encima de todo lo demás.
+	for hijo in _blockout.get_children():
+		var cuerpo := hijo as StaticBody3D
+		if cuerpo == null or not String(cuerpo.name).begins_with("Borde"):
+			continue
+		var forma := cuerpo.get_child(0) as CollisionShape3D
+		if forma == null or not (forma.shape is BoxShape3D):
+			continue
+		var caja: Vector3 = (forma.shape as BoxShape3D).size
+		var base := cuerpo.global_transform.basis.orthonormalized()
+		var centro := cuerpo.global_position
+		var eje := base.x if caja.x >= caja.z else base.z
+		var largo: float = maxf(caja.x, caja.z)
+		for paso in int(largo / 0.3) + 1:
+			var t := float(paso) * 0.3 - largo * 0.5
+			var p := centro + eje * t
+			_punto(img, Vector2(p.x, p.z), minimo, escala, Color(0.85, 0.25, 0.25))
+
+	# El estanque.
+	if radio_agua > 0.0:
+		_disco(img, Vector2(sitio_agua.x, sitio_agua.z), radio_agua, minimo,
+			escala, Color(0.25, 0.55, 0.9))
+
+	# El punto de aparición.
+	var inicio: Vector3 = _blockout.get("punto_inicio")
+	_disco(img, Vector2(inicio.x, inicio.z), 2.0, minimo, escala, Color(0.3, 1.0, 0.4))
+
+	img.save_png(ProjectSettings.globalize_path(PLANO))
+	print("\n-- Plano --\n   guardado en %s (%.0f x %.0f m)"
+		% [PLANO, extension.x, extension.y])
+
+	# Y el listado de dónde ha quedado cada cosa. El dibujo enseña que algo se
+	# monta encima de otra cosa; los números dicen cuál y por cuántos metros.
+	print("   arenas:")
+	for nombre: String in centros:
+		var c: Vector3 = centros[nombre]
+		var r: float = float(_blockout.get("radios_arena").get(nombre, 11.0))
+		var linea := "     %-14s (%7.1f, %7.1f) r %.0f" % [nombre, c.x, c.z, r]
+		if radio_agua > 0.0:
+			var d := Vector2(c.x, c.z).distance_to(
+				Vector2(sitio_agua.x, sitio_agua.z))
+			if d < r + radio_agua:
+				linea += "   ⚠ SE MONTA CON EL ESTANQUE (%.1f m de solape)" \
+					% (r + radio_agua - d)
+			else:
+				linea += "   · %.0f m al estanque" % d
+		print(linea)
+	print("   tramos:")
+	for indice in tramos.size():
+		var tramo: Dictionary = tramos[indice]
+		var a: Vector3 = tramo["origen"]
+		var dir: Vector3 = tramo["direccion"]
+		var b := a + dir * float(tramo["largo"])
+		var linea := "     %d: (%7.1f, %7.1f) → (%7.1f, %7.1f) ancho %.0f" \
+			% [indice, a.x, a.z, b.x, b.z, float(tramo["ancho"])]
+		if radio_agua > 0.0:
+			var d := _distancia_al_segmento(
+				Vector2(sitio_agua.x, sitio_agua.z),
+				Vector2(a.x, a.z), Vector2(b.x, b.z))
+			if d < float(tramo["ancho"]) * 0.5 + radio_agua:
+				linea += "   ⚠ SE MONTA CON EL ESTANQUE"
+		print(linea)
+
+
+func _punto(img: Image, mundo: Vector2, origen: Vector2, escala: float,
+		color: Color) -> void:
+	var x := int((mundo.x - origen.x) * escala)
+	var y := int((mundo.y - origen.y) * escala)
+	if x < 0 or y < 0 or x >= img.get_width() or y >= img.get_height():
+		return
+	img.set_pixel(x, y, color)
+
+
+func _disco(img: Image, centro: Vector2, radio: float, origen: Vector2,
+		escala: float, color: Color) -> void:
+	var pasos := int(radio / 0.35) + 1
+	for j in range(-pasos, pasos + 1):
+		for i in range(-pasos, pasos + 1):
+			var d := Vector2(float(i) * 0.35, float(j) * 0.35)
+			if d.length() <= radio:
+				_punto(img, centro + d, origen, escala, color)
+
+
 # --- Utilidades ----------------------------------------------------------------
 
 ## La altura del TERRENO en un punto, ignorando el blockout.
@@ -385,6 +543,16 @@ func _altura_del_terreno(punto: Vector3):
 	if choque.is_empty():
 		return null
 	return choque["position"].y
+
+
+## Distancia de un punto a un segmento, en el plano.
+func _distancia_al_segmento(p: Vector2, a: Vector2, b: Vector2) -> float:
+	var ab := b - a
+	var largo2 := ab.length_squared()
+	if largo2 < 0.0001:
+		return p.distance_to(a)
+	var t := clampf((p - a).dot(ab) / largo2, 0.0, 1.0)
+	return p.distance_to(a + ab * t)
 
 
 func _contar(que: String, cuantos: int) -> void:
