@@ -671,6 +671,14 @@ func decorar(constructor: ConstructorNivel) -> void:
 	_estorbos = constructor.estorbos
 	_apartar_el_blockout(constructor)
 	_sin_suelo = 0
+	# EL REPARTO RESERVA SU SITIO, Y LO PRIMERO DE TODO.
+	#
+	# A Mercury se le plantaba un arbusto encima y alguna cosa más. Es el mismo
+	# descuido que tenía el puente: quien no aparta a los demás, se lleva un
+	# cerezo dentro. Y un personaje con el que hay que hablar es de lo que más
+	# derecho tiene a su hueco — se le tapaba la cara con un matorral.
+	for sitio: Vector3 in constructor.sitios_encuentro:
+		_apuntar_hueco(sitio, 3.4)
 	_por_encima = 0
 	_dentro_de_muro = 0
 	_sitios_rincon.clear()

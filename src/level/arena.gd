@@ -38,9 +38,20 @@ class_name Arena
 ## Más segmentos = círculo más redondo y más draw calls. 16 es buen equilibrio.
 @export var barrier_segments: int = 16
 @export var barrier_color: Color = Color(1.0, 0.55, 0.85, 0.28)
+## Empezar con la barrera puesta, y no dejar entrar hasta que se desbloquee.
+##
+## La arena del guardián se cerraba con la puerta mágica del pasillo, pero eso
+## solo tapa el camino: dando un rodeo por el campo se entraba tan tranquilo y
+## el guardián aparecía sin haber encendido un solo farol. Un pasillo cerrado no
+## cierra una arena — un anillo sí, y la barrera ya es un anillo completo.
+##
+## Se abre con `desbloquear()`, a la vez que la puerta.
+@export var bloqueada_al_empezar: bool = false
 
 var started: bool = false
 var cleared: bool = false
+## Mientras esté bloqueada, ni se entra ni se dispara la oleada.
+var bloqueada: bool = false
 
 var _wave_index: int = -1
 var _spawned: Array[Node] = []
@@ -51,9 +62,13 @@ var _barrier: Node3D = null
 
 func _ready() -> void:
 	monitoring = true
+	# En grupo para poder alcanzarlas desde fuera sin cablear NodePaths: el
+	# nivel necesita desbloquear la del guardián cuando se encienden los faroles.
+	add_to_group("arenas")
 	body_entered.connect(_on_body_entered)
 	_build_barrier()
-	_set_barrier(false)
+	bloqueada = bloqueada_al_empezar
+	_set_barrier(bloqueada)
 	set_physics_process(false)
 
 
@@ -122,15 +137,23 @@ func _build_barrier() -> void:
 
 
 func _on_body_entered(body: Node3D) -> void:
-	if started or cleared:
+	if started or cleared or bloqueada:
 		return
 	if not body.is_in_group("player"):
 		return
 	start()
 
 
+## Levanta el cierre previo. La pelea no empieza aquí: empieza cuando se entra.
+func desbloquear() -> void:
+	if not bloqueada:
+		return
+	bloqueada = false
+	_set_barrier(false)
+
+
 func start() -> void:
-	if started:
+	if started or bloqueada:
 		return
 	started = true
 	set_physics_process(true)

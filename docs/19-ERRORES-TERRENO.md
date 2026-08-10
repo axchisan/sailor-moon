@@ -29,6 +29,16 @@
 altura, comparando el terreno solo contra el terreno más el blockout. Los
 escalones invisibles no se ven, pero un rayo sí los mide.
 
+## Tercera tanda (2026-08-10, mediodía)
+
+| Qué era | Cómo se arregló |
+|---|---|
+| **Se entraba al guardián dando un rodeo** por el campo, sin encender un farol | Un pasillo cerrado no cierra una arena. La arena del guardián empieza con su **barrera puesta**, que da la vuelta entera, y se abre con los faroles a la vez que la puerta (`bloqueada_al_empezar` en `arena.gd`) |
+| Arbusto y props encima de Sailor Mercury | Los encuentros **reservan su hueco** antes que nadie. Mismo descuido que tenía el puente |
+| El farol de al lado de Mercury flotando | Faroles, personajes y puerta se **posan sobre el terreno**, no a la altura del tramo. Se hace después de generar el terreno, porque al colocarlos todavía no existe |
+| Muros del cruce sin conectar con la arena | El alargue contra arenas solo estaba en `_pasillo`; ahora también en `_cruce`, que es quien desemboca en la Arena 2 |
+| Los setos se leían como cajas | Un **remate más estrecho** los corona (`muro_cresta`). Un prisma tiene la cara de arriba lisa y cuatro esquinas rectas; un seto recortado no. Va en la misma multimalla: cero llamadas de dibujado |
+
 ## Lo que queda pendiente
 
 - **Los cantos de los setos.** Siguen siendo cajas: se les ve la cara de arriba
@@ -36,18 +46,10 @@ escalones invisibles no se ven, pero un rayo sí los mide.
   fallo de montaje, es que a la pieza le falta remate.
 - **Dos rincones no encuentran sitio** (`AltarGato` y `Vivero`). Salen por
   consola en cada carga. De nueve rincones se colocan siete.
-- **Props encima de Sailor Mercury**: un arbusto y alguna cosa más le caen
-  dentro. El `Encuentro` no reserva su hueco, igual que le pasaba al puente.
-- **El farol de al lado de Mercury flota.** Es el tercero del objetivo, el que
-  va alto a propósito (`FAROLES` en `constructor_nivel.gd` lo pone a 1,6 m),
-  pero se posa como si estuviera al ras.
-- **Un muro de pasillo que no conecta con el anillo de la arena** (foto 4, cerca
-  de `(45.6, 0.6, -60.9)`), por los dos lados. El alargue contra arenas se hace
-  cuando el paso vecino ES una arena; ahí debe de haber un giro de por medio y
-  no se aplica.
-- **`ClaroPortal` tiene 3 bocas** en la auditoría. No es nuevo: el cilindro del
-  suelo tapaba los rayos y lo ocultaba. Ahora que el suelo no colisiona, se ve
-  que su anillo tiene más aberturas de las previstas.
+- **`ClaroPortal` tiene 2 bocas** en la auditoría, y debería tener una (es el
+  final del recorrido). No es nuevo: el cilindro del suelo tapaba los rayos y lo
+  ocultaba. Cuando se monte el guardián del portal (Fase C ter) habrá que
+  cerrarlo igual que el del guardián.
 
 ## La herramienta
 

@@ -162,29 +162,8 @@ rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
 textures/vram_compression/import_etc2_astc=true
 lights_and_shadows/directional_shadow/size=2048
-; El filtro DURO dejaba el borde de las sombras en diente de sierra: cada
-; sombra grande sobre el terreno se veía recortada en zigzag siguiendo los
-; texels del mapa. No es «borde duro de cel shading», es aliasing — el estilo
-; pide un contorno limpio, y una sierra no lo es.
-;
-; Un filtro suave de nivel bajo lo quita y cuesta poco: el mapa de sombras se
-; muestrea unas pocas veces más, y el pase de sombra ya se sabe lo que vale
-; (63.000 triángulos y 19 llamadas de dibujado, medidos con F8).
-lights_and_shadows/directional_shadow/soft_shadow_filter_quality=2
 lights_and_shadows/positional_shadow/soft_shadow_filter_quality=0
 occlusion_culling/occlusion_rays_per_thread=256
-; SIN ANTIALIASING NINGUNO, y medido en el móvil.
-;
-; Aquí había un razonamiento que sonaba bien y era falso: «FXAA es un filtro de
-; pantalla que cuesta una fracción del MSAA». Una fracción del MSAA sí, pero
-; barato no: es un pase que RELEE el fotograma entero varias veces por píxel, y
-; en un móvil el ancho de banda es justo el recurso caro. Apagándolo, el juego
-; pasó de 37-45 fps a 60 en la mayoría de sitios — el cambio más grande de todos
-; los probados, por delante del cielo y del terreno.
-;
-; Y se pierde poco: con masas planas de color hay pocos bordes que suavizar, y
-; en la pantalla de un móvil el píxel no se ve. Si algún día canta en algún
-; sitio, antes que volver a FXAA está MSAA a 2x, que suaviza solo las siluetas.
 anti_aliasing/quality/screen_space_aa=1
 occlusion_culling/use_occlusion_culling=true
 lights_and_shadows/positional_shadow/atlas_size=1024

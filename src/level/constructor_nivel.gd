@@ -134,6 +134,13 @@ const RECORRIDO: Array[Dictionary] = [
 ## Subirlo de verdad se leería como un paredón, así que sube solo lo que choca:
 ## lo que se ve mide lo que medía y el límite se respeta igual.
 @export var muro_tope: float = 4.0
+## Alto del remate que corona los muros, y cuánto se mete por los lados.
+##
+## Un prisma se lee como una caja: cara de arriba lisa y cuatro esquinas en
+## ángulo recto. Un seto recortado tiene el remate más estrecho que el cuerpo, y
+## con eso basta para romper la silueta — aparece un escalón de sombra arriba y
+## las esquinas dejan de ser aristas limpias. A 0 se queda el prisma de antes.
+@export var muro_cresta: float = 0.28
 ## Ancho de la franja de color que marca el camino.
 @export var ancho_camino: float = 3.2
 ## Hueco que se deja en el borde de la arena para entrar y salir, en grados.
@@ -229,6 +236,53 @@ var radio_limite: float = 0.0
 ## queda solo su FORMA —rectángulos orientados y discos de arena—, que es lo que
 ## el terreno necesita para pintarse la máscara.
 var franjas_camino: Array[Dictionary] = []
+## Dónde ha quedado cada personaje del reparto, para que el decorador les deje
+## sitio. Sin esto se les siembra un arbusto encima — le pasó a Mercury.
+var sitios_encuentro: Array[Vector3] = []
+
+
+## Baja algo hasta el terreno, dejándolo a `alto` metros por encima.
+##
+## Lo que se coloca por coordenadas del recorrido —faroles, personajes, la
+## puerta— sale a la altura del TRAMO, que es un número exacto. Pero por lo que
+## se anda es el terreno, y ahí donde el terreno no llega justo a esa altura, la
+## pieza aparece flotando: el farol de al lado de Mercury era exactamente eso.
+##
+## Se apartan los cuerpos propios para que el rayo no se pare en un muro y deje
+## el farol subido encima del seto.
+func posar_en_el_terreno(sitio: Vector3, alto: float) -> Vector3:
+	var espacio := get_world_3d().direct_space_state
+	if espacio == null:
+		return sitio
+	var apartar: Array[RID] = []
+	for hijo in get_children():
+		var cuerpo := hijo as StaticBody3D
+		if cuerpo != null:
+			apartar.append(cuerpo.get_rid())
+	var consulta := PhysicsRayQueryParameters3D.create(
+		sitio + Vector3.UP * 60.0, sitio + Vector3.DOWN * 60.0)
+	consulta.collision_mask = 1
+	consulta.exclude = apartar
+	var choque := espacio.intersect_ray(consulta)
+	if choque.is_empty():
+		return sitio
+	return Vector3(sitio.x, choque["position"].y + alto, sitio.z)
+
+
+## Vuelve a posar sobre el terreno lo que se colocó antes de que existiera.
+##
+## Los encuentros y la puerta se sitúan en `construir()`, y en ese momento el
+## terreno todavía no está: se genera después, precisamente porque necesita
+## saber por dónde va el escenario. Así que hay que volver a pasar por ellos.
+func posar_lo_colocado() -> void:
+	sitios_encuentro.clear()
+	for ficha in ENCUENTROS:
+		var nodo := get_parent().get_node_or_null(ficha["nodo"]) as Node3D
+		if nodo == null:
+			continue
+		nodo.global_position = posar_en_el_terreno(
+			nodo.global_position, ficha.get("alto", 0.0))
+		sitios_encuentro.append(nodo.global_position)
 
 
 func _ready() -> void:
@@ -274,7 +328,7 @@ func construir() -> void:
 			"pradera":
 				_pradera(paso)
 			"cruce":
-				_cruce(paso)
+				_cruce(paso, _recorte_de_esquina(i, -1), _recorte_de_esquina(i, 1))
 			"giro":
 				_direccion = _direccion.rotated(Vector3.UP, deg_to_rad(paso["grados"]))
 			"arena":
@@ -500,7 +554,8 @@ func _pradera(paso: Dictionary) -> void:
 ##
 ## Las dos ramas son suelo firme y ninguna castiga. La gracia no es acertar,
 ## es que haya algo que elegir.
-func _cruce(paso: Dictionary) -> void:
+func _cruce(paso: Dictionary, ajuste_entrada: float = 0.0,
+		ajuste_salida: float = 0.0) -> void:
 	var largo: float = paso["largo"]
 	var ancho: float = paso["ancho"]
 	var separacion: float = paso["separacion"]
@@ -515,9 +570,19 @@ func _cruce(paso: Dictionary) -> void:
 	# Bocas de entrada y salida: anchas, para que se vean las dos ramas de un
 	# vistazo y no haya que adivinar que el camino se parte.
 	var ancho_boca := separacion + ancho
-	for boca: Array in [[entrada * 0.5, entrada], [largo - salida * 0.5, salida]]:
-		var eje: float = boca[0]
-		var fondo: float = boca[1]
+	# Cada boca lleva su ajuste: contra una arena el muro se alarga para meterse
+	# dentro del anillo, o queda una cuña abierta en la junta — la misma trampa
+	# 35 de siempre, que aquí se colaba porque el alargue solo se hacía en los
+	# pasillos y el cruce desemboca directamente en la Arena 2.
+	var bocas: Array[Dictionary] = [
+		{"eje": entrada * 0.5, "fondo": entrada, "ajuste": ajuste_entrada, "hacia": -1.0},
+		{"eje": largo - salida * 0.5, "fondo": salida, "ajuste": ajuste_salida, "hacia": 1.0},
+	]
+	for boca: Dictionary in bocas:
+		var eje: float = boca["eje"]
+		var fondo: float = boca["fondo"]
+		var ajuste: float = boca["ajuste"]
+		var hacia: float = boca["hacia"]
 		_losa("SueloCruce", _origen + _direccion * eje + Vector3.UP * _altura,
 			Vector3(ancho_boca, grosor_suelo, fondo + solape * 2.0), suelo, giro)
 		_losa("CaminoCruce", _origen + _direccion * eje
@@ -526,12 +591,14 @@ func _cruce(paso: Dictionary) -> void:
 			giro, 0.0, false)
 		# Los costados de la boca dan al vacío: sin muro se cae por ellos justo
 		# en el punto donde hay que pararse a mirar por dónde tirar.
+		var largo_muro: float = maxf(fondo - ajuste, 1.0)
+		var eje_muro: float = eje - hacia * ajuste * 0.5
 		for costado: float in [-1.0, 1.0]:
 			_losa("BordeCruce",
-				_origen + _direccion * eje
+				_origen + _direccion * eje_muro
 					+ lado * costado * (ancho_boca * 0.5 + ancho_borde * 0.5)
 					+ Vector3.UP * (_altura + alto_borde * 0.5 + grosor_suelo * 0.5),
-				Vector3(ancho_borde, alto_borde, fondo), borde, giro)
+				Vector3(ancho_borde, alto_borde, largo_muro), borde, giro)
 
 	# Las dos ramas
 	for signo: float in [1.0, -1.0]:
@@ -717,6 +784,32 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 		var pose := Transform3D(base * Basis.from_scale(tam_visual), centro_visual)
 		var lote: Array = _lotes.get(superficie, [])
 		lote.append(pose)
+
+		# LA CRESTA: lo que quita al seto la cara de caja.
+		#
+		# Un muro es un prisma, y desde cualquier sitio un poco alto se le ve la
+		# cara de arriba lisa y las cuatro esquinas en ángulo recto. Eso es lo
+		# que hacía que el parque se leyera como bloques por mucho que el suelo
+		# ya fuera continuo.
+		#
+		# Un seto de verdad está recortado y su remate es más estrecho que su
+		# cuerpo. Con una segunda caja encima, un poco metida por los lados y
+		# por las puntas, la silueta deja de ser un rectángulo: aparece un
+		# escalón de sombra en el borde superior y las esquinas se rompen.
+		#
+		# Va en la MISMA multimalla, así que no cuesta ninguna llamada de
+		# dibujado — son doce triángulos por muro y nada más.
+		if es_muro and muro_cresta > 0.001:
+			var mete := minf(muro_cresta, tam.x * 0.35)
+			var cresta_tam := Vector3(
+				maxf(tam.x - mete * 2.0, 0.05),
+				muro_cresta,
+				maxf(tam.z - mete * 2.0, 0.05))
+			var cresta_centro := centro + arriba * (tam.y * 0.5 + muro_cresta * 0.5)
+			lote.append(Transform3D(
+				base * Basis.from_scale(cresta_tam), cresta_centro))
+			_piezas += 1
+
 		_lotes[superficie] = lote
 		_piezas += 1
 
@@ -915,9 +1008,12 @@ func sembrar_faroles(escena: PackedScene, destino: Node) -> int:
 		# Godot renombra las copias a `@Area3D@388` y compañía, y con eso no hay
 		# quien depure ni quien las referencie desde fuera.
 		farol.name = ficha["id"].capitalize()
-		var sitio := punto_en_tramo(
-			ficha["tramo"], ficha["t"], ficha["lado"], ficha["alto"],
-			ficha.get("rama", 0.0))
+		# Sobre el TERRENO, no a la altura del tramo. El tramo da un número y el
+		# terreno da la superficie por la que se anda; donde no coinciden, el
+		# farol se queda en el aire.
+		var sitio := posar_en_el_terreno(punto_en_tramo(
+			ficha["tramo"], ficha["t"], ficha["lado"], 0.0,
+			ficha.get("rama", 0.0)), ficha["alto"])
 		farol.global_position = sitio
 		if "id" in farol:
 			farol.set("id", ficha["id"])

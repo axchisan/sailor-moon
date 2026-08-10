@@ -45,8 +45,9 @@ El trabajo se organiza por el **plan maestro**
 | **B** | Texturas reciclables | ✅ |
 | **C** | Mundo abierto, límites naturales | ✅ |
 | **C bis** | Objetivos, portal y rincones | ✅ (falta el mapa de escenarios) |
-| **D** | Rendimiento | ✅ primera pasada, medida en el móvil |
-| **E** | Movimiento y combate | ⬜ **bloqueada:** faltan animaciones de Mixamo |
+| **C ter** | Que el nivel EXPLIQUE lo que pide | ⬜ **nueva.** Avisos en las puertas, cinemática del portal, panel de objetivos y el jefe guardián del portal |
+| **D** | Rendimiento | ✅ dos pasadas. 60 fps en el móvil |
+| **E** | Movimiento y combate | 🟡 **desbloqueada**: el usuario bajó las animaciones, están en su carpeta de Descargas y hay que moverlas a `assets/animations/serena/` |
 | **F** | Conversación viva | ⬜ |
 | **G** | Menú, guardado, vidas | ⬜ |
 | **H** | Historia y cinemática | ⬜ guion escrito, sin montar |
@@ -82,9 +83,10 @@ detalle en [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md)):
 
 ### Lo siguiente, en orden
 
-1. **Bajar las animaciones de Mixamo** — es lo único que bloquea la Fase E, y
-   depende del usuario. Ver [`17-ANIMACIONES.md`](17-ANIMACIONES.md): se sube
-   **`Models/rigged_originales/serena_rigged.fbx`** y **no se le hace rig**
+1. **Mover las animaciones de Mixamo** desde la carpeta de Descargas a
+   `assets/animations/serena/`, con los nombres de
+   [`17-ANIMACIONES.md`](17-ANIMACIONES.md), y reconstruir la librería con
+   `tools/construir_libreria_animaciones.gd`. Ya están bajadas
 2. **Fase E** — salto nuevo, doble salto, trepar cornisas, y que al Cofrecito
    se le pueda pegar por el costado
 3. **Fase F** — retratos en el diálogo, animación de hablar, audio de Mercury

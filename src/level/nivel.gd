@@ -201,6 +201,10 @@ func _ready() -> void:
 		# espera, los rayos que posan los props salen al vacío y todo el parque
 		# vuelve a quedarse flotando.
 		await get_tree().physics_frame
+		# Y ahora que hay terreno, se vuelve a posar sobre él lo que se colocó
+		# cuando todavía no existía.
+		if _constructor != null:
+			_constructor.posar_lo_colocado()
 
 	# Después de construir el terreno: el perfil del móvil le retoca el material,
 	# y hasta aquí ese material no existe.
@@ -360,6 +364,13 @@ func _al_encender_farol(_farol: Farol) -> void:
 	var barrera := get_node_or_null(puerta) as PuertaMagica
 	if barrera != null:
 		barrera.abrir()
+	# Y con el camino se abre la arena. Cerrar solo el pasillo no cerraba nada:
+	# dando un rodeo por el campo se entraba al guardián sin haber encendido un
+	# farol. La que cierra de verdad es la barrera de la arena, que da la vuelta
+	# entera.
+	for arena in get_tree().get_nodes_in_group("arenas"):
+		if arena is Arena and (arena as Arena).bloqueada:
+			(arena as Arena).desbloquear()
 
 
 func _al_coger_estrella(total: int) -> void:

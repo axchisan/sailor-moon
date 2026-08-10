@@ -143,6 +143,7 @@ collision_layer = 0
 collision_mask = 2
 script = ExtResource("6_arena")
 arena_id = "n1_guardian"
+bloqueada_al_empezar = true
 waves = Array[int]([3, 4, 5])
 enemy_scene = ExtResource("2_peluchin")
 enemy_scenes_extra = Array[PackedScene]([ExtResource("3_cofrecito"), ExtResource("4_hadita")])

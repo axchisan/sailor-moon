@@ -304,6 +304,24 @@ func _arcos_de_fuga(centro: Vector3, radio: float) -> Array[Dictionary]:
 	if abierto:
 		arcos.append({"desde": inicio, "ancho": grados - inicio})
 
+	# Dos arcos separados por uno o dos grados son LA MISMA boca: por en medio
+	# ha pillado el canto de un panel, que no cierra nada. Sin juntarlos, una
+	# entrada perfectamente normal se cuenta como dos o tres agujeros.
+	var juntos: Array[Dictionary] = []
+	for arco: Dictionary in arcos:
+		if juntos.size() > 0:
+			var previo: Dictionary = juntos[-1]
+			var fin: float = float(previo["desde"]) + float(previo["ancho"])
+			if float(arco["desde"]) - fin <= 2.0:
+				juntos[-1] = {
+					"desde": previo["desde"],
+					"ancho": float(arco["desde"]) + float(arco["ancho"])
+						- float(previo["desde"]),
+				}
+				continue
+		juntos.append(arco)
+	arcos = juntos
+
 	# Un arco que cruza el 0° sale partido en dos, y así una boca perfectamente
 	# normal se cuenta como dos agujeros. Se vuelven a juntar. (La entrada de la
 	# Arena 1 aparecía como «339°→360°» y «0°→22°», y parecía un fallo.)
