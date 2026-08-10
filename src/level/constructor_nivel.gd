@@ -117,6 +117,23 @@ const RECORRIDO: Array[Dictionary] = [
 
 @export var alto_borde: float = 2.2
 @export var ancho_borde: float = 0.8
+## Cuánto se entierra el pie de un muro por debajo del suelo del tramo.
+##
+## Un muro se coloca a la altura del tramo, que es un número exacto; el terreno
+## que ahora hace de suelo tiene el ruido del relieve y el suavizado de las
+## faldas. Bastan dos dedos de diferencia para que el seto se quede flotando —
+## se veía en los dos lados del pasillo que sube al guardián.
+##
+## Enterrarle el pie lo arregla de una vez y no se ve, porque lo que sobra queda
+## dentro del terreno. Perseguir que el terreno quede plano bajo cada muro sería
+## pelear contra el relieve para siempre.
+@export var muro_pie: float = 2.0
+## Cuánto sube la COLISIÓN de un muro por encima de su parte visible.
+##
+## Donde el terreno de al lado sube, el seto queda bajo y se salta por encima.
+## Subirlo de verdad se leería como un paredón, así que sube solo lo que choca:
+## lo que se ve mide lo que medía y el límite se respeta igual.
+@export var muro_tope: float = 4.0
 ## Ancho de la franja de color que marca el camino.
 @export var ancho_camino: float = 3.2
 ## Hueco que se deja en el borde de la arena para entrar y salir, en grados.
@@ -248,7 +265,7 @@ func construir() -> void:
 		var paso := RECORRIDO[i]
 		match paso.get("tipo", ""):
 			"pasillo":
-				_pasillo(paso)
+				_pasillo(paso, _recorte_de_esquina(i, -1), _recorte_de_esquina(i, 1))
 			# Faltaba, y el `match` se lo tragaba sin decir nada: la pradera de
 			# arranque llevaba desde que se escribió sin construirse. Se veía en
 			# el sitio equivocado —el nivel entero cincuenta metros más corto—,
@@ -315,7 +332,58 @@ func _colocar_encuentros() -> void:
 
 # --- Tramos --------------------------------------------------------------------
 
-func _pasillo(paso: Dictionary) -> void:
+## Cuánto hay que acortar el muro de este tramo por uno de sus extremos.
+##
+## EL PROBLEMA DE LAS ESQUINAS
+##
+## En un giro de 90°, el tramo nuevo arranca en el punto donde acabó el
+## anterior. Pero un tramo no es una línea: tiene ancho, y ese ancho se extiende
+## hacia los dos lados del eje. Así que el tramo nuevo se mete media anchura
+## hacia atrás, sobre el anterior — y sus muros, que van pegados al eje desde el
+## primer metro, aparecen cruzando el pasillo de antes.
+##
+## Se veía en el paseo de vuelta: el muro del pasillo de 26 m cortaba por la
+## mitad el pasillo de 22 m, y con él una fila de vallas. Jugando parece un muro
+## puesto al azar en mitad del camino.
+##
+## `sentido` es −1 para el arranque del tramo y +1 para su final. Se mira si por
+## ese lado hay un giro y, si lo hay, se retira el muro media anchura del tramo
+## que hay al otro lado del giro, más el grosor del propio muro.
+func _recorte_de_esquina(indice: int, sentido: int) -> float:
+	var vecino := indice + sentido
+	if vecino < 0 or vecino >= RECORRIDO.size():
+		return 0.0
+
+	# Contra una ARENA se hace lo contrario: se ALARGA (recorte negativo).
+	#
+	# Es la trampa 35 otra vez, pero en los muros en vez de en el suelo. El muro
+	# del pasillo es recto y el anillo de la arena curvo, así que si el muro
+	# acaba justo donde empieza el anillo, entre los dos queda una cuña abierta.
+	# Por ahí se cuela la jugadora — y con la barrera de la oleada puesta, se
+	# queda fuera de una pelea que no la deja salir.
+	#
+	# Metiendo el muro dentro del disco, la cuña se cierra y el trozo que sobra
+	# queda enterrado en el anillo, donde no se ve.
+	if RECORRIDO[vecino].get("tipo", "") == "arena":
+		return -(margen_arena + ancho_borde)
+
+	if RECORRIDO[vecino].get("tipo", "") != "giro":
+		return 0.0
+	# Al otro lado del giro está el tramo con el que hay que dejar sitio.
+	var otro := vecino + sentido
+	if otro < 0 or otro >= RECORRIDO.size():
+		return 0.0
+	var paso: Dictionary = RECORRIDO[otro]
+	var ancho: float = float(paso.get("ancho", 0.0))
+	if ancho <= 0.0:
+		# Una arena no tiene «ancho» sino radio, y su anillo ya se encarga de su
+		# propio borde: ahí no hay esquina que recortar.
+		return 0.0
+	return ancho * 0.5 + ancho_borde
+
+
+func _pasillo(paso: Dictionary, recorte_inicio: float = 0.0,
+		recorte_final: float = 0.0) -> void:
 	var largo: float = paso["largo"]
 	var ancho: float = paso["ancho"]
 	var subida: float = paso.get("subida", 0.0)
@@ -347,6 +415,11 @@ func _pasillo(paso: Dictionary) -> void:
 	# árboles que se le pongan encima. Dejando abierto un costado, el mismo
 	# camino pasa a ser un sendero que bordea algo.
 	var muros: String = paso.get("muros", "ambos")
+	# El muro se retira de las esquinas para no meterse en el tramo de al lado
+	# del giro. Se acorta por los extremos que toquen y su centro se corre a la
+	# mitad de esa diferencia, para que lo que se quita salga del lado correcto.
+	var largo_muro: float = maxf(largo_real - recorte_inicio - recorte_final, 1.0)
+	var centro_muro := centro + _direccion * ((recorte_inicio - recorte_final) * 0.5)
 	for signo: float in [-1.0, 1.0]:
 		if muros == "ninguno":
 			continue
@@ -354,9 +427,9 @@ func _pasillo(paso: Dictionary) -> void:
 			continue
 		if muros == "derecha" and signo < 0.0:
 			continue
-		_losa("Borde", centro + lado * signo * (ancho * 0.5 + ancho_borde * 0.5)
+		_losa("Borde", centro_muro + lado * signo * (ancho * 0.5 + ancho_borde * 0.5)
 			+ Vector3.UP * (alto_borde * 0.5 + grosor_suelo * 0.5),
-			Vector3(ancho_borde, alto_borde, largo_real), borde, giro, inclinacion)
+			Vector3(ancho_borde, alto_borde, largo_muro), borde, giro, inclinacion)
 
 	if paso.get("plataformas", false):
 		_plataformas(largo, ancho)
@@ -608,6 +681,28 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 		})
 		return
 
+	# Los MUROS se estiran por los dos extremos, y cada extremo arregla una cosa.
+	#
+	# HACIA ABAJO (`muro_pie`), y esto se ve: un muro se coloca a la altura
+	# exacta del tramo, que es un número; el terreno que ahora hace de suelo
+	# tiene el ruido del relieve y el suavizado de las faldas. Donde el terreno
+	# cae dos dedos, el muro se queda flotando. Enterrarle el pie un par de
+	# metros lo arregla para siempre y no se ve, porque lo que sobra queda dentro
+	# del terreno. Es mucho más robusto que perseguir que el terreno quede
+	# perfectamente plano debajo de cada muro.
+	#
+	# HACIA ARRIBA (`muro_tope`) va SOLO LA COLISIÓN, no la malla. Donde el
+	# terreno de al lado sube, el seto queda bajo y se salta por encima — y
+	# subirlo de verdad se leería como un paredón, que es justo lo que no
+	# queremos. Así que lo que se ve mide lo que medía y lo que choca llega más
+	# alto: el límite se respeta sin que el parque parezca amurallado.
+	var es_muro := nombre.begins_with("Borde")
+	var base := Basis.from_euler(Vector3(inclinacion, giro, peralte))
+	# El «abajo» de una pieza inclinada es su eje local, no el del mundo.
+	var arriba := base.y.normalized()
+	var pie: float = muro_pie if es_muro else 0.0
+	var tope: float = muro_tope if es_muro else 0.0
+
 	# `peralte` es el vuelco lateral, sobre el eje que sigue al camino. Lo usan
 	# los taludes: una losa de suelo volcada 58° deja de ser suelo y pasa a ser
 	# ladera, sin necesidad de otra malla ni de otra forma de colisión.
@@ -616,10 +711,10 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 	# superficie plana exacta, que la rejilla del terreno no puede garantizar—
 	# pero lo que se ve es el terreno, que ahora sube hasta su cara de arriba.
 	# Un cuerpo sin malla no cuesta ni un triángulo ni una llamada de dibujado.
+	var tam_visual := Vector3(tam.x, tam.y + pie, tam.z)
+	var centro_visual := centro - arriba * (pie * 0.5)
 	if not nombre.begins_with("Suelo"):
-		var pose := Transform3D(
-			Basis.from_euler(Vector3(inclinacion, giro, peralte)) * Basis.from_scale(tam),
-			centro)
+		var pose := Transform3D(base * Basis.from_scale(tam_visual), centro_visual)
 		var lote: Array = _lotes.get(superficie, [])
 		lote.append(pose)
 		_lotes[superficie] = lote
@@ -630,14 +725,15 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 
 	var cuerpo := StaticBody3D.new()
 	cuerpo.name = nombre
-	cuerpo.position = centro
+	# La caja de choque cubre desde el pie enterrado hasta el tope invisible.
+	cuerpo.position = centro + arriba * ((tope - pie) * 0.5)
 	cuerpo.rotation = Vector3(inclinacion, giro, peralte)
 	cuerpo.collision_layer = 1
 	cuerpo.collision_mask = 0
 
 	var forma := CollisionShape3D.new()
 	var caja := BoxShape3D.new()
-	caja.size = tam
+	caja.size = Vector3(tam.x, tam.y + pie + tope, tam.z)
 	forma.shape = caja
 	cuerpo.add_child(forma)
 
@@ -657,11 +753,15 @@ func _losa(nombre: String, centro: Vector3, tam: Vector3, superficie: String,
 		# camino, y sin esto el motor dibujaba igualmente los cien árboles del
 		# otro lado. Solo los muros: los suelos son planos y desde arriba no
 		# tapan nada, y cada tapadera cuesta CPU al rasterizarse.
+		#
+		# Va con la caja VISUAL, no con la de choque: la parte alta del muro es
+		# aire invisible y no tapa nada, y decirle al motor que sí lo hace le
+		# haría descartar cosas que sí se ven.
 		var tapadera := OccluderInstance3D.new()
 		var bulto := BoxOccluder3D.new()
-		bulto.size = tam
+		bulto.size = tam_visual
 		tapadera.occluder = bulto
-		tapadera.position = centro
+		tapadera.position = centro_visual
 		tapadera.rotation = Vector3(inclinacion, giro, peralte)
 		add_child(tapadera)
 

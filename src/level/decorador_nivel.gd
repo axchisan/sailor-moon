@@ -654,6 +654,7 @@ func decorar(constructor: ConstructorNivel) -> void:
 	_alto_suelo = constructor.grosor_suelo * 0.5
 	_huecos.clear()
 	_estorbos = constructor.estorbos
+	_apartar_el_blockout(constructor)
 	_sin_suelo = 0
 	_por_encima = 0
 	_dentro_de_muro = 0
@@ -1606,6 +1607,33 @@ func _posar(sitio: Vector3) -> Vector3:
 ## plantaba siempre horizontal, y en la ladera de al lado de la fuente eso
 ## dejaba media plaza de piedras planas clavadas de canto en la cuesta. Lo que
 ## va tumbado tiene que tumbarse CON el suelo.
+## Los cuerpos del blockout, que el rayo de `_apoyo()` tiene que ignorar.
+##
+## POR QUÉ HAY QUE APARTARLOS
+##
+## Los props se posan con un rayo hacia abajo contra la capa del escenario, y en
+## esa capa está el terreno pero TAMBIÉN las losas del blockout, que ya no se
+## dibujan. El terreno sube hasta la cara de arriba de cada losa, pero lo hace
+## con vértices cada tres metros: entre dos vértices, cerca del borde de la
+## losa, la malla interpolada puede quedar un dedo por debajo. Ahí el rayo
+## chocaba con la losa —invisible— en vez de con el terreno, y el prop se
+## plantaba sobre un suelo que no está: se veía el tronco, el farol y la mata
+## flotando un palmo por encima de la hierba.
+##
+## Apartándolos, el rayo solo puede encontrar el terreno, que es exactamente lo
+## que se ve. Si en algún punto el terreno queda un dedo por debajo de la losa,
+## el prop se hunde ese dedo en vez de flotarlo — y eso no se nota.
+var _apartados: Array[RID] = []
+
+
+func _apartar_el_blockout(constructor: ConstructorNivel) -> void:
+	_apartados.clear()
+	for hijo in constructor.get_children():
+		var cuerpo := hijo as StaticBody3D
+		if cuerpo != null:
+			_apartados.append(cuerpo.get_rid())
+
+
 func _apoyo(sitio: Vector3) -> Dictionary:
 	var plano := {"punto": sitio, "normal": Vector3.UP}
 	var espacio := get_world_3d().direct_space_state
@@ -1620,6 +1648,7 @@ func _apoyo(sitio: Vector3) -> Dictionary:
 	var consulta := PhysicsRayQueryParameters3D.create(
 		sitio + Vector3.UP * 90.0, sitio + Vector3.DOWN * 60.0)
 	consulta.collision_mask = 1
+	consulta.exclude = _apartados
 	var choque := espacio.intersect_ray(consulta)
 	if choque.is_empty():
 		# Sin suelo debajo. Se devuelve con la Y a infinito para que `_plantar`
