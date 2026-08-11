@@ -48,7 +48,7 @@ velocidad = 42.0
 
 [sub_resource type="Resource" id="L03"]
 script = ExtResource("2_linea")
-animacion = "hurt"
+animacion = "surprised"
 actua = "personaje"
 hablante = "mercury"
 texto = "¿Ho-hola? ¿Hay alguien ahí?"
@@ -151,7 +151,7 @@ velocidad = 42.0
 
 [sub_resource type="Resource" id="L14"]
 script = ExtResource("2_linea")
-animacion = "victory"
+animacion = "nod"
 actua = "jugador"
 hablante = "serena"
 texto = "¡Sailor Mercury! ¡Ahora sí que estamos completas!"

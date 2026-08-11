@@ -446,10 +446,20 @@ idéntico al personaje del juego y no hay que buscar imágenes por ahí.
 
 Tres gestos por personaje: normal, contenta, preocupada.
 
-### F2. Animación de hablar
+### F2. Animación de hablar ✅ hecho
 
-Ahora una línea dispara un gesto seco. Debe entrar un **bucle de hablar**
-mientras dura la frase, y los gestos puntuales mezclarse encima.
+Ahora hay un **bucle de hablar** (`talk_idle`) por debajo de toda la
+conversación, y los gestos se mezclan encima como acentos. Antes cada línea
+disparaba un gesto suelto y, entre gesto y gesto, los dos personajes volvían a
+la pose de estar de pie: dos estatuas turnándose para soltar un manotazo.
+
+Tras cada gesto se vuelve al bucle. No hay señal fiable de «este gesto terminó»
+—el `AnimationTree` mezcla y no avisa por estado— así que se le pregunta a la
+librería cuánto dura y se espera eso, igual que hace el combate para encajar los
+golpes.
+
+Y los gestos del diálogo de Mercury dejan de ser prestados del combate: `hurt`
+pasa a `surprised` y `victory` a `nod`, que es lo que dicen las frases.
 
 ### F3. Transiciones
 

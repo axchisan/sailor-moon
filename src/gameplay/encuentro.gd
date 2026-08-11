@@ -167,24 +167,78 @@ func empezar() -> void:
 		_al_terminar("")
 
 
-## Lanza el gesto que lleve la línea. Es lo que separa una conversación de dos
-## estatuas hablando: en la transformación de Ami se ve el brazo alzado en vez
-## de leer que se transforma.
+## El bucle base mientras se conversa.
+##
+## Antes cada línea disparaba un gesto suelto y, entre gesto y gesto, los dos
+## personajes se quedaban en la pose de estar de pie: dos estatuas turnándose
+## para soltar un manotazo. Con un bucle de hablar por debajo, el gesto pasa a
+## ser un ACENTO sobre algo que ya se está moviendo, que es lo que hace que
+## parezca una conversación.
+const BUCLE_HABLAR := "talk"
+
+## Cuánto se espera tras un gesto antes de volver al bucle.
+##
+## No hay señal fiable de «este gesto terminó» —el `AnimationTree` mezcla y no
+## avisa por estado— así que se pregunta a la librería cuánto dura y se espera
+## eso. Es lo mismo que hace el combate para encajar los golpes.
+const MARGEN_GESTO := 0.15
+
+
+## Lanza el gesto que lleve la línea, sobre el bucle de hablar. Es lo que separa
+## una conversación de dos estatuas: en la transformación de Ami se ve el brazo
+## alzado en vez de leer que se transforma.
 func _al_mostrar_linea(indice: int) -> void:
 	if dialogo == null or indice < 0 or indice >= dialogo.lineas.size():
 		return
 	var linea: LineaDialogo = dialogo.lineas[indice]
+	var habla_el_jugador := linea.actua == "jugador"
+
+	# Sin gesto propio, quien habla se queda en el bucle de hablar. Antes se
+	# quedaba parado y la línea se leía sobre una estatua.
 	if linea.animacion.is_empty():
+		_animar(habla_el_jugador, BUCLE_HABLAR)
 		return
-	if linea.actua == "jugador":
+
+	_animar(habla_el_jugador, linea.animacion)
+	await _esperar_gesto(habla_el_jugador, linea.animacion)
+	# Y de vuelta al bucle, si la conversación sigue viva. Sin esto, el
+	# personaje se queda clavado en la última pose del gesto hasta la línea
+	# siguiente.
+	if _hablando:
+		_animar(habla_el_jugador, BUCLE_HABLAR)
+
+
+## Pide una animación a quien corresponda. El jugador y el personaje del
+## encuentro se animan por vías distintas, y esto lo deja en un solo sitio.
+func _animar(al_jugador: bool, estado: String) -> void:
+	if al_jugador:
 		if _jugador != null and _jugador.has_method("play"):
-			_jugador.call("play", linea.animacion)
+			_jugador.call("play", estado)
 	elif _visual != null:
-		_visual.reproducir(linea.animacion)
+		_visual.reproducir(estado)
+
+
+func _esperar_gesto(del_jugador: bool, estado: String) -> void:
+	var animador: CharacterAnimator = null
+	if del_jugador and _jugador != null:
+		animador = _jugador.get("animator") as CharacterAnimator
+	elif _visual != null:
+		animador = _visual.get("_animador") as CharacterAnimator
+	var duracion := 0.9
+	if animador != null:
+		var largo := animador.get_length(
+			CharacterAnimator.ANIMACION_DE.get(estado, estado))
+		if largo > 0.0:
+			duracion = largo
+	await get_tree().create_timer(duracion + MARGEN_GESTO).timeout
 
 
 func _al_terminar(_id_dialogo: String) -> void:
 	_hablando = false
+	# Los dos vuelven a estar de pie. Sin esto se quedan gesticulando solos
+	# después de que el cuadro de diálogo se haya cerrado.
+	_animar(true, "locomocion")
+	_animar(false, "locomocion")
 	_congelar_jugador(false)
 	encuentro_terminado.emit(id)
 
