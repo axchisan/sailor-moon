@@ -835,6 +835,24 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
    cinemática cuya cámara depende de por dónde llegue la jugadora, eso falla a
    veces sí y a veces no. Comprobar la distancia antes de llamarlo.
 
+94. **La `global_position` de una arena no es su suelo.** El nodo `Guardian` está
+   a y=2,5 y el suelo por el que se anda a y=3,6: los enemigos aparecían medio
+   metro bajo tierra, salían despedidos a cualquier parte y la oleada se quedaba
+   esperando a uno que ya no se podía matar. Los sitios de aparición se sacan
+   ahora con un rayo al suelo real, igual que los faroles y los props (trampa 37
+   otra vez, en otro sitio). Si algo se coloca «a la altura de la arena», está
+   mal colocado.
+95. **Un enemigo perdido cuelga el nivel para siempre.** La oleada solo avanza
+   cuando no queda nadie vivo, así que uno inalcanzable —volando fuera, caído,
+   atascado— deja el juego muerto sin decir nada. Hay vigilancia en
+   `_vigilar_perdidos()`, pero la regla general es: **cualquier condición de
+   avance que dependa de que un enemigo muera necesita una salida**.
+96. **Dos números con el mismo «de 6» en el mismo renglón se confunden siempre.**
+   «✓ Enciende los seis faroles  (2 de 6)» — el segundo par son objetivos del
+   parque, no faroles, y no hay forma de leerlo bien. El conteo estaba perfecto;
+   lo que estaba mal era la frase. Antes de buscar un bug en un contador, leer en
+   voz alta lo que sale por pantalla.
+
 ## 7. Decisiones tomadas y por qué
 
 | Decisión | Motivo |

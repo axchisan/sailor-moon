@@ -130,8 +130,18 @@ func _anunciar(id: String) -> void:
 			break
 	objetivo_cumplido.emit(id, cuantos_hechos(), LISTA.size())
 	if avisar:
-		EventBus.show_message.emit("✓ %s  (%d de %d)" % [
-			texto, cuantos_hechos(), LISTA.size()], 2.4)
+		# EL RECUENTO VA EN SU PROPIA LÍNEA Y DICE DE QUÉ ES.
+		#
+		# Antes era «✓ Enciende los seis faroles  (2 de 6)», y ese «2 de 6» son
+		# objetivos del parque, no faroles. Pegado a un texto que habla de seis
+		# faroles no hay forma de leerlo bien: parecía que al encender el sexto
+		# el juego solo contaba dos, y el conteo estaba perfecto — lo que estaba
+		# mal era la frase.
+		#
+		# Dos números distintos con el mismo «de 6» en el mismo renglón se van a
+		# confundir siempre, por muy correctos que sean los dos.
+		EventBus.show_message.emit("✓ %s\nLlevas %d de %d objetivos del parque" % [
+			texto, cuantos_hechos(), LISTA.size()], 3.0)
 
 
 func _comprobar_final() -> void:

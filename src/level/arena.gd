@@ -266,7 +266,9 @@ func _physics_process(delta: float) -> void:
 		return
 
 	if _alive_count() > 0:
+		_vigilar_perdidos(delta)
 		return
+	_sin_bajas = 0.0
 
 	EventBus.wave_cleared.emit(_wave_index)
 
@@ -275,6 +277,73 @@ func _physics_process(delta: float) -> void:
 	else:
 		_waiting = true
 		_delay_timer = wave_delay
+
+
+## NINGÚN ENEMIGO PUEDE COLGAR LA OLEADA PARA SIEMPRE.
+##
+## La oleada solo avanza cuando no queda nadie vivo, así que **un solo enemigo
+## al que no se pueda llegar deja el nivel muerto**: no salen más, no se abre la
+## barrera y no hay nada que hacer salvo cerrar el juego. Pasa con más facilidad
+## de la que parece — la Hadita vuela y huye, y la del guardián nace en una
+## cuesta desde la que se rueda—, y para quien juega no se distingue de que el
+## juego esté roto, porque lo está.
+##
+## Así que se vigila: al que se sale del ruedo o se cae se le trae de vuelta, y
+## si pasa un buen rato sin que muera nadie se traen todos junto a la jugadora.
+## No se les da por muertos —eso sí sería regalar la pelea—: se les devuelve a
+## ella.
+const RESCATE_SECO := 25.0
+
+var _sin_bajas: float = 0.0
+var _vivos_antes: int = -1
+
+
+func _vigilar_perdidos(delta: float) -> void:
+	var vivos := _alive_count()
+	if vivos < _vivos_antes or _vivos_antes < 0:
+		# Ha caído alguno: la pelea avanza, no hay nada que rescatar.
+		_sin_bajas = 0.0
+	_vivos_antes = vivos
+	_sin_bajas += delta
+
+	var jugador := get_tree().get_first_node_in_group("player") as Node3D
+	var seco := _sin_bajas >= RESCATE_SECO
+	var alguno := false
+
+	for nodo in _spawned:
+		if not is_instance_valid(nodo):
+			continue
+		var enemigo := nodo as Enemy
+		if enemigo == null or enemigo.defeated:
+			continue
+		var p := enemigo.global_position
+		var lejos := Vector2(p.x - global_position.x, p.z - global_position.z) \
+			.length() > barrier_radius
+		var caido := p.y < global_position.y - 6.0
+		if not (lejos or caido or seco):
+			continue
+		alguno = true
+		# Al lado de la jugadora, no en el centro: si el rescate la deja en la
+		# otra punta del ruedo, vuelve a perderse antes de que llegue nadie.
+		#
+		# Salvo que ella misma esté fuera del ruedo, que en partida no pasa —la
+		# pelea arranca al entrar— pero sí al depurar: entonces el rescate los
+		# sacaba a todos de la arena en vez de meterlos.
+		var destino := global_position
+		if jugador != null:
+			var d := Vector2(jugador.global_position.x - global_position.x,
+				jugador.global_position.z - global_position.z).length()
+			if d <= barrier_radius:
+				destino = jugador.global_position
+		var giro := randf() * TAU
+		enemigo.global_position = destino \
+			+ Vector3(cos(giro), 0.0, sin(giro)) * 4.0 + Vector3.UP * 0.6
+		if enemigo is CharacterBody3D:
+			(enemigo as CharacterBody3D).velocity = Vector3.ZERO
+
+	if alguno and seco:
+		_sin_bajas = 0.0
+		EventBus.show_message.emit("¡Se escondían! Aquí vienen otra vez", 2.5)
 
 
 func _next_wave() -> void:
@@ -301,11 +370,43 @@ func _spawn_enemy(index: int, total: int) -> void:
 	# Repartidos en círculo para que no aparezcan todos amontonados encima
 	# del jugador. Aparecer pegado a la cara es lo más injusto que hay.
 	var angle := TAU * (float(index) / maxf(1.0, float(total))) + randf() * 0.4
-	var offset := Vector3(cos(angle), 0.0, sin(angle)) * spawn_radius
 	get_parent().add_child(enemy)
-	enemy.global_position = global_position + offset + Vector3.UP * 0.5
+	enemy.global_position = _sitio_de_aparicion(angle)
 
 	_spawned.append(enemy)
+
+
+## APARECER SOBRE EL SUELO QUE HAY, NO SOBRE EL QUE DEBERÍA HABER.
+##
+## El anillo de aparición se calculaba en plano, a la altura del centro de la
+## arena. En la del guardián eso pone tres de cada dieciséis sitios en plena
+## cuesta de entrada, con dos metros de desnivel: quien sale ahí nace enterrado
+## hasta el pecho o cayéndose, y de ahí sale rodando a cualquier parte.
+##
+## Se prueba el ángulo pedido y, si no hay suelo firme, se va girando. Nueve
+## intentos y se rinde: si no cabe en ninguno, mejor uno mal puesto —al que el
+## rescate de más abajo alcanzará— que ningún enemigo y una oleada que no acaba.
+func _sitio_de_aparicion(angulo: float) -> Vector3:
+	var espacio := get_world_3d().direct_space_state
+	for intento in 9:
+		var a := angulo + TAU * float(intento) / 9.0
+		var p := global_position + Vector3(cos(a), 0.0, sin(a)) * spawn_radius
+		if espacio == null:
+			return p + Vector3.UP * 0.5
+		var consulta := PhysicsRayQueryParameters3D.create(
+			p + Vector3.UP * 5.0, p + Vector3.DOWN * 20.0)
+		consulta.collision_mask = 1
+		var choque := espacio.intersect_ray(consulta)
+		if choque.is_empty():
+			continue
+		var suelo: float = choque["position"].y
+		# Un escalón de metro y medio respecto al centro ya no es la arena: es
+		# la cuesta de al lado o el techo de un muro.
+		if absf(suelo - global_position.y) > 1.5:
+			continue
+		return Vector3(p.x, suelo + 0.5, p.z)
+	return global_position + Vector3(cos(angulo), 0.0, sin(angulo)) * spawn_radius \
+		+ Vector3.UP * 0.5
 
 
 ## Mezcla la oleada. Los enemigos extra solo entran a partir de
