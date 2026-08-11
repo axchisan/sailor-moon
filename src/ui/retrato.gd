@@ -34,14 +34,14 @@ const CAPA_RETRATO := 10
 ## píxel de más se paga en el móvil.
 const LADO := 256
 
-## A qué altura de la cara apunta, en metros desde los pies.
+## A qué altura del personaje está la cara, en fracción de su altura total.
+##
+## Sale así y no en metros porque los personajes miden cosas muy distintas:
+## Serena 1,6 m y Luna cuarenta centímetros. Un número fijo enfocaba a la una y
+## le apuntaba al aire por encima de la otra.
+const PROPORCION_CARA := 0.88
+## Altura de emergencia si el modelo no da su caja envolvente.
 const ALTURA_CARA := 1.42
-## Desde qué distancia. Más cerca deforma con el gran angular, más lejos deja de
-## ser un primer plano.
-const DISTANCIA := 0.85
-## Cuánto se desplaza a un lado, para que no salga perfectamente de frente. Una
-## cara centrada y simétrica se lee como una foto de carnet.
-const LADEO := 0.32
 
 var _camara: Camera3D = null
 
@@ -90,16 +90,50 @@ func enfocar(visual: Node3D) -> bool:
 	var mallas := visual.find_children("*", "MeshInstance3D", true, false)
 	if mallas.is_empty():
 		return false
+
 	for malla in mallas:
 		(malla as MeshInstance3D).layers |= 1 << (CAPA_RETRATO - 1)
 
-	# Delante de la cara y un poco de lado. El frente del personaje es su −Z.
+	# LA CARA SE BUSCA POR EL HUESO DE LA CABEZA.
+	#
+	# El primer intento la sacaba de la caja envolvente del modelo, y salió mal
+	# de una forma muy tonta: a estos personajes se les pone un `custom_aabb`
+	# enorme a propósito —2,6 m— para que no desaparezcan por frustum culling
+	# cuando la animación se sale de la caja de reposo (trampa 11). Preguntarle
+	# la altura a esa caja es preguntársela a un número inventado, así que el
+	# encuadre salía por las nubes y se veían los pies.
+	#
+	# El hueso de la cabeza no miente y además vale para cualquiera: Serena mide
+	# 1,6 y Luna cuarenta centímetros, y a las dos se les enfoca la cara.
+	var cara := _donde_esta_la_cara(visual)
+
+	# Delante y un poco de lado. El frente del personaje es su −Z.
 	var frente := -visual.global_transform.basis.z.normalized()
 	var costado := visual.global_transform.basis.x.normalized()
-	var cara := visual.global_position + Vector3.UP * ALTURA_CARA
-	_camara.global_position = cara + frente * DISTANCIA + costado * LADEO
+	# La distancia se mide desde los pies hasta la cara: a un gato se le enfoca
+	# de más cerca que a una persona, o sale de cuerpo entero y diminuto.
+	var talla := maxf(cara.y - visual.global_position.y, 0.3)
+	var lejos := clampf(talla * 0.55, 0.3, 0.95)
+	_camara.global_position = cara + frente * lejos + costado * (lejos * 0.38)
 	_camara.look_at(cara, Vector3.UP)
 	return true
+
+
+## Dónde tiene la cara este personaje, en coordenadas del mundo.
+##
+## Por el hueso si lo hay; si no —modelos sin esqueleto, o con los huesos
+## nombrados de otra manera— se cae a una fracción de lo que mide la malla, que
+## para eso sí sirve la caja envolvente: lo que no vale es la del personaje
+## principal, que va inflada.
+func _donde_esta_la_cara(visual: Node3D) -> Vector3:
+	for nodo in visual.find_children("*", "Skeleton3D", true, false):
+		var esqueleto := nodo as Skeleton3D
+		for nombre in ["mixamorig_Head", "Head", "cabeza", "Cabeza"]:
+			var hueso := esqueleto.find_bone(nombre)
+			if hueso >= 0:
+				var pose := esqueleto.global_transform * esqueleto.get_bone_global_pose(hueso)
+				return pose.origin
+	return visual.global_position + Vector3.UP * ALTURA_CARA
 
 
 ## Deja al personaje como estaba. Sin esto se queda en la capa del retrato para

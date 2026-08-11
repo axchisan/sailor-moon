@@ -255,7 +255,7 @@ func _al_mostrar_linea(indice: int) -> void:
 	# Luna no tiene librería de animaciones —es el gato, con su esqueleto a
 	# mano— así que cuando habla ella no se anima nadie. Es lo correcto: mover a
 	# Amy mientras habla Luna es justamente lo que se veía mal.
-	var nadie_actua := not habla_el_jugador and quien != _id_del_personaje()
+	var nadie_actua := not habla_el_jugador and not _habla_el_personaje(quien)
 
 	_seguir_al_que_habla(quien)
 	# El que NO habla vuelve a estar de pie. Sin esto se queda gesticulando
@@ -281,9 +281,21 @@ func _al_mostrar_linea(indice: int) -> void:
 		_animar(habla_el_jugador, BUCLE_HABLAR)
 
 
-## Con qué id se llama al personaje de este encuentro.
-func _id_del_personaje() -> String:
-	return personaje.id if personaje != null and "id" in personaje else ""
+## ¿Habla el personaje de este encuentro?
+##
+## La comparación es tolerante a propósito. Los diálogos dicen `"mercury"` y el
+## recurso del personaje se llama `"sailor_mercury"`: comparándolos por igualdad
+## no coincidían NUNCA, así que Amy no gesticulaba ni salía en el retrato — se
+## quedaba muda en su propia conversación.
+##
+## Podría arreglarse renombrando uno de los dos, pero entonces habría que
+## acordarse cada vez que se añada un personaje, y este es exactamente el tipo
+## de detalle que no se recuerda. Que uno contenga al otro basta y no falla.
+func _habla_el_personaje(quien: String) -> bool:
+	if personaje == null or quien.is_empty():
+		return false
+	var suyo: String = personaje.id
+	return suyo == quien or suyo.contains(quien) or quien.contains(suyo)
 
 
 ## Mueve el retrato al que está hablando.
@@ -297,7 +309,7 @@ func _seguir_al_que_habla(quien: String) -> void:
 	var objetivo: Node3D = null
 	if quien == "serena" or quien == "jugador":
 		objetivo = _jugador.get_node_or_null("Model") if _jugador != null else null
-	elif quien == _id_del_personaje():
+	elif _habla_el_personaje(quien):
 		objetivo = _visual
 	elif quien == "luna":
 		# Luna anda suelta por el parque siguiendo a Serena; se la busca por el
