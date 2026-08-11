@@ -540,6 +540,8 @@ var _hay_estanque := false
 ## en un sitio y el agua en otro.
 var _sitio_estanque_elegido := Vector3.ZERO
 var _estanque_buscado := false
+## Dónde espera cada personaje del reparto, para plantarle sus árboles detrás.
+var _sitios_encuentro: Array[Vector3] = []
 ## Dónde acabó cada rincón, para que el campo los respete y los senderos sepan
 ## a dónde ir: `{centro, radio}`.
 var _sitios_rincon: Array[Dictionary] = []
@@ -679,6 +681,7 @@ func decorar(constructor: ConstructorNivel) -> void:
 	# derecho tiene a su hueco — se le tapaba la cara con un matorral.
 	for sitio: Vector3 in constructor.sitios_encuentro:
 		_apuntar_hueco(sitio, 3.4)
+	_sitios_encuentro = constructor.sitios_encuentro
 	_por_encima = 0
 	_dentro_de_muro = 0
 	_sitios_rincon.clear()
@@ -700,6 +703,7 @@ func decorar(constructor: ConstructorNivel) -> void:
 	# llenaban de troncos. Colocándolos antes, son ellos los que reservan el
 	# sitio y el resto los rodea.
 	_puerta_de_entrada(constructor)
+	_arboles_de_los_encuentros()
 	if radio_estanque > 0.0:
 		_estanque(sitio_del_estanque(constructor))
 	_poblar_rincones(medida["centro"])
@@ -998,6 +1002,48 @@ func sitio_del_estanque(constructor: ConstructorNivel) -> Vector3:
 		% [elegido.x, elegido.z, Vector2(elegido.x - centro.x,
 		elegido.z - centro.z).length()])
 	return elegido
+
+
+## Los árboles detrás de cada personaje del reparto.
+##
+## POR QUÉ EXISTEN
+##
+## El diálogo de Mercury empieza con «Hay alguien detrás de esos árboles…», y
+## detrás de ella no había ni uno: se la veía de pie en mitad del césped desde
+## veinte metros antes, y la frase quedaba en ridículo. Lo que dice el guion hay
+## que ponerlo en el escenario, o el guion se convierte en un decorado que no
+## cuadra con lo que se está mirando.
+##
+## Se plantan al LADO CONTRARIO del camino —el que se aleja del recorrido—, así
+## que tapan desde donde se llega y dejan libre el frente para hablar. Y van de
+## los primeros en sembrarse, después de la puerta: si fueran al final, el hueco
+## que el propio encuentro tiene reservado se lo habría comido otra cosa.
+func _arboles_de_los_encuentros() -> void:
+	# Detrás, un poco a cada lado y a distinta distancia: tres en línea recta se
+	# leen como una valla, no como una arboleda.
+	const RAMILLETE := [
+		{"fondo": 3.2, "lado": -2.0, "escala": 1.25},
+		{"fondo": 4.1, "lado": 0.6, "escala": 1.5},
+		{"fondo": 3.0, "lado": 2.4, "escala": 1.15},
+	]
+	for sitio: Vector3 in _sitios_encuentro:
+		var desde_camino := sitio - _punto_del_recorrido_mas_cercano(sitio)
+		desde_camino.y = 0.0
+		if desde_camino.length_squared() < 0.01:
+			desde_camino = Vector3.FORWARD
+		desde_camino = desde_camino.normalized()
+		var costado := Vector3(-desde_camino.z, 0.0, desde_camino.x)
+
+		for arbol: Dictionary in RAMILLETE:
+			var punto := sitio + desde_camino * float(arbol["fondo"]) \
+				+ costado * float(arbol["lado"])
+			var escala: float = arbol["escala"]
+			_plantar({
+				"pieza": "arbol_cerezo",
+				"escala": [escala, escala],
+				"hundir": 0.15,
+				"pie": 0.35,
+			}, _posar(punto), _rng.randf() * TAU, Vector3.ZERO)
 
 
 ## ¿Cabe algo de este tamaño aquí sin pisar el recorrido ni una arena?

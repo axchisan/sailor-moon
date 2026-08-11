@@ -15,6 +15,23 @@ class_name Player
 @export var acceleration: float = 22.0
 @export var deceleration: float = 28.0
 @export var air_control: float = 0.45
+
+@export_group("Trepar cornisas")
+## A qué altura del suelo se palpa la pared. A la altura del pecho: más abajo
+## engancharía cualquier bordillo, más arriba se perdería la mitad de los
+## salientes.
+@export var alto_pecho: float = 1.1
+## Cuántos metros por delante se busca la pared.
+@export var alcance_cornisa: float = 0.65
+## Alturas entre las que un canto se considera agarrable, medidas desde los pies.
+##
+## Por debajo del mínimo se sube andando y agarrarse sería estorbar; por encima
+## del máximo no llegan los brazos y colgarse ahí se ve mal. Los setos del
+## parque quedan fuera por arriba a propósito: su colisión llega cuatro metros
+## por encima de lo que se ve (`muro_tope` del constructor), y el límite de un
+## parque no es un sitio por el que trepar.
+@export var alto_cornisa_min: float = 1.0
+@export var alto_cornisa_max: float = 2.3
 @export var rotation_speed: float = 14.0
 
 @export_group("Salto")
@@ -356,6 +373,68 @@ func snap_face_to(target_position: Vector3) -> void:
 
 
 # --- Física -------------------------------------------------------------------
+
+## ¿Hay una cornisa agarrable justo delante?
+##
+## Devuelve `{}` si no la hay, o `{borde, normal}` con el punto exacto del canto
+## y hacia dónde mira la pared.
+##
+## CÓMO SE BUSCA
+##
+## Con dos rayos, y el orden importa:
+##
+##   1. Uno horizontal a la altura del pecho, hacia donde se mira. Si no choca
+##      con nada, no hay pared que agarrar y se acabó — es el descarte barato.
+##   2. Otro vertical, desde por encima de la cabeza y un poco más allá de la
+##      pared, hacia abajo. Ese encuentra el CANTO de arriba.
+##
+## Y luego se comprueba que el canto esté a una altura razonable: ni tan bajo
+## que se suba andando, ni tan alto que no se llegue. Los setos del parque no
+## salen agarrables porque su colisión llega cuatro metros por encima de lo que
+## se ve (`muro_tope`), y eso es a propósito: un límite del parque no es un
+## sitio por el que trepar.
+##
+## Se mira solo la capa del escenario. Un enemigo no es una cornisa.
+func buscar_cornisa() -> Dictionary:
+	var espacio := get_world_3d().direct_space_state
+	if espacio == null:
+		return {}
+
+	var frente := -global_transform.basis.z.normalized()
+	var pecho := global_position + Vector3.UP * alto_pecho
+
+	var pared := PhysicsRayQueryParameters3D.create(
+		pecho, pecho + frente * alcance_cornisa)
+	pared.collision_mask = 1
+	pared.exclude = [get_rid()]
+	var choque_pared := espacio.intersect_ray(pared)
+	if choque_pared.is_empty():
+		return {}
+
+	# Desde arriba y un poco pasada la pared, hacia abajo. El punto de salida
+	# tiene que estar POR ENCIMA del canto o el rayo sale ya dentro del muro y
+	# no encuentra nada.
+	var sonda: Vector3 = global_position + Vector3.UP * (alto_cornisa_max + 0.4) \
+		+ frente * (alcance_cornisa + 0.12)
+	var techo := PhysicsRayQueryParameters3D.create(
+		sonda, sonda + Vector3.DOWN * (alto_cornisa_max + 0.5))
+	techo.collision_mask = 1
+	techo.exclude = [get_rid()]
+	var choque_canto := espacio.intersect_ray(techo)
+	if choque_canto.is_empty():
+		return {}
+
+	var canto: Vector3 = choque_canto["position"]
+	var altura := canto.y - global_position.y
+	if altura < alto_cornisa_min or altura > alto_cornisa_max:
+		return {}
+	# Tiene que ser una superficie por la que se pueda andar. Un tejado
+	# inclinado no es una cornisa: se agarraría para acabar resbalando.
+	if choque_canto["normal"].y < 0.7:
+		return {}
+
+	return {"borde": canto, "normal": choque_pared["normal"]}
+
 
 func apply_gravity(delta: float) -> void:
 	var g := jump_gravity if velocity.y > 0.0 else fall_gravity

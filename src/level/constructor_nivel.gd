@@ -1040,8 +1040,50 @@ func _peana(cima: Vector3, sobre_el_camino: float) -> void:
 		if not choque.is_empty():
 			base = choque["position"].y
 	var alto := maxf(cima.y - base, 0.4)
-	_losa("Peana", Vector3(cima.x, base + alto * 0.5, cima.z),
-		Vector3(2.2, alto, 2.2), plataforma, 0.0)
+	var centro := Vector3(cima.x, base + alto * 0.5, cima.z)
+	# Estrecha y de piedra, como un pedestal. Medía 2,2 de lado y era de madera
+	# de plataforma, y mientras fue invisible dio igual; en cuanto se ve, un
+	# bloque así de ancho no se lee como el apoyo de un farol sino como una caja
+	# tirada en el camino.
+	var tam := Vector3(1.15, alto, 1.15)
+
+	# LA PEANA SE CONSTRUYE SUELTA, NO POR `_losa()`.
+	#
+	# Aquí estaba el farol flotante. `_losa()` no dibuja nada: apunta la pose en
+	# un lote que `_volcar_lotes()` convierte en multimalla al final de
+	# `construir()`. Pero las peanas nacen en `sembrar_faroles()`, que el nivel
+	# llama MÁS TARDE —necesita el terreno hecho para saber a qué altura está el
+	# suelo—, así que su pose se guardaba en un lote ya volcado y no se dibujaba
+	# nunca.
+	#
+	# El resultado era exactamente lo que se veía: el farol arriba, en el aire, y
+	# debajo un bloque invisible con el que se chocaba. Como pieza suelta son un
+	# nodo y una llamada de dibujado por farol alto — hay uno en todo el nivel.
+	var cuerpo := StaticBody3D.new()
+	cuerpo.name = "Peana"
+	cuerpo.position = centro
+	cuerpo.collision_layer = 1
+	cuerpo.collision_mask = 0
+
+	var malla := BoxMesh.new()
+	malla.size = tam
+	var visual := MeshInstance3D.new()
+	visual.mesh = malla
+	visual.material_override = PaletaTerreno.obtener("piedra")
+	cuerpo.add_child(visual)
+
+	var forma := CollisionShape3D.new()
+	var caja := BoxShape3D.new()
+	caja.size = tam
+	forma.shape = caja
+	cuerpo.add_child(forma)
+	add_child(cuerpo)
+
+	estorbos.append({
+		"centro": centro,
+		"mitad": Vector2(tam.x * 0.5, tam.z * 0.5),
+		"giro": 0.0,
+	})
 
 
 ## Siembra las Estrellas de Sueño. Devuelve cuántas colocó.
