@@ -57,6 +57,8 @@ var _tiempo: float = 0.0
 var _enfriamiento: float = 0.0
 ## El primer plano en vivo, solo mientras dura la conversación.
 var _retrato: Retrato = null
+## A quién está enfocando el retrato ahora mismo.
+var _enfocado: Node3D = null
 
 ## Cuánto dura ese respiro.
 const RESPIRO_TRAS_CERRAR := 0.8
@@ -198,6 +200,7 @@ func _montar_retrato(panel: Node) -> void:
 	_retrato = Retrato.new()
 	_retrato.name = "Retrato"
 	add_child(_retrato)
+	_enfocado = _visual
 	if _retrato.enfocar(_visual):
 		panel.poner_retrato(_retrato.get_texture())
 	else:
@@ -209,9 +212,10 @@ func _tirar_retrato(panel: Node) -> void:
 		panel.poner_retrato(null)
 	if _retrato == null:
 		return
-	_retrato.soltar(_visual)
+	_retrato.soltar(_enfocado)
 	_retrato.queue_free()
 	_retrato = null
+	_enfocado = null
 
 
 ## El bucle base mientras se conversa.
@@ -238,10 +242,32 @@ func _al_mostrar_linea(indice: int) -> void:
 	if dialogo == null or indice < 0 or indice >= dialogo.lineas.size():
 		return
 	var linea: LineaDialogo = dialogo.lineas[indice]
-	var habla_el_jugador := linea.actua == "jugador"
 
-	# Sin gesto propio, quien habla se queda en el bucle de hablar. Antes se
-	# quedaba parado y la línea se leía sobre una estatua.
+	# MANDA `hablante`, NO `actua`.
+	#
+	# `actua` era opcional y casi nunca estaba puesto, así que todo caía por
+	# defecto en el personaje del encuentro: hablara quien hablara —Luna,
+	# Serena— la que gesticulaba era Amy, y Serena se quedaba tiesa cuando le
+	# tocaba a ella. Quién habla ya lo dice cada línea; no hacía falta un
+	# segundo campo para lo mismo.
+	var quien := linea.hablante
+	var habla_el_jugador := quien == "serena" or quien == "jugador"
+	# Luna no tiene librería de animaciones —es el gato, con su esqueleto a
+	# mano— así que cuando habla ella no se anima nadie. Es lo correcto: mover a
+	# Amy mientras habla Luna es justamente lo que se veía mal.
+	var nadie_actua := not habla_el_jugador and quien != _id_del_personaje()
+
+	_seguir_al_que_habla(quien)
+	# El que NO habla vuelve a estar de pie. Sin esto se queda gesticulando
+	# mientras habla el otro, que es la mitad del problema de que «siempre se
+	# mueve Amy»: no es que se moviera de más, es que no paraba nunca.
+	if habla_el_jugador or nadie_actua:
+		_animar(false, "locomocion")
+	if not habla_el_jugador or nadie_actua:
+		_animar(true, "locomocion")
+	if nadie_actua:
+		return
+
 	if linea.animacion.is_empty():
 		_animar(habla_el_jugador, BUCLE_HABLAR)
 		return
@@ -253,6 +279,38 @@ func _al_mostrar_linea(indice: int) -> void:
 	# siguiente.
 	if _hablando:
 		_animar(habla_el_jugador, BUCLE_HABLAR)
+
+
+## Con qué id se llama al personaje de este encuentro.
+func _id_del_personaje() -> String:
+	return personaje.id if personaje != null and "id" in personaje else ""
+
+
+## Mueve el retrato al que está hablando.
+##
+## Antes enfocaba siempre al personaje del encuentro, así que salía Amy con el
+## nombre de Luna debajo. El retrato tiene que decir QUIÉN habla, que es
+## justamente para lo que sirve.
+func _seguir_al_que_habla(quien: String) -> void:
+	if _retrato == null:
+		return
+	var objetivo: Node3D = null
+	if quien == "serena" or quien == "jugador":
+		objetivo = _jugador.get_node_or_null("Model") if _jugador != null else null
+	elif quien == _id_del_personaje():
+		objetivo = _visual
+	elif quien == "luna":
+		# Luna anda suelta por el parque siguiendo a Serena; se la busca por el
+		# grupo en vez de guardarla, porque puede no estar en esta escena.
+		for gato in get_tree().current_scene.find_children("*", "Companero", true, false):
+			objetivo = gato
+			break
+
+	if objetivo == null:
+		return
+	_retrato.soltar(_enfocado)
+	if _retrato.enfocar(objetivo):
+		_enfocado = objetivo
 
 
 ## Pide una animación a quien corresponda. El jugador y el personaje del
