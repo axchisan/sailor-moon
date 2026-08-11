@@ -1,5 +1,8 @@
 # El Guardián del Portal
 
+> **Hecho y en el juego.** Modelo, esqueleto, ocho animaciones y la pelea con
+> sus tres fases. Lo que queda al final del documento son los remates.
+
 Cierre del Acto 1. Aparece cuando la lista de objetivos está completa y se
 planta delante de la ruina: la puerta no se abre porque sí, se abre porque
 alguien la deja abrir.
@@ -77,22 +80,64 @@ todo lo del nivel.
 - **Una sola vista.** Las láminas de «model sheet» con tres poses dan tres
   medio-modelos superpuestos.
 
-## Cuando llegue el modelo
+## Cómo se montó
 
-Va al mismo sitio que el resto: `Models/`, y de ahí a una escena en
-`scenes/enemies/`. Escala de referencia: **2,6 m de alto** — Serena mide 1,6, y
-esa proporción es la que lo hace leerse como jefe sin dejar de caber en la
-arena.
+El modelo llegó con **dos millones de triángulos**, 74 MB y sin esqueleto. Lo
+que se hizo con él, por si hay que repetirlo con otro:
 
-Necesitará esqueleto para animar. Los reconstructores de imagen no lo dan, así
-que toca ponérselo en Blender (Rigify o Mixamo).
+1. **Reducir a 25 000 triángulos** (Decimate, ratio 0,0125). Es UN jefe en
+   pantalla, no una multitud, así que se le puede dar más que a un peluche —
+   pero dos millones no los mueve ningún móvil. A 25k no se nota la diferencia:
+   siguen ahí los cristales, el musgo y las florecitas.
+2. **Texturas de 4K a 1024**, y fuera la de *metallic/roughness*: el juego pinta
+   con MToon y no la mira. Eran ocho megas para un canal que nadie lee. Con eso
+   el `.glb` pasó de 74 MB a **1,3 MB**.
+3. **Esqueleto de 19 huesos**, puesto por código con las medidas sacadas de
+   dónde está cada pieza — no a ojo.
+4. **Pesos rígidos**: cada vértice a un solo hueso y con peso entero. Lo normal
+   es repartirlos para que la piel se doble suave, pero esto es un golem de
+   placas de piedra y la piedra no se estira. Repartir pesos aquí solo consigue
+   que las placas se deformen como goma en los codos, que es lo que delata a un
+   muñeco barato.
+5. **Ocho animaciones** a mano en Blender.
 
-## Lo que queda por decidir
+El `.blend` está en `Models/guardian_portal.blend`. Si hay que retocar una
+animación o añadir otra, se abre ese — rehacer el rig desde el `.glb` original
+de dos millones de triángulos no es una opción.
 
-Nada de esto bloquea el modelo — se puede ir haciendo mientras:
+## Las animaciones
 
-- Qué hace en la pelea. La idea de partida: **tres fases**, una por cada cosa
-  que ya se sabe hacer (pegar, esquivar, saltar), para que el jefe sea el examen
-  de lo aprendido y no una mecánica nueva de última hora.
-- Que la barrera del claro se cierre al empezar, que para eso está puesta ya.
-- Música propia. Es el único sitio del acto que la pide.
+| Nombre | Qué es |
+|---|---|
+| `reposo` | Casi nada, a propósito. Un golem que se mueve mucho parado deja de pesar |
+| `andar` | El peso está en el balanceo lateral, no en la zancada |
+| `despertar` | Cinco segundos desde el ovillo hasta ponerse de pie. Es su presentación |
+| `golpe` | Anticipación larga y bajada seca |
+| `golpe_suelo` | Los dos puños arriba y abajo. Sin usar todavía |
+| `rugido` | El aviso entre fases |
+| `dano` | Corto y con poco recorrido: si se tambalea con cada golpe, deja de imponer |
+| `derrota` | No explota. Se le apaga la luz y se sienta a quedarse quieto otra vez |
+
+## Cómo pelea
+
+No estrena mecánicas. Un jefe que pide algo que el nivel no ha enseñado no es
+difícil, es injusto — así que es lo mismo de siempre con más peso: pega despacio
+y avisando, y a cambio el golpe duele y empuja lejos.
+
+**Gira lento** (`turn_speed` 2,6 contra los 8-9 de los demás). Ahí está toda la
+pelea: rodearlo funciona, quedarse delante no. Es la lección del Cofrecito otra
+vez, contra algo que no se puede matar a base de insistir.
+
+**Tres fases**, a dos tercios y a un tercio de vida. Se para, ruge y acelera.
+Sirve para partir una pelea larga en tres tramos —una barra que baja sin que
+pase nada se hace eterna a los ocho años— y para avisar de que la cosa cambia
+antes de que cambie, en vez de después.
+
+## Lo que queda
+
+- **Barra de vida del jefe.** Sin ella la pelea no dice cuánto falta. Va con el
+  panel de objetivos, cuando haya interfaz.
+- **`golpe_suelo` sin usar.** La animación está; falta darle un ataque de área
+  con su aviso en el suelo.
+- **Música propia.** Es el único sitio del acto que la pide.
+- **Sonido**: pasos, el puño contra el suelo, la piedra al despertar.

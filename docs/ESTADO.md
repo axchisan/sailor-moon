@@ -45,7 +45,7 @@ El trabajo se organiza por el **plan maestro**
 | **B** | Texturas reciclables | ✅ |
 | **C** | Mundo abierto, límites naturales | ✅ |
 | **C bis** | Objetivos, portal y rincones | ✅ (falta el mapa de escenarios) |
-| **C ter** | Que el nivel EXPLIQUE lo que pide | 🟡 **en curso.** Avisos ✅ y cinemática del portal ✅ (falta pulir encuadre). Quedan el panel de objetivos y el jefe guardián |
+| **C ter** | Que el nivel EXPLIQUE lo que pide | 🟡 Avisos ✅, cinemática ✅, jefe guardián ✅. Queda el panel de objetivos |
 | **D** | Rendimiento | ✅ dos pasadas. 60 fps en el móvil |
 | **E** | Movimiento y combate | ✅ **cerrada.** Salto en tres partes, doble salto, trepar cornisas y el Cofrecito rodeable |
 | **F** | Conversación viva | ✅ **cerrada** salvo F5 (audio de Mercury, depende de ti) |
@@ -119,7 +119,8 @@ conversación por turnos, transiciones suaves y la transformación en tres tiemp
 
 | Qué | Dónde |
 |---|---|
-| **Jefe guardián del portal** | Concepto y prompt en [`20-JEFE-GUARDIAN.md`](20-JEFE-GUARDIAN.md). Esperando el modelo |
+| Barra de vida del jefe | Va con el panel de objetivos, cuando haya interfaz |
+| Ataque de área del jefe | La animación `golpe_suelo` está hecha y sin usar |
 | **Panel de objetivos** | Esperando a que haya interfaz — decisión del usuario |
 | Encuadre de la cinemática | `_presentar()` en `portal_salida.gd` |
 | Sonido propio del portal al presentarse | Va mudo; la escena pide algo |

@@ -26,11 +26,17 @@ class_name Nivel
 ## La barrera que se abre al encenderlos todos.
 @export var puerta: NodePath
 
+@export_group("Guardián del portal")
+## Quién cierra el paso cuando la lista está completa. Sin esto asignado el
+## acto sigue funcionando: la puerta se abre sola, como antes.
+@export var escena_guardian: PackedScene
+
 var _jugador: Node3D = null
 var _constructor: ConstructorNivel = null
 var _terreno: TerrenoNivel = null
 var _objetivos: ObjetivosNivel = null
 var _portal: PortalSalida = null
+var _jefe: GuardianPortal = null
 var _limpias: int = 0
 var _ultimo_suelo: Vector3 = Vector3.ZERO
 var _camara_plano: Camera3D = null
@@ -289,7 +295,12 @@ func _montar_objetivos() -> void:
 
 	_portal = get_node_or_null("PortalSalida") as PortalSalida
 	if _portal != null:
-		_objetivos.todos_cumplidos.connect(_portal.activar)
+		# LA LISTA COMPLETA NO ABRE LA PUERTA: DESPIERTA A QUIEN LA GUARDA.
+		#
+		# Que el portal se encendiera solo al marcar la última casilla dejaba el
+		# acto acabando en una lista de recados: se recoge todo, se enciende una
+		# luz y ya. Faltaba que alguien dijera que no.
+		_objetivos.todos_cumplidos.connect(_despertar_al_guardian)
 		_portal.usado.connect(_al_usar_portal)
 		# El portal va en el claro del final, no en el arranque: una puerta al
 		# siguiente mundo a dos pasos de donde apareces no tiene ningún peso.
@@ -356,6 +367,56 @@ func rescatar() -> void:
 ## Se mantiene al día con cada farol: llegar a una puerta cerrada sin saber por
 ## qué es lo que hace que una niña de ocho años deje de jugar. Decirle que
 ## faltan dos faroles la manda a buscarlos, que es justo lo que se quiere.
+## EL GUARDIÁN DEL PORTAL: LO ÚLTIMO DEL ACTO.
+##
+## Con la lista completa, la ruina no se enciende — se levanta. El guardián sale
+## del propio claro, se cierra la barrera y hasta que no cae no hay puerta.
+##
+## Se espera un momento antes de soltarlo: si aparece en el mismo instante en
+## que salta el cartel de «lo has hecho todo», las dos cosas se pisan y no se
+## disfruta ninguna. Primero que le dé tiempo a alegrarse.
+func _despertar_al_guardian() -> void:
+	if _jefe != null or escena_guardian == null or _portal == null:
+		# Sin jefe asignado el acto sigue funcionando: se abre la puerta y ya.
+		if _portal != null:
+			_portal.activar()
+		return
+
+	await get_tree().create_timer(2.6).timeout
+
+	var claro := _arena_del_claro()
+	var sitio := _portal.global_position
+	if claro != null:
+		sitio = claro.global_position
+
+	_jefe = escena_guardian.instantiate() as GuardianPortal
+	add_child(_jefe)
+	# Entre la jugadora y la puerta, mirándola: es lo que dice «por aquí no».
+	_jefe.global_position = sitio + Vector3(0.0, 0.2, 4.0)
+	if claro != null:
+		claro.poner_barrera(true)
+	_jefe.derrotado.connect(_al_caer_el_guardian.bind(claro))
+	_jefe.despertar()
+
+
+func _al_caer_el_guardian(claro: Arena) -> void:
+	if claro != null:
+		# Con calma: la barrera se queda mientras se desploma. Que se abra en el
+		# mismo golpe en que cae le quita el final a la pelea.
+		await get_tree().create_timer(2.2).timeout
+		claro.poner_barrera(false)
+	if _portal != null:
+		_portal.activar()
+
+
+func _arena_del_claro() -> Arena:
+	for nodo in get_tree().get_nodes_in_group("arenas"):
+		var a := nodo as Arena
+		if a != null and a.arena_id.ends_with("claro"):
+			return a
+	return null
+
+
 func _actualizar_pista_de_la_puerta() -> void:
 	var quedan := _faroles_totales - _faroles_encendidos
 	var texto := ""

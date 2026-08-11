@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://src/level/arena.gd" id="6_arena"]
 [ext_resource type="Script" path="res://src/level/constructor_nivel.gd" id="7_constructor"]
 [ext_resource type="Script" path="res://src/level/nivel.gd" id="8_nivel"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/guardian_portal.tscn" id="21_guardian"]
 [ext_resource type="Shader" path="res://src/level/cielo_anime.gdshader" id="9_cielo"]
 [ext_resource type="PackedScene" path="res://scenes/pickups/estrella_sueno.tscn" id="10_estrella"]
 [ext_resource type="PackedScene" path="res://scenes/ui/panel_dialogo.tscn" id="11_dialogo"]
@@ -84,6 +85,7 @@ escena_estrella = ExtResource("10_estrella")
 estrellas_del_nivel = 7
 escena_farol = ExtResource("16_farol")
 puerta = NodePath("PuertaGuardian")
+escena_guardian = ExtResource("21_guardian")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Env_1")

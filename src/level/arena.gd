@@ -443,6 +443,13 @@ func _finish() -> void:
 	EventBus.arena_cleared.emit(arena_id)
 
 
+## Cierra o abre la barrera desde fuera. La usa el nivel para encerrar a la
+## jugadora con el guardián del portal, que no tiene oleadas y por tanto no pasa
+## por el camino normal de `start()`.
+func poner_barrera(puesta: bool) -> void:
+	_set_barrier(puesta)
+
+
 func _set_barrier(active: bool) -> void:
 	if _barrier == null:
 		return
