@@ -119,13 +119,14 @@ conversación por turnos, transiciones suaves y la transformación en tres tiemp
 
 | Qué | Dónde |
 |---|---|
-| **Jefe guardián del portal** | Sin empezar. Ver C ter 4 en el plan maestro |
+| **Jefe guardián del portal** | Concepto y prompt en [`20-JEFE-GUARDIAN.md`](20-JEFE-GUARDIAN.md). Esperando el modelo |
 | **Panel de objetivos** | Esperando a que haya interfaz — decisión del usuario |
 | Encuadre de la cinemática | `_presentar()` en `portal_salida.gd` |
 | Sonido propio del portal al presentarse | Va mudo; la escena pide algo |
 | Sonido propio de la transformación | `SFX_TRANSFORMACION` en `combat_feel.gd`. Va prestado del especial |
 | Audio de Mercury (F5) | Depende del usuario: fish.audio, texto en `14-VOCES.md` |
-| Zonas vacías y salientes para trepar | [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md) |
+| Zonas vacías y salientes para trepar | [`20-JEFE-GUARDIAN.md`](20-JEFE-GUARDIAN.md) | El jefe del Acto 1: concepto, prompt de imagen y qué hace falta |
+| [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md) |
 | El APK pesa 132 MB | Subió al meter las animaciones. Sin diagnosticar |
 | Dos rincones no caben | `AltarGato` y `Vivero`. Salen por consola en cada carga |
 
@@ -152,6 +153,7 @@ conversación por turnos, transiciones suaves y la transformación en tres tiemp
 | [`16-GUION.md`](16-GUION.md) | ⭐ **La historia completa**, escena por escena |
 | [`17-ANIMACIONES.md`](17-ANIMACIONES.md) | ⭐ **Qué archivo subir a Mixamo** y con qué ajustes. Bloquea la Fase E |
 | [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md) | ⭐ **Estado del Nivel 1:** cómo se monta, qué hay, qué falta, rendimiento |
+| [`20-JEFE-GUARDIAN.md`](20-JEFE-GUARDIAN.md) | El jefe del Acto 1: concepto, prompt de imagen y qué hace falta |
 | [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md) | ⭐ Fallos de montaje del escenario, cómo se arreglaron, y **las zonas vacías y los salientes que faltan** |
 | [`CREDITOS.md`](CREDITOS.md) | Atribuciones de assets |
 
