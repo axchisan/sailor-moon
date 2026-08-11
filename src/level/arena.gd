@@ -246,6 +246,14 @@ func _finish() -> void:
 	set_physics_process(false)
 	_set_barrier(false)
 	CombatDirector.reset()
+	# UNA ARENA SIN OLEADAS NO ANUNCIA NADA.
+	#
+	# El claro del portal es un `Arena` con la lista de oleadas vacía —lo es para
+	# heredar la barrera y el disco, no para pelear— así que al pisarlo saltaba
+	# «¡Arena limpia!» sin haber luchado contra nadie. Y peor: ese cartel pisaba
+	# al del portal, que es justo lo que había que leer ahí.
+	if waves.is_empty():
+		return
 	EventBus.arena_cleared.emit(arena_id)
 
 

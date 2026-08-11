@@ -39,7 +39,12 @@ func _ready() -> void:
 	collision_layer = 0
 	collision_mask = 2
 	body_entered.connect(_al_entrar)
-	monitoring = false
+	# ESCUCHA DESDE EL PRINCIPIO, aunque esté dormido.
+	#
+	# Estaba apagado hasta activarse, así que llegar al portal antes de tiempo no
+	# disparaba nada: ni se usaba (correcto) ni avisaba de lo que faltaba (que
+	# era el problema). Dormido no sirve para viajar, pero sí para explicarse.
+	monitoring = true
 
 	var forma := CollisionShape3D.new()
 	var cilindro := CylinderShape3D.new()
@@ -50,7 +55,89 @@ func _ready() -> void:
 	add_child(forma)
 
 	_montar_aro()
+	_montar_zona_de_aviso()
 	set_process(true)
+
+
+## Cuánto antes de llegar se cuenta lo que falta.
+##
+## El aro de uso mide un par de metros: hay que pisarlo justo para que salte, y
+## a esa distancia ya se está encima. El aviso tiene que llegar mientras se
+## camina hacia él, que es cuando se está preguntando qué es eso.
+@export var radio_aviso: float = 9.0
+
+
+func _montar_zona_de_aviso() -> void:
+	var zona := Area3D.new()
+	zona.name = "ZonaAviso"
+	zona.collision_layer = 0
+	zona.collision_mask = 2
+	var forma := CollisionShape3D.new()
+	var esfera := SphereShape3D.new()
+	esfera.radius = radio_aviso
+	forma.shape = esfera
+	zona.add_child(forma)
+	zona.body_entered.connect(func(cuerpo: Node3D) -> void:
+		if _activo or not cuerpo.is_in_group("player"):
+			return
+		if not _presentado:
+			_presentar(cuerpo)
+		else:
+			_recitar_lo_que_falta())
+	add_child(zona)
+
+
+## Si ya se ha hecho la presentación. Solo la primera vez.
+var _presentado: bool = false
+
+
+## LA PRIMERA VEZ QUE SE LLEGA, EL PORTAL SE PRESENTA.
+##
+## Un cartel con una lista de recados no basta para lo que esto es. La primera
+## vez la cámara sube a mirarlo, se para un momento sobre él, y entonces sí se
+## dice lo que falta. Ese par de segundos son lo que convierte la ruina en un
+## objetivo: hasta que no se mira, es piedra decorativa.
+##
+## Y se hace UNA vez. Repetirla cada vez que se pasa por delante sería de las
+## cosas que más cansan de un juego.
+func _presentar(jugador: Node3D) -> void:
+	_presentado = true
+	var camara := get_viewport().get_camera_3d()
+	if camara == null:
+		_recitar_lo_que_falta()
+		return
+
+	# Se quita el control mientras dura: si se puede andar, se anda, y la escena
+	# se la pierde quien más falta le hace verla.
+	if jugador.has_method("set_control_enabled"):
+		jugador.call("set_control_enabled", false)
+
+	var camara_escena := Camera3D.new()
+	camara_escena.fov = camara.fov
+	camara_escena.far = camara.far
+	add_child(camara_escena)
+	camara_escena.global_transform = camara.global_transform
+	camara_escena.make_current()
+
+	# De donde está la cámara a un plano bajo mirando hacia arriba: el ángulo
+	# contrapicado es lo que hace que algo se lea como importante.
+	var cerca := global_position + Vector3.UP * 1.2 \
+		+ (jugador.global_position - global_position).normalized() * 5.0
+	var mirar := global_position + Vector3.UP * 2.6
+
+	var t := create_tween()
+	t.tween_method(func(v: float) -> void:
+		camara_escena.global_position = camara.global_position.lerp(cerca, v)
+		camara_escena.look_at(mirar, Vector3.UP),
+		0.0, 1.0, 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await t.finished
+	await get_tree().create_timer(1.1).timeout
+
+	camara.make_current()
+	camara_escena.queue_free()
+	if jugador.has_method("set_control_enabled"):
+		jugador.call("set_control_enabled", true)
+	_recitar_lo_que_falta()
 
 
 func _process(delta: float) -> void:

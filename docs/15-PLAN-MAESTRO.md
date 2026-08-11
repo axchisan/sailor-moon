@@ -293,11 +293,19 @@ mismo cartel tres veces.
 > puedes pasar» manda a irse. A los ocho años esa diferencia es toda la
 > diferencia.
 
-### C ter 2. La cinemática del portal
+### C ter 2. La cinemática del portal ✅ primera versión
 
-La primera vez que se llega al portal, **antes** de que esté abierto: un plano
-corto que enseñe qué es y para qué sirve, y que deje claro que hay que reunir
-las cosas. Es lo que convierte una lista de tareas en un objetivo.
+La primera vez que se entra en el claro —y solo la primera— la cámara sube a
+mirar el portal en contrapicado, se para un momento sobre él, y entonces sí se
+recita lo que falta. Ese par de segundos son lo que convierte la ruina en un
+objetivo: hasta que no se mira, es piedra decorativa.
+
+Se quita el control mientras dura: si se puede andar, se anda, y la escena se la
+pierde justo quien más falta le hace verla.
+
+> **Falta pulir el encuadre.** Funciona y se ejecuta, pero el plano no siempre
+> deja el portal centrado. Los números están en `_presentar()`: el punto de
+> cámara (`cerca`), a dónde mira (`mirar`) y los tiempos del recorrido.
 
 ### C ter 3. Un panel de objetivos que se pueda consultar
 
