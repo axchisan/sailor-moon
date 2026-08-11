@@ -67,6 +67,9 @@ class_name Companero
 ## normal. Se usa para acelerar la animación con el desplazamiento y que las
 ## patas no patinen. Se ajusta a ojo: si resbala, bajarlo.
 @export var velocidad_de_la_zancada: float = 1.5
+## Por debajo de esta velocidad real se considera parada, por mucho que quiera
+## seguir andando. Es lo que evita el caminar en el sitio contra una pared.
+const PARADA := 0.35
 ## Tope de aceleración de la animación. Sin él, corriendo a 6 m/s las patas
 ## giran como un dibujo animado.
 @export_range(1.0, 5.0) var zancada_maxima: float = 2.4
@@ -172,11 +175,26 @@ func _physics_process(delta: float) -> void:
 	velocity.x = paso.x
 	velocity.z = paso.z
 	velocity.y = 0.0 if is_on_floor() else velocity.y - gravedad * delta
+	var antes := global_position
 	move_and_slide()
 	_desatascar(delta, distancia)
 
+	# LO QUE SE ANIMA ES LO QUE SE HA MOVIDO DE VERDAD.
+	#
+	# Antes se animaba con el avance que se le PEDÍA, y eso deja al gato
+	# caminando en el sitio en cuanto se topa con algo: quiere ir a por Serena,
+	# no puede pasar, y sigue moviendo las patas contra la pared indefinidamente.
+	# Se veía sobre todo al quedarse encajada en una esquina.
+	#
+	# Midiendo el desplazamiento real después de `move_and_slide()`, si no se
+	# mueve se planta y se queda sentada, que es lo que haría un gato.
+	var movido := Vector2(global_position.x - antes.x, global_position.z - antes.z).length()
+	var avance_real: float = movido / maxf(delta, 0.0001)
+	if avance_real < PARADA:
+		_andando = false
+
 	if animar:
-		_animar(andaba, avance)
+		_animar(andaba, avance_real)
 
 
 ## Cambia entre `andar` e `idle`, y acompasa la zancada al avance real.
