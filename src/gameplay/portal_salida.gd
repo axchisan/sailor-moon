@@ -84,10 +84,56 @@ func activar() -> void:
 
 
 func _al_entrar(cuerpo: Node3D) -> void:
-	if not _activo or not cuerpo.is_in_group("player"):
+	if not cuerpo.is_in_group("player"):
+		return
+	# Dormido NO se calla: dice qué falta.
+	#
+	# Llegar al portal antes de tiempo y que no pase nada deja a la jugadora
+	# mirando una piedra sin saber si está rota, si es decorado o si hace algo.
+	# Enseñarle aquí mismo la lista de lo que queda convierte ese viaje en el
+	# momento en que se entera de a qué está jugando — y este es el sitio donde
+	# más ganas tiene de saberlo.
+	if not _activo:
+		_recitar_lo_que_falta()
 		return
 	monitoring = false
 	usado.emit(destino)
+
+
+## Cuánto se espera antes de volver a recitar la lista.
+const REPETIR_LISTA := 8.0
+
+var _proxima_lista: float = 0.0
+
+
+func _recitar_lo_que_falta() -> void:
+	var ahora := Time.get_ticks_msec() / 1000.0
+	if ahora < _proxima_lista:
+		return
+	_proxima_lista = ahora + REPETIR_LISTA
+
+	var objetivos := get_tree().get_first_node_in_group("objetivos") as ObjetivosNivel
+	if objetivos == null:
+		EventBus.show_message.emit("La puerta sigue dormida…", 2.5)
+		return
+
+	# Solo lo que falta, y de una en una cosa. La lista entera con lo hecho
+	# tachado se lee como deberes; lo que queda por hacer se lee como un plan.
+	var pendientes: Array[String] = []
+	for ficha: Dictionary in objetivos.resumen():
+		if not ficha["hecho"]:
+			var cuantos: int = ficha["cuantos"]
+			var meta: int = ficha["meta"]
+			if meta > 1:
+				pendientes.append("%s (%d de %d)" % [ficha["texto"], cuantos, meta])
+			else:
+				pendientes.append(str(ficha["texto"]))
+
+	if pendientes.is_empty():
+		EventBus.show_message.emit("La puerta sigue dormida…", 2.5)
+		return
+	EventBus.show_message.emit(
+		"Para despertar la puerta falta:\n· %s" % "\n· ".join(pendientes), 4.5)
 
 
 ## Monta la ruina y se queda con el material del cristal, que es lo único que

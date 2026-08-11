@@ -277,14 +277,21 @@ El nivel ya tiene objetivos, pero no los dice en ninguna parte: se llega a la
 puerta del guardián y no se abre, y no hay forma de saber por qué. Una niña de
 ocho años ahí se queda dando vueltas.
 
-### C ter 1. Avisos en las puertas
+### C ter 1. Avisos en las puertas ✅ hecho
 
-Al acercarse a un sitio cerrado, un cartel dice **qué falta**, no que esté
-cerrado: «Faltan 2 faroles por encender», no «no puedes pasar». La diferencia es
-que uno manda a jugar y el otro manda a irse.
+- **Puerta del guardián**: al acercarse dice «Faltan 2 faroles por encender».
+  La cuenta la mantiene `nivel.gd` con cada farol que se enciende; la puerta
+  solo enseña la frase, porque no tiene por qué saber de qué va el objetivo
+- **Portal dormido**: recita **lo que falta**, no la lista entera con lo hecho
+  tachado. La lista completa se lee como deberes; lo que queda por hacer se lee
+  como un plan. Y con las cuentas donde las hay: «Estrellas de Sueño (3 de 7)»
 
-- Puerta del guardián → los faroles que queden
-- Portal → la lista entera, con lo hecho tachado
+Los dos llevan enfriamiento: entrar y salir del área tres veces no suelta el
+mismo cartel tres veces.
+
+> **Lo importante es cómo está escrito.** «Faltan 2 faroles» manda a jugar; «no
+> puedes pasar» manda a irse. A los ocho años esa diferencia es toda la
+> diferencia.
 
 ### C ter 2. La cinemática del portal
 

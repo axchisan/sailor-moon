@@ -225,6 +225,7 @@ func _ready() -> void:
 		_faroles_totales = _constructor.sembrar_faroles(escena_farol, self)
 		for nodo in get_tree().get_nodes_in_group("faroles"):
 			(nodo as Farol).encendido.connect(_al_encender_farol)
+		_actualizar_pista_de_la_puerta()
 		print("[Nivel] %d faroles colocados" % _faroles_totales)
 
 	var bichos := get_node_or_null("Bichos") as Bichos
@@ -350,8 +351,27 @@ func rescatar() -> void:
 	EventBus.player_respawned.emit(destino)
 
 
+## Qué le dice la puerta del guardián a quien se acerque.
+##
+## Se mantiene al día con cada farol: llegar a una puerta cerrada sin saber por
+## qué es lo que hace que una niña de ocho años deje de jugar. Decirle que
+## faltan dos faroles la manda a buscarlos, que es justo lo que se quiere.
+func _actualizar_pista_de_la_puerta() -> void:
+	var barrera := get_node_or_null(puerta) as PuertaMagica
+	if barrera == null:
+		return
+	var quedan := _faroles_totales - _faroles_encendidos
+	if quedan <= 0:
+		barrera.pista = ""
+	elif quedan == 1:
+		barrera.pista = "Falta 1 farol por encender"
+	else:
+		barrera.pista = "Faltan %d faroles por encender" % quedan
+
+
 func _al_encender_farol(_farol: Farol) -> void:
 	_faroles_encendidos += 1
+	_actualizar_pista_de_la_puerta()
 	if _faroles_encendidos < _faroles_totales:
 		# Se dice cuántos quedan, no cuántos llevas: lo que hace falta saber es
 		# si esto se ha acabado o hay que seguir buscando.

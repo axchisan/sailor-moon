@@ -46,6 +46,8 @@ var _cerrado: bool = false
 
 
 func _ready() -> void:
+	# En grupo para que el portal pueda preguntarle qué falta sin cablear rutas.
+	add_to_group("objetivos")
 	for ficha in LISTA:
 		_progreso[ficha["id"]] = 0
 

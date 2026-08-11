@@ -17,15 +17,64 @@ signal abierta
 ## Cuántos segmentos verticales. Más = más suave y más draw calls.
 @export var segmentos: int = 5
 
+## Qué falta para que se abra, en una frase.
+##
+## LO QUE DICE IMPORTA MÁS DE LO QUE PARECE
+##
+## Una puerta cerrada sin explicación manda a la jugadora a dar vueltas hasta que
+## se cansa. Y el aviso tiene que decir **qué falta**, no que no se puede pasar:
+## «Faltan 2 faroles por encender» manda a jugar, «no puedes pasar» manda a
+## irse. A los ocho años esa diferencia es toda la diferencia.
+##
+## Lo rellena quien lleve la cuenta —en el Nivel 1, `nivel.gd` con los faroles—
+## porque la puerta no tiene por qué saber de qué va el objetivo.
+@export var pista: String = ""
+## A qué distancia se avisa.
+@export var radio_aviso: float = 5.5
+## Cada cuánto se repite el aviso, para no ser pesada.
+@export var repetir_aviso: float = 6.0
+
 var esta_abierta: bool = false
 
 var _cuerpo: StaticBody3D = null
 var _material: StandardMaterial3D = null
 var _tiempo: float = 0.0
+var _proximo_aviso: float = 0.0
 
 
 func _ready() -> void:
 	_construir()
+	_montar_detector()
+
+
+## Área que avisa al acercarse. Se monta por código para que colocar una puerta
+## siga siendo poner el nodo y nada más.
+func _montar_detector() -> void:
+	var zona := Area3D.new()
+	zona.name = "ZonaAviso"
+	zona.collision_layer = 0
+	zona.collision_mask = 2
+	var forma := CollisionShape3D.new()
+	var esfera := SphereShape3D.new()
+	esfera.radius = radio_aviso
+	forma.shape = esfera
+	zona.add_child(forma)
+	zona.body_entered.connect(_al_acercarse)
+	add_child(zona)
+
+
+func _al_acercarse(cuerpo: Node3D) -> void:
+	if esta_abierta or pista.is_empty():
+		return
+	if not cuerpo.is_in_group("player"):
+		return
+	# Con enfriamiento: entrar y salir del área tres veces seguidas no tiene por
+	# qué soltar el mismo cartel tres veces.
+	var ahora := Time.get_ticks_msec() / 1000.0
+	if ahora < _proximo_aviso:
+		return
+	_proximo_aviso = ahora + repetir_aviso
+	EventBus.show_message.emit(pista, 3.0)
 
 
 func _process(delta: float) -> void:

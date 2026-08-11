@@ -419,6 +419,7 @@ func _al_terminar(_id_dialogo: String) -> void:
 ## animación y descartar las pulsaciones pendientes. Lo hace `Player`, que es
 ## quien conoce su animador y su máquina de estados.
 func _congelar_jugador(congelado: bool) -> void:
+	_congelar_companeros(congelado)
 	if _jugador == null:
 		return
 	if _jugador.has_method("set_control_enabled"):
@@ -428,6 +429,25 @@ func _congelar_jugador(congelado: bool) -> void:
 	_jugador.set_physics_process(not congelado)
 	if congelado and _jugador is CharacterBody3D:
 		(_jugador as CharacterBody3D).velocity = Vector3.ZERO
+
+
+## Luna se para mientras se habla.
+##
+## Persigue a Serena todo el rato, y durante una conversación Serena está
+## clavada: el gato se queda dando vueltas alrededor, empujándose contra ella o
+## encajándose en el seto de al lado. Nada de eso se ve bien en mitad de una
+## escena, y además es cuando más se mira, porque no hay otra cosa moviéndose.
+##
+## Se para del todo y se le deja el ciclo de estar sentada, que es exactamente
+## lo que haría un gato mientras dos personas hablan.
+func _congelar_companeros(congelado: bool) -> void:
+	for gato in get_tree().current_scene.find_children("*", "Companero", true, false):
+		var companero := gato as CharacterBody3D
+		if companero == null:
+			continue
+		companero.set_physics_process(not congelado)
+		if congelado:
+			companero.velocity = Vector3.ZERO
 
 
 func _mirarse() -> void:
