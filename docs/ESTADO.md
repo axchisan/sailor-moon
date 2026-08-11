@@ -4,8 +4,8 @@
 > retoma tras un tiempo, lee esto primero y luego el documento específico que
 > necesites.
 >
-> **Última actualización:** 2026-08-10 · Fase E arrancada: las 25 animaciones
-> integradas, con salto en tres partes y doble salto. Antes: dos pasadas de
+> **Última actualización:** 2026-08-10 · Fase E: salto en tres partes, doble
+> salto y trepar cornisas. Antes: dos pasadas de
 > rendimiento y el blockout dejando de verse
 
 ---
@@ -47,7 +47,7 @@ El trabajo se organiza por el **plan maestro**
 | **C bis** | Objetivos, portal y rincones | ✅ (falta el mapa de escenarios) |
 | **C ter** | Que el nivel EXPLIQUE lo que pide | ⬜ **nueva.** Avisos en las puertas, cinemática del portal, panel de objetivos y el jefe guardián del portal |
 | **D** | Rendimiento | ✅ dos pasadas. 60 fps en el móvil |
-| **E** | Movimiento y combate | 🟡 **en curso.** E1 salto y E2 doble salto hechos. Falta E3 trepar cornisas y E4 Cofrecito |
+| **E** | Movimiento y combate | 🟡 **en curso.** E1 salto, E2 doble salto y E3 trepar cornisas hechos. Falta E4 (Cofrecito) |
 | **F** | Conversación viva | ⬜ |
 | **G** | Menú, guardado, vidas | ⬜ |
 | **H** | Historia y cinemática | ⬜ guion escrito, sin montar |
@@ -83,9 +83,10 @@ detalle en [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md)):
 
 ### Lo siguiente, en orden
 
-1. **Fase E3** — trepar cornisas. Las dos animaciones ya están
-   (`ledge_grab`, `ledge_climb`); falta la detección de borde
-2. **Fase E4** — que al Cofrecito se le pueda pegar por el costado
+1. **Fase E4** — que al Cofrecito se le pueda pegar por el costado
+2. **Salientes para trepar** — la mecánica está, pero el parque tiene una sola
+   plataforma y queda baja. Trepar abre el diseño de nivel solo si hay a dónde
+   subir y algo arriba que lo merezca
 3. **Fase F** — retratos en el diálogo, animación de hablar, audio de Mercury
 4. **Fase G** — menú, guardado, corazones de vida escondidos
 5. **Fase H** — cinemática de historieta y narrador

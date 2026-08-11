@@ -32,6 +32,15 @@ func physics_update(delta: float) -> String:
 	if p.wants_double_jump():
 		return "DoubleJump"
 
+	# La cornisa se busca CAYENDO, no subiendo. Mirándola también en la subida,
+	# se engancharía en el borde nada más despegar de un saliente bajo y no
+	# habría forma de saltar por encima de nada: agarrarse pasaría de ser una
+	# ayuda a ser un estorbo.
+	if p.velocity.y < 0.0:
+		var cornisa := p.buscar_cornisa()
+		if not cornisa.is_empty():
+			return "LedgeGrab"
+
 	if p.is_on_floor():
 		# Aterrizaje solo si se venía cayendo de verdad. Cada bordillo de diez
 		# centímetros disparando la animación entera deja al personaje dando

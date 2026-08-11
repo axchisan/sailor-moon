@@ -392,10 +392,31 @@ encadenarlo tarde no levantaba del suelo y parecía que el botón no respondía.
 
 Se repone al tocar suelo, y durante la voltereta se sigue teniendo control.
 
-### E3. Trepar cornisas
+### E3. Trepar cornisas ✅ hecho
 
-Detección de borde delante y a la altura del pecho → se agarra → sube. Cambia
-cómo se lee el mundo: un saliente deja de ser un muro y pasa a ser un camino.
+Detección con dos rayos: uno horizontal a la altura del pecho para ver si hay
+pared, y otro vertical desde arriba para encontrar el canto. Se comprueba que el
+canto esté a una altura agarrable (1,0–2,3 m) y que sea una superficie por la
+que se pueda andar — un tejado inclinado no es una cornisa, se agarraría para
+acabar resbalando.
+
+Solo se busca **cayendo**, no subiendo: mirándola también en la subida, se
+engancharía en el borde nada más despegar de un saliente bajo y agarrarse
+pasaría de ser una ayuda a ser un estorbo.
+
+Colgada se está sin prisa —no hay temporizador, no se cae sola— y hay dos
+salidas: `jump` sube, y tirar del joystick hacia el lado contrario suelta. Se
+suelta así porque **no hay más botones**: en el móvil están joystick, salto y
+golpe, y no cabe uno de «soltar».
+
+Al subir, la posición se interpola a mano y con la vertical por delante de la
+horizontal: en línea recta el personaje entra en diagonal atravesando la
+esquina del muro.
+
+> **Lo que falta ahora es NIVEL, no mecánica.** El parque tiene una sola
+> plataforma trepable y queda baja. Trepar «abre el diseño de nivel» solo si hay
+> salientes a los que subir y algo arriba que merezca la pena — eso toca al
+> repasar el escenario.
 
 ### E4. Cofrecito
 

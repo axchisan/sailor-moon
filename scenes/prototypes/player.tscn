@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3]
+[gd_scene load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://src/player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://src/player/camera_rig.gd" id="2_camera"]
@@ -19,6 +19,8 @@
 [ext_resource type="Script" path="res://src/player/states/dizzy.gd" id="17_dizzy"]
 [ext_resource type="Script" path="res://src/player/states/double_jump.gd" id="18_double_jump"]
 [ext_resource type="Script" path="res://src/player/states/land.gd" id="19_land"]
+[ext_resource type="Script" path="res://src/player/states/ledge_grab.gd" id="20_ledge_grab"]
+[ext_resource type="Script" path="res://src/player/states/ledge_climb.gd" id="21_ledge_climb"]
 
 [sub_resource type="CapsuleShape3D" id="Shape_body"]
 radius = 0.32
@@ -129,6 +131,12 @@ script = ExtResource("18_double_jump")
 
 [node name="Land" type="Node" parent="StateMachine"]
 script = ExtResource("19_land")
+
+[node name="LedgeGrab" type="Node" parent="StateMachine"]
+script = ExtResource("20_ledge_grab")
+
+[node name="LedgeClimb" type="Node" parent="StateMachine"]
+script = ExtResource("21_ledge_climb")
 
 [node name="Attack" type="Node" parent="StateMachine"]
 script = ExtResource("14_attack")

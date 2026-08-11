@@ -400,7 +400,15 @@ func buscar_cornisa() -> Dictionary:
 	if espacio == null:
 		return {}
 
-	var frente := -global_transform.basis.z.normalized()
+	# Hacia donde MIRA, que es el nodo `Model`. El cuerpo no rota nunca —para que
+	# la cámara y la hitbox tengan un marco estable—, así que preguntarle a él
+	# por su frente devuelve siempre la misma dirección y la cornisa solo se
+	# encontraría mirando al norte.
+	var frente := -model.global_transform.basis.z
+	frente.y = 0.0
+	if frente.length_squared() < 0.001:
+		return {}
+	frente = frente.normalized()
 	var pecho := global_position + Vector3.UP * alto_pecho
 
 	var pared := PhysicsRayQueryParameters3D.create(
