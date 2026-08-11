@@ -807,7 +807,10 @@ a 5.000 · props de escenario (coral 4.700, bonsái 9.750). ✅
 ### Cómo se mide
 
 **Panel del modo desarrollador: F1**, o **tres toques en la esquina superior
-izquierda** en el móvil. Muestra fps, draw calls y triángulos, y **separa
+izquierda** en el móvil. **Tocando el panel se copian todos sus datos al
+portapapeles** (o `F9`): el informe completo más la posición exacta como
+`Vector3(…)`, hacia dónde mira y qué pisa. Va también por consola, para
+pescarlo con `adb logcat` cuando el portapapeles del móvil no ayuda. Muestra fps, draw calls y triángulos, y **separa
 pantalla de sombra** — que es la cifra que importa: el pase de sombra llegó a
 costar el triple que la imagen y sumados no se veía (trampa 50).
 

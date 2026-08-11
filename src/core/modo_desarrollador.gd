@@ -148,6 +148,7 @@ func _unhandled_input(evento: InputEvent) -> void:
 		KEY_F6: _alternar_colisiones()
 		KEY_F7: _limpiar_enemigos()
 		KEY_F8: _siguiente_prueba()
+		KEY_F9: _copiar_informe()
 		_: return
 	get_viewport().set_input_as_handled()
 
@@ -313,6 +314,56 @@ func _limpiar_enemigos() -> void:
 	EventBus.show_message.emit("%d enemigos eliminados" % muertos, 1.5)
 
 
+## Copia al portapapeles todo lo que dice el panel, y con más detalle.
+##
+## POR QUÉ EXISTE
+##
+## Depurar esto va de coordenadas: «el farol de (55,6, 4,3, −73,7) flota», «hay
+## una colisión rara cerca de (80,9, −84,4)». Leerlas de una foto de la pantalla
+## y volver a teclearlas es lento y se cometen erratas — y una coordenada mal
+## copiada manda a mirar a treinta metros del problema.
+##
+## Se copia lo mismo que se ve MÁS lo que no cabe en el panel: la posición
+## exacta con tres decimales, hacia dónde mira, qué tiene debajo y a qué
+## distancia. Con eso pegado en un mensaje se puede ir directo al sitio.
+func _copiar_informe() -> void:
+	var lineas: Array[String] = [_informe(), ""]
+	var jugador := get_tree().get_first_node_in_group("player") as Node3D
+	if jugador != null:
+		var p := jugador.global_position
+		lineas.append("Vector3(%.3f, %.3f, %.3f)" % [p.x, p.y, p.z])
+		var modelo := jugador.get_node_or_null("Model") as Node3D
+		if modelo != null:
+			lineas.append("mira hacia %.0f°" % rad_to_deg(modelo.rotation.y))
+		lineas.append(_que_hay_debajo(jugador))
+	lineas.append("escena: %s" % get_tree().current_scene.scene_file_path)
+
+	var texto := "\n".join(lineas)
+	DisplayServer.clipboard_set(texto)
+	EventBus.show_message.emit("Datos copiados al portapapeles", 1.6)
+	# Y también por consola: en el móvil el portapapeles no siempre se puede
+	# pegar donde uno quiere, y así queda en el log del `adb logcat`.
+	print("\n----- DEPURACIÓN -----\n%s\n----------------------\n" % texto)
+
+
+## Qué pisa el jugador y a qué distancia, que es la pregunta que más se repite.
+func _que_hay_debajo(jugador: Node3D) -> String:
+	var espacio := jugador.get_world_3d().direct_space_state
+	if espacio == null:
+		return "suelo: ?"
+	var consulta := PhysicsRayQueryParameters3D.create(
+		jugador.global_position + Vector3.UP * 0.1,
+		jugador.global_position + Vector3.DOWN * 40.0)
+	consulta.collision_mask = 1
+	consulta.exclude = [jugador.get_rid()]
+	var choque := espacio.intersect_ray(consulta)
+	if choque.is_empty():
+		return "suelo: NADA en 40 m"
+	return "suelo: %s a %.3f (%.3f por debajo)" % [
+		str(choque["collider"].name), choque["position"].y,
+		jugador.global_position.y - choque["position"].y]
+
+
 func _informe() -> String:
 	var lineas: Array[String] = []
 	lineas.append("FPS %d · %d draw calls · %.1f k tris" % [
@@ -347,8 +398,8 @@ func _informe() -> String:
 	lineas.append("PRUEBA %d/%d: %s" % [
 		_prueba, PRUEBAS.size() - 1, PRUEBAS[_prueba]])
 	lineas.append("F1 panel · F2 invuln · F3 vida · F4 especial")
-	lineas.append("F5 tramo · F6 colisiones · F7 matar · F8 prueba")
-	lineas.append("(móvil: 3 toques aquí · 1 arriba a la derecha = prueba)")
+	lineas.append("F5 tramo · F6 colisiones · F7 matar · F8 prueba · F9 copiar")
+	lineas.append("(toca este panel para copiar los datos)")
 	return "\n".join(lineas)
 
 
@@ -371,3 +422,21 @@ func _montar_panel() -> void:
 	_texto.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_child(_texto)
 	add_child(_panel)
+
+	# TOCAR EL PANEL COPIA SUS DATOS.
+	#
+	# En el móvil no hay F9, y es justo donde más falta hace: es allí donde se
+	# ven los fallos y donde apuntar una coordenada a mano es más incómodo.
+	# El propio panel hace de botón, que es lo único que se puede tocar sin
+	# quitarle sitio a los controles del juego.
+	#
+	# Deja de ser `IGNORE` para poder recibir el toque —cuidado con eso, un
+	# `Control` que para el toque se lo quita a `_unhandled_input` (trampa 34)—
+	# pero solo estorba mientras el panel está a la vista, que es cuando se está
+	# depurando y no jugando.
+	_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_panel.gui_input.connect(func(evento: InputEvent) -> void:
+		var toque := evento as InputEventScreenTouch
+		var clic := evento as InputEventMouseButton
+		if (toque != null and toque.pressed) or (clic != null and clic.pressed):
+			_copiar_informe())

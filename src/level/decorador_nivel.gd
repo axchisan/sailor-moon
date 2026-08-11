@@ -1019,30 +1019,36 @@ func sitio_del_estanque(constructor: ConstructorNivel) -> Vector3:
 ## los primeros en sembrarse, después de la puerta: si fueran al final, el hueco
 ## que el propio encuentro tiene reservado se lo habría comido otra cosa.
 func _arboles_de_los_encuentros() -> void:
-	# UNO SOLO, y grande. Se probó con tres y el pasillo se saturaba: entre el
-	# muro, el personaje y la arboleda no quedaba por dónde pasar, y encima
-	# alguno caía fuera del pasillo, en el campo, donde no pinta nada.
+	# LAS POSICIONES VAN A MANO, Y ES A PROPÓSITO.
 	#
-	# Con uno basta: la frase dice «detrás de esos árboles» y lo que hace falta
-	# es que haya algo que la tape al acercarse, no un bosque.
-	const FONDO := 2.6
-	const ESCALA := 1.45
+	# El primer intento los colocaba «detrás del personaje, alejándose del
+	# camino». Suena bien y sale mal: detrás de Mercury, a dos metros y medio,
+	# está el muro del pasillo — el árbol caía en x=57,07 y el seto empieza en
+	# 56,9, así que el reparto de sitio lo descartaba y no aparecía ninguno.
+	#
+	# Aquí no hay una regla que valga: es un sitio concreto de una conversación
+	# concreta, y lo que hace falta es que tapen a Mercury desde donde se llega
+	# sin cerrar el paso. Elegidos mirándolo en el juego.
+	const ARBOLES := [
+		{"donde": Vector3(55.4, 0.0, -68.8), "escala": 1.45},
+		{"donde": Vector3(55.1, 0.0, -63.8), "escala": 1.3},
+	]
 
-	for sitio: Vector3 in _sitios_encuentro:
-		var desde_camino := sitio - _punto_del_recorrido_mas_cercano(sitio)
-		desde_camino.y = 0.0
-		if desde_camino.length_squared() < 0.01:
-			desde_camino = Vector3.FORWARD
-		desde_camino = desde_camino.normalized()
-
-		var punto := _posar(sitio + desde_camino * FONDO)
-		if punto.y == INF or _dentro_de_un_estorbo(punto, 0.4):
+	for arbol: Dictionary in ARBOLES:
+		var punto := _posar(arbol["donde"])
+		if punto.y == INF:
+			push_warning("DecoradorNivel: no hay suelo para el árbol de %s"
+				% str(arbol["donde"]))
 			continue
+		var escala: float = arbol["escala"]
 		_plantar({
 			"pieza": "arbol_cerezo",
-			"escala": [ESCALA, ESCALA],
+			"escala": [escala, escala],
 			"hundir": 0.15,
 			"pie": 0.35,
+			# Sin comprobar hueco ni estorbo: se ponen donde se ha dicho. Si no,
+			# vuelve a pasar lo de antes y desaparecen sin avisar.
+			"libre": true,
 		}, punto, _rng.randf() * TAU, Vector3.ZERO)
 
 
