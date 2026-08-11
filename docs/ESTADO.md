@@ -747,6 +747,28 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     ningún lado. Se estuvo midiendo contra una instancia vieja y las
     propiedades nuevas salían `null`, que parecía un fallo del código. Para
     matarlo de verdad: `kill -9 $(lsof -nP -iTCP:9090 -sTCP:LISTEN -t)`.
+87. **Un personaje se posa ENCIMA DE SÍ MISMO si no se aparta del rayo.** Un
+    `Encuentro` lleva un `StaticBody3D` con cápsula para que no se le atraviese
+    (trampa 37), y el rayo que lo posa sale de muy arriba y baja en vertical: lo
+    primero que encuentra es su propio cuerpo. Mercury quedaba metro y cuarto en
+    el aire, y cada vez que se volviera a posar subiría otro tanto — llamándolo
+    dos veces a mano, subía a 4,45. Todo lo que se posa con un rayo y tenga
+    cuerpo propio tiene que excluirse a sí mismo.
+88. **Para pegar un personaje a una pared, lo que manda no es el esqueleto sino
+    la carne.** Colgada de una cornisa, el HUESO de la espina a tres centímetros
+    del muro parece perfecto y la cara ya está dentro de la piedra: el pecho y
+    la cabeza sobresalen bastante por delante del hueso. Se arrima el modelo
+    (`ACERCAR_MODELO`) solo hasta donde la carne aguanta, y lo que falta para
+    que las manos alcancen el canto se saca **doblando los brazos**, no
+    acercando más el cuerpo.
+89. **Un `SkeletonModifier3D` es la única forma de retocar una pose animada.**
+    Escribir la rotación desde un `_process` la pisa el `AnimationTree` al
+    fotograma siguiente, y desactivar el árbol para escribir devuelve el
+    esqueleto a la pose de reposo — que en un rigueado de Mixamo es la T, así
+    que en vez de brazos doblados sale una T con las manos donde no van. Y ojo
+    al calibrar: por la trampa 9, `get_bone_global_pose()` devuelve la pose
+    ANTERIOR al modificador, así que los números dicen que no hace nada aunque
+    en pantalla se vea perfectamente. Ahí hay que mirar, no medir.
 ---
 
 ## 7. Decisiones tomadas y por qué

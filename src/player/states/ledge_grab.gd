@@ -90,6 +90,10 @@ func enter(msg: Dictionary = {}) -> void:
 	# nunca, así que un desplazamiento en coordenadas del mundo vale tal cual.
 	p.model.position = -_normal * ACERCAR_MODELO
 	p.play("ledge_grab")
+	# Los brazos se doblan hacia el borde. Sin esto las manos se quedan a un
+	# palmo del canto: el cuerpo no puede arrimarse más, pero los brazos sí.
+	if p.animator != null and p.animator.brazos_cornisa != null:
+		p.animator.brazos_cornisa.activo = true
 
 
 func physics_update(_delta: float) -> String:
@@ -118,3 +122,5 @@ func exit() -> void:
 	# Y el modelo vuelve a su sitio. Si se queda arrimado, el personaje anda el
 	# resto de la partida con el cuerpo desplazado un palmo de su propia sombra.
 	p.model.position = Vector3.ZERO
+	if p.animator != null and p.animator.brazos_cornisa != null:
+		p.animator.brazos_cornisa.activo = false

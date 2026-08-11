@@ -69,6 +69,9 @@ const ESTADOS_CONVERSACION := [
 
 var tree: AnimationTree = null
 var player: AnimationPlayer = null
+## Corrige la postura de los brazos al colgarse de una cornisa. Ver
+## [`brazos_cornisa.gd`](../core/brazos_cornisa.gd).
+var brazos_cornisa: BrazosCornisa = null
 
 var _playback: AnimationNodeStateMachinePlayback = null
 var _duraciones: Dictionary = {}
@@ -101,6 +104,13 @@ func _ready() -> void:
 	tree.anim_player = tree.get_path_to(player)
 	tree.tree_root = _construir_arbol()
 	tree.active = true
+
+	# El corrector de brazos para las cornisas. Va como hijo del esqueleto —es
+	# donde tiene que estar un `SkeletonModifier3D`— y arranca apagado: solo lo
+	# enciende el estado de agarre.
+	brazos_cornisa = BrazosCornisa.new()
+	brazos_cornisa.name = "BrazosCornisa"
+	skeleton.add_child(brazos_cornisa)
 
 	_playback = tree.get("parameters/maquina/playback")
 	player.animation_finished.connect(func(a: StringName) -> void: animation_finished.emit(String(a)))
