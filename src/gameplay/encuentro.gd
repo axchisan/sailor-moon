@@ -55,6 +55,8 @@ var _aviso: Node3D = null
 var _tiempo: float = 0.0
 ## Respiro tras cerrar, para que el toque que cierra no vuelva a abrirlo.
 var _enfriamiento: float = 0.0
+## El primer plano en vivo, solo mientras dura la conversación.
+var _retrato: Retrato = null
 
 ## Cuánto dura ese respiro.
 const RESPIRO_TRAS_CERRAR := 0.8
@@ -177,11 +179,39 @@ func empezar() -> void:
 	if _aviso != null:
 		_aviso.visible = false
 
+	_montar_retrato(panel)
 	panel.terminado.connect(_al_terminar, CONNECT_ONE_SHOT)
 	if not panel.linea_mostrada.is_connected(_al_mostrar_linea):
 		panel.linea_mostrada.connect(_al_mostrar_linea)
 	if not panel.mostrar(dialogo):
 		_al_terminar("")
+
+
+## Monta el retrato en vivo y lo mete en el cuadro de diálogo.
+##
+## Se crea al abrir y se tira al cerrar: es una cámara más renderizando, y no
+## tiene por qué existir mientras se corre por el parque. Ver
+## [`retrato.gd`](../ui/retrato.gd).
+func _montar_retrato(panel: Node) -> void:
+	if _visual == null or not panel.has_method("poner_retrato"):
+		return
+	_retrato = Retrato.new()
+	_retrato.name = "Retrato"
+	add_child(_retrato)
+	if _retrato.enfocar(_visual):
+		panel.poner_retrato(_retrato.get_texture())
+	else:
+		_tirar_retrato(panel)
+
+
+func _tirar_retrato(panel: Node) -> void:
+	if panel != null and panel.has_method("poner_retrato"):
+		panel.poner_retrato(null)
+	if _retrato == null:
+		return
+	_retrato.soltar(_visual)
+	_retrato.queue_free()
+	_retrato = null
 
 
 ## El bucle base mientras se conversa.
@@ -252,6 +282,7 @@ func _esperar_gesto(del_jugador: bool, estado: String) -> void:
 
 func _al_terminar(_id_dialogo: String) -> void:
 	_hablando = false
+	_tirar_retrato(_buscar_panel())
 	_enfriamiento = RESPIRO_TRAS_CERRAR
 	# Los dos vuelven a estar de pie. Sin esto se quedan gesticulando solos
 	# después de que el cuadro de diálogo se haya cerrado.

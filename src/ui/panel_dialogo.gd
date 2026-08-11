@@ -26,6 +26,8 @@ signal linea_mostrada(indice: int)
 
 @onready var _marco: Control = $Marco
 @onready var _nombre: Label = $Marco/Nombre
+## El recuadro del retrato en vivo. Se crea la primera vez que hace falta.
+var _retrato: TextureRect = null
 @onready var _texto: RichTextLabel = $Marco/Texto
 @onready var _flecha: Label = $Marco/Flecha
 @onready var _voz: AudioStreamPlayer = $Voz
@@ -197,6 +199,42 @@ func _terminar_linea() -> void:
 	_esperando = _pausa > 0.0
 	if not _esperando:
 		_flecha.visible = true
+
+
+## Cuelga el retrato en vivo del cuadro, o lo quita si se le pasa `null`.
+##
+## El recuadro se crea la primera vez y luego solo se enseña o se esconde: es
+## una esquina del panel, no hace falta reconstruirlo en cada conversación.
+##
+## La textura viene de un `SubViewport` que enfoca al personaje de verdad, así
+## que **se mueve**: si está diciendo su frase con la animación de hablar, aquí
+## se le ve decirla. Ver [`retrato.gd`](retrato.gd).
+func poner_retrato(textura: Texture2D) -> void:
+	if _retrato == null:
+		_retrato = TextureRect.new()
+		_retrato.name = "Retrato"
+		_retrato.custom_minimum_size = Vector2(132, 132)
+		_retrato.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_retrato.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_retrato.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Sobre el marco y pegado al borde de arriba: es donde no tapa el texto
+		# y donde se mira antes de empezar a leer.
+		_retrato.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		# Encima del cuadro y por delante de la etiqueta del nombre, que se corre
+		# a la derecha para dejarle sitio. Puesto más abajo le tapaba el nombre a
+		# medias, que es peor que no tener retrato.
+		_retrato.position = Vector2(6, -128)
+		var marco := get_node_or_null("Marco")
+		if marco != null:
+			marco.add_child(_retrato)
+		else:
+			add_child(_retrato)
+
+	_retrato.texture = textura
+	_retrato.visible = textura != null
+	# El nombre se aparta para no quedar debajo del retrato.
+	if _nombre != null:
+		_nombre.position.x = 128.0 if textura != null else 24.0
 
 
 func _siguiente_linea() -> void:
