@@ -30,7 +30,7 @@ signal todos_cumplidos
 ## Los objetivos del Acto 1. El orden es el que se muestra.
 const LISTA: Array[Dictionary] = [
 	{"id": "arenas", "texto": "Despeja los tres caminos", "meta": 3},
-	{"id": "faroles", "texto": "Enciende los tres faroles", "meta": 3},
+	{"id": "faroles", "texto": "Enciende los seis faroles", "meta": 6},
 	{"id": "mercury", "texto": "Encuentra a Amy", "meta": 1},
 	{"id": "estrellas", "texto": "Reúne las 7 Estrellas de Sueño", "meta": 7},
 	{"id": "rincones", "texto": "Recorre los cuatro rincones del parque", "meta": 4},

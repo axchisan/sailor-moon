@@ -122,6 +122,7 @@ conversación por turnos, transiciones suaves y la transformación en tres tiemp
 | **Jefe guardián del portal** | Sin empezar. Ver C ter 4 en el plan maestro |
 | **Panel de objetivos** | Esperando a que haya interfaz — decisión del usuario |
 | Encuadre de la cinemática | `_presentar()` en `portal_salida.gd` |
+| Sonido propio del portal al presentarse | Va mudo; la escena pide algo |
 | Sonido propio de la transformación | `SFX_TRANSFORMACION` en `combat_feel.gd`. Va prestado del especial |
 | Audio de Mercury (F5) | Depende del usuario: fish.audio, texto en `14-VOCES.md` |
 | Zonas vacías y salientes para trepar | [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md) |
@@ -811,6 +812,28 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
     ANTERIOR al modificador, así que los números dicen que no hace nada aunque
     en pantalla se vea perfectamente. Ahí hay que mirar, no medir.
 ---
+
+90. **Una señal que nadie escucha no da ningún error.** `EventBus.show_message`
+   la emitían veintiún sitios —el portal, las puertas, los faroles, los
+   objetivos— y el HUD nunca se conectó a ella. Todos esos avisos llevaban desde
+   siempre gritando al vacío. No se ve leyendo el código que emite, porque ese
+   código está bien; solo se ve probando el mensaje en pantalla. Si un aviso
+   «no sale», comprobar primero que alguien lo escucha:
+   `EventBus.show_message.get_connections().size()`.
+91. **Dos números que tienen que ir juntos acaban separándose.** El disparador de
+   las arenas medía 6 m en el `.tscn` y la barrera 11 en el script: entre uno y
+   otra quedaba un anillo de cinco metros por el que se cruzaba la arena entera
+   sin que arrancara la pelea. Ahora el disparador se calcula del radio de la
+   barrera. Cuando dos medidas describen la misma cosa, que solo se escriba una.
+92. **Un `SubResource` del `.tscn` lo comparten todos los nodos que lo usan.** Las
+   cuatro arenas apuntaban al mismo `CylinderShape3D`; cambiarle el radio a una
+   se lo cambiaba a las cuatro y ganaba la última en inicializarse. `duplicate()`
+   antes de tocar nada que venga de la escena.
+93. **`look_at` es un error, no un aviso, si se mira a donde ya se está.** Y el
+   error corta la ejecución de la función a la mitad, así que lo que viniera
+   después —devolver el control, abrir un panel— no llega a pasar. En una
+   cinemática cuya cámara depende de por dónde llegue la jugadora, eso falla a
+   veces sí y a veces no. Comprobar la distancia antes de llamarlo.
 
 ## 7. Decisiones tomadas y por qué
 

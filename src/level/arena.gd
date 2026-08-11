@@ -34,7 +34,12 @@ class_name Arena
 ## y saltándola se sale de la pelea, que es justo lo que impide. Subir el panel
 ## de verdad taparía el escenario con una pared rosa en el momento en que más
 ## falta hace ver a los enemigos, así que sube solo lo que choca.
-@export var barrier_extra_collision: float = 4.5
+## Con cuatro metros y medio de más se seguía entrando de vez en cuando: el
+## doble salto sube mucho, y basta con tomar carrerilla desde un montículo del
+## borde para pasar por encima. Es colisión invisible, así que subirla no cuesta
+## nada ni se ve — y una barrera que se salta «solo a veces» es peor que ninguna,
+## porque el juego parece roto en vez de difícil.
+@export var barrier_extra_collision: float = 11.0
 ## Más segmentos = círculo más redondo y más draw calls. 16 es buen equilibrio.
 @export var barrier_segments: int = 16
 @export var barrier_color: Color = Color(1.0, 0.55, 0.85, 0.28)
@@ -66,10 +71,83 @@ func _ready() -> void:
 	# nivel necesita desbloquear la del guardián cuando se encienden los faroles.
 	add_to_group("arenas")
 	body_entered.connect(_on_body_entered)
+	_ajustar_disparador()
 	_build_barrier()
 	bloqueada = bloqueada_al_empezar
 	_set_barrier(bloqueada)
+	_montar_zona_de_aviso()
 	set_physics_process(false)
+
+
+## LA PELEA EMPIEZA EN TODA LA ARENA, NO SOLO EN EL CENTRO.
+##
+## El disparador venía del `.tscn` con seis metros de radio y la barrera con
+## once: entre uno y otra quedaba un anillo de cinco metros de arena por el que
+## se podía cruzar de lado a lado sin que saltara nada. Y se cruzaba — pegarse al
+## borde y bordear era la forma de saltarse las dos primeras peleas enteras.
+##
+## Que el disparador se ajuste solo al radio de la barrera quita el problema de
+## raíz: eran dos números que tenían que ir juntos escritos en sitios distintos,
+## y eso siempre acaba desalineándose. Ahora solo hay uno.
+func _ajustar_disparador() -> void:
+	for hijo in get_children():
+		var forma := hijo as CollisionShape3D
+		if forma == null or forma.shape == null:
+			continue
+		# Duplicado ANTES de tocarlo: en la escena del nivel las cuatro arenas
+		# comparten el mismo `SubResource`, así que cambiarle el radio a una se
+		# lo cambiaba a todas — y con radios de 11, 12 y 13 ganaba la última.
+		var cilindro := forma.shape.duplicate() as CylinderShape3D
+		if cilindro == null:
+			continue
+		# Medio metro por dentro del panel, para no arrancar la pelea con la
+		# jugadora metida en la propia barrera cuando esta se levanta.
+		cilindro.radius = maxf(barrier_radius - 0.6, 1.0)
+		forma.shape = cilindro
+
+
+## Qué se le dice a quien intente entrar mientras está cerrada.
+##
+## La barrera de la arena es lo que cierra de verdad el paso al guardián —el
+## pasillo tiene puerta, pero el campo se rodea—, y quien llega por el campo se
+## encontraba una pared rosa muda. La puerta explicaba qué faltaba y la barrera
+## no, cuando las dos cierran lo mismo.
+##
+## Lo rellena `nivel.gd`, que es quien lleva la cuenta de los faroles.
+@export var pista: String = ""
+## A qué distancia del borde de la barrera se avisa.
+@export var margen_aviso: float = 4.0
+## Cada cuánto se repite, para no ser pesada.
+@export var repetir_aviso: float = 6.0
+
+var _proximo_aviso: float = 0.0
+
+
+func _montar_zona_de_aviso() -> void:
+	if not bloqueada_al_empezar:
+		return
+	var zona := Area3D.new()
+	zona.name = "ZonaAviso"
+	zona.collision_layer = 0
+	zona.collision_mask = 2
+	var forma := CollisionShape3D.new()
+	var cilindro := CylinderShape3D.new()
+	cilindro.radius = barrier_radius + margen_aviso
+	cilindro.height = 8.0
+	forma.shape = cilindro
+	forma.position.y = 2.0
+	zona.add_child(forma)
+	zona.body_entered.connect(func(cuerpo: Node3D) -> void:
+		if not bloqueada or pista.is_empty():
+			return
+		if not cuerpo.is_in_group("player"):
+			return
+		var ahora := Time.get_ticks_msec() / 1000.0
+		if ahora < _proximo_aviso:
+			return
+		_proximo_aviso = ahora + repetir_aviso
+		EventBus.show_message.emit(pista, 3.0))
+	add_child(zona)
 
 
 ## Construye la barrera como un anillo de paneles. Se genera por código porque
@@ -154,6 +232,18 @@ func desbloquear() -> void:
 
 func start() -> void:
 	if started or bloqueada:
+		return
+	# UNA ARENA SIN OLEADAS NO ES UNA ARENA.
+	#
+	# El claro del portal es un `Arena` con la lista vacía —lo es para heredar la
+	# barrera y el disco de suelo, no para pelear—, así que pisarlo anunciaba
+	# «¡Aquí vienen!» sin que viniera nadie, y ese cartel se comía al del portal,
+	# que es justo lo que hay que leer ahí. Callarlo al terminar no bastaba: el
+	# ruido estaba al empezar.
+	#
+	# Cuando el guardián del portal tenga su oleada, esto dejará de aplicarle
+	# solo con rellenarle la lista.
+	if waves.is_empty():
 		return
 	started = true
 	set_physics_process(true)
@@ -246,12 +336,7 @@ func _finish() -> void:
 	set_physics_process(false)
 	_set_barrier(false)
 	CombatDirector.reset()
-	# UNA ARENA SIN OLEADAS NO ANUNCIA NADA.
-	#
-	# El claro del portal es un `Arena` con la lista de oleadas vacía —lo es para
-	# heredar la barrera y el disco, no para pelear— así que al pisarlo saltaba
-	# «¡Arena limpia!» sin haber luchado contra nadie. Y peor: ese cartel pisaba
-	# al del portal, que es justo lo que había que leer ahí.
+	# Sin oleadas no hay victoria que anunciar. Ver `start()`.
 	if waves.is_empty():
 		return
 	EventBus.arena_cleared.emit(arena_id)

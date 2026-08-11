@@ -125,19 +125,63 @@ func _presentar(jugador: Node3D) -> void:
 		+ (jugador.global_position - global_position).normalized() * 5.0
 	var mirar := global_position + Vector3.UP * 2.6
 
+	var desde := camara.global_position
 	var t := create_tween()
 	t.tween_method(func(v: float) -> void:
-		camara_escena.global_position = camara.global_position.lerp(cerca, v)
-		camara_escena.look_at(mirar, Vector3.UP),
+		if not is_instance_valid(camara_escena):
+			return
+		camara_escena.global_position = desde.lerp(cerca, v)
+		# `look_at` REVIENTA SI SE MIRA A DONDE YA SE ESTÁ.
+		#
+		# Godot lo trata como error, y el error corta la ejecución de este lambda
+		# a media escena: la cámara se queda clavada donde estuviera y lo que
+		# viene detrás —devolver el control, abrir la lista— no llega a pasar.
+		# Depende de por dónde se acerque la jugadora, así que fallaba a veces sí
+		# y a veces no, que es la peor forma de fallar.
+		if camara_escena.global_position.distance_squared_to(mirar) > 0.01:
+			camara_escena.look_at(mirar, Vector3.UP),
 		0.0, 1.0, 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await t.finished
 	await get_tree().create_timer(1.1).timeout
 
 	camara.make_current()
 	camara_escena.queue_free()
+
+	# Y ahora sí la lista, con el juego parado y sitio para leerla. El control no
+	# vuelve hasta que se cierra: si se puede andar mientras se lee, no se lee.
+	await _abrir_la_lista()
+
 	if jugador.has_method("set_control_enabled"):
 		jugador.call("set_control_enabled", true)
-	_recitar_lo_que_falta()
+
+
+## LA LISTA COMPLETA, A PANTALLA ENTERA.
+##
+## Es lo más importante que el juego tiene que decir en todo el nivel, y se
+## estaba diciendo con el mismo cartelito de paso que anuncia un farol
+## encendido: media pantalla, cuatro segundos y a tomar viento. Aquí se enseña
+## entera y con lo hecho marcado, que es lo que convierte «me faltan cosas» en
+## «voy por la mitad».
+## Igual, pero quitando el control mientras dura. Para cuando se abre la lista
+## sin venir de la cinemática, que es la que ya lo tenía quitado.
+func _ensenar_la_lista(jugador: Node3D) -> void:
+	if jugador.has_method("set_control_enabled"):
+		jugador.call("set_control_enabled", false)
+	await _abrir_la_lista()
+	if jugador.has_method("set_control_enabled"):
+		jugador.call("set_control_enabled", true)
+
+
+func _abrir_la_lista() -> void:
+	var objetivos := get_tree().get_first_node_in_group("objetivos") as ObjetivosNivel
+	if objetivos == null:
+		return
+	var panel := PanelRequisitos.new()
+	get_tree().current_scene.add_child(panel)
+	await panel.mostrar(
+		"LA PUERTA ANTIGUA DUERME",
+		"Estaba aquí antes que el parque. Despertará cuando todo esté hecho.",
+		objetivos.resumen())
 
 
 func _process(delta: float) -> void:
@@ -181,7 +225,13 @@ func _al_entrar(cuerpo: Node3D) -> void:
 	# momento en que se entera de a qué está jugando — y este es el sitio donde
 	# más ganas tiene de saberlo.
 	if not _activo:
-		_recitar_lo_que_falta()
+		# Tocarla es preguntar. Pasar cerca se contesta con una línea (lo hace la
+		# zona de aviso); venir hasta aquí a ponerle la mano encima se contesta
+		# con la lista entera, porque a eso ha venido.
+		var ahora := Time.get_ticks_msec() / 1000.0
+		if ahora >= _proxima_lista:
+			_proxima_lista = ahora + REPETIR_LISTA
+			_ensenar_la_lista(cuerpo)
 		return
 	monitoring = false
 	usado.emit(destino)

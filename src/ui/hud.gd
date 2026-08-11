@@ -13,6 +13,51 @@ extends Control
 @onready var wave_label: Label = %WaveLabel
 
 var _banner_timer: float = 0.0
+var _aviso: Label = null
+var _aviso_timer: float = 0.0
+
+
+## EL AVISO VA APARTE DEL CARTEL DE COMBATE.
+##
+## Podrían compartir el `Banner` y salía más barato, pero entonces «¡Aquí
+## vienen!» y «Faltan 3 faroles» se pisan: el que llega segundo borra al primero,
+## y llegar a una arena es justo el momento en que los dos tienen algo que decir.
+## Separados, el de pelea manda arriba y el informativo abajo, y los dos caben.
+##
+## Y es más pequeño a propósito. El cartel de combate grita porque anuncia algo
+## que pasa ahora mismo; esto explica, y lo que explica se lee, no se grita.
+func _montar_aviso() -> void:
+	_aviso = Label.new()
+	_aviso.name = "Aviso"
+	_aviso.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_aviso.anchor_top = 0.72
+	_aviso.anchor_bottom = 0.72
+	_aviso.offset_left = -420.0
+	_aviso.offset_right = 420.0
+	_aviso.offset_top = -60.0
+	_aviso.offset_bottom = 60.0
+	_aviso.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_aviso.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_aviso.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_aviso.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_aviso.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_aviso.add_theme_font_size_override("font_size", 27)
+	_aviso.add_theme_color_override("font_color", Color(1.0, 0.96, 0.99))
+	_aviso.add_theme_color_override("font_outline_color", Color(0.28, 0.08, 0.24))
+	_aviso.add_theme_constant_override("outline_size", 9)
+	_aviso.modulate.a = 0.0
+	add_child(_aviso)
+
+
+## Un aviso de paso, abajo. Para la lista completa de objetivos está
+## [`PanelRequisitos`](panel_requisitos.gd), que para eso para el juego.
+func mostrar_aviso(texto: String, duracion: float = 3.0) -> void:
+	if _aviso == null:
+		return
+	_aviso.text = texto
+	_aviso_timer = duracion
+	var t := create_tween()
+	t.tween_property(_aviso, "modulate:a", 1.0, 0.18)
 
 
 func _ready() -> void:
@@ -27,9 +72,21 @@ func _ready() -> void:
 	EventBus.wave_cleared.connect(_on_wave_cleared)
 	EventBus.arena_cleared.connect(_on_arena_cleared)
 	EventBus.player_died.connect(_on_player_died)
+	# NADIE ESCUCHABA ESTA SEÑAL.
+	#
+	# `show_message` es por donde hablan el portal, las puertas mágicas, los
+	# faroles y los objetivos: veintiún sitios del juego emitiéndola, y el HUD
+	# nunca se conectó. Todos esos avisos llevaban desde siempre gritando al
+	# vacío, y por eso llegar a una puerta cerrada no explicaba nada — el aviso
+	# se escribía, sencillamente no lo mostraba nadie.
+	#
+	# Se ve al probar los mensajes uno a uno y no se ve nunca leyendo el código
+	# que los emite, que estaba bien: la señal existía y el `emit` era correcto.
+	EventBus.show_message.connect(mostrar_aviso)
 
 	banner.modulate.a = 0.0
 	special_label.visible = false
+	_montar_aviso()
 	_refresh_all()
 
 
@@ -39,6 +96,11 @@ func _process(delta: float) -> void:
 		if _banner_timer <= 0.0:
 			var tween := create_tween()
 			tween.tween_property(banner, "modulate:a", 0.0, 0.4)
+
+	if _aviso_timer > 0.0:
+		_aviso_timer -= delta
+		if _aviso_timer <= 0.0 and _aviso != null:
+			create_tween().tween_property(_aviso, "modulate:a", 0.0, 0.45)
 
 	# El botón del especial late cuando está listo. Es imposible no verlo.
 	if GameManager.is_special_ready():

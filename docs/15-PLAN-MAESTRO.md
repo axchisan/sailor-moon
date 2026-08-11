@@ -303,6 +303,12 @@ objetivo: hasta que no se mira, es piedra decorativa.
 Se quita el control mientras dura: si se puede andar, se anda, y la escena se la
 pierde justo quien más falta le hace verla.
 
+Y al terminar la cámara se abre **la lista entera** ([`panel_requisitos.gd`](../src/ui/panel_requisitos.gd)):
+el juego se para, se oscurece el parque y las seis líneas caen una a una, con lo
+hecho marcado. Lo que falta se decía con el mismo cartelito de paso que anuncia
+un farol encendido, y lo más importante que el nivel tiene que decir no puede
+decirse con el formato de lo más pasajero.
+
 > **Falta pulir el encuadre.** Funciona y se ejecuta, pero el plano no siempre
 > deja el portal centrado. Los números están en `_presentar()`: el punto de
 > cámara (`cerca`), a dónde mira (`mirar`) y los tiempos del recorrido.

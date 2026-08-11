@@ -180,10 +180,34 @@ const ESTRELLAS: Array[Dictionary] = [
 ## Uno en mitad del camino (imposible no verlo), otro pegado al borde (hay que
 ## fijarse) y el tercero alto (hay que subir). Así el objetivo se entiende solo:
 ## el primero se enciende sin querer y ya sabes qué toca.
+## REPARTIDOS POR EL PARQUE, NO APILADOS EN LA CUESTA DEL GUARDIÁN.
+##
+## Los tres primeros estaban los tres en el mismo pasillo de quince metros: se
+## encendían de camino, sin desviarse, y con eso el objetivo no pedía nada. Un
+## objetivo que se cumple andando en línea recta no es un objetivo, es un
+## trámite — y encima dejaba sin usar el parque entero, que es lo que más ha
+## costado montar.
+##
+## Ahora hay seis y hay que ir a por ellos: uno en la pradera de salida, otro en
+## el sendero, uno en cada rama del cruce (así ninguna de las dos es «la mala»)
+## y dos en la cuesta. Todos ANTES del guardián: son los que abren su puerta, y
+## uno detrás sería imposible de encender a tiempo.
 const FAROLES: Array[Dictionary] = [
-	{"id": "farol_1", "tramo": 3, "t": 0.18, "lado": 0.0, "alto": 0.0},
-	{"id": "farol_2", "tramo": 3, "t": 0.52, "lado": -0.82, "alto": 0.0},
-	{"id": "farol_3", "tramo": 3, "t": 0.78, "lado": 0.80, "alto": 1.6},
+	# En la pradera de salida, a un lado: se ve desde donde apareces y enseña
+	# qué es un farol antes de que haga falta saberlo.
+	{"id": "farol_1", "tramo": 0, "t": 0.62, "lado": 0.70, "alto": 0.0},
+	# En el sendero, contra el lado abierto — hay que salirse un paso del camino.
+	{"id": "farol_2", "tramo": 1, "t": 0.72, "lado": -0.78, "alto": 0.0},
+	# Uno en cada rama del cruce. Ninguna de las dos se queda sin farol: si solo
+	# lo tuviera la larga, coger la corta sería un castigo, y elegir camino deja
+	# de tener gracia en cuanto una opción es peor.
+	{"id": "farol_3", "tramo": 2, "t": 0.38, "lado": 0.66, "alto": 0.0,
+		"rama": 1.0},
+	{"id": "farol_4", "tramo": 2, "t": 0.58, "lado": -0.66, "alto": 0.0,
+		"rama": -1.0},
+	# Y los dos de la cuesta del guardián, que ya estaban bien donde estaban.
+	{"id": "farol_5", "tramo": 3, "t": 0.30, "lado": -0.82, "alto": 0.0},
+	{"id": "farol_6", "tramo": 3, "t": 0.78, "lado": 0.80, "alto": 1.6},
 ]
 
 ## Dónde espera cada personaje del reparto, en coordenadas del recorrido.

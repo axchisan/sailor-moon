@@ -357,16 +357,27 @@ func rescatar() -> void:
 ## qué es lo que hace que una niña de ocho años deje de jugar. Decirle que
 ## faltan dos faroles la manda a buscarlos, que es justo lo que se quiere.
 func _actualizar_pista_de_la_puerta() -> void:
-	var barrera := get_node_or_null(puerta) as PuertaMagica
-	if barrera == null:
-		return
 	var quedan := _faroles_totales - _faroles_encendidos
-	if quedan <= 0:
-		barrera.pista = ""
-	elif quedan == 1:
-		barrera.pista = "Falta 1 farol por encender"
-	else:
-		barrera.pista = "Faltan %d faroles por encender" % quedan
+	var texto := ""
+	if quedan == 1:
+		texto = "Falta 1 farol por encender"
+	elif quedan > 1:
+		texto = "Faltan %d faroles por encender" % quedan
+
+	var barrera := get_node_or_null(puerta) as PuertaMagica
+	if barrera != null:
+		barrera.pista = texto
+
+	# Y LO MISMO EN LA BARRERA DE LA ARENA.
+	#
+	# El pasillo tiene puerta, pero el campo se rodea: quien llega al guardián
+	# por fuera se encontraba una pared rosa muda, sin nada que le dijera qué le
+	# faltaba. Las dos cosas cierran el mismo sitio, así que las dos tienen que
+	# contar lo mismo.
+	for nodo in get_tree().get_nodes_in_group("arenas"):
+		var arena := nodo as Arena
+		if arena != null and arena.bloqueada:
+			arena.pista = texto
 
 
 func _al_encender_farol(_farol: Farol) -> void:
