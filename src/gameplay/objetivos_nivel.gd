@@ -102,7 +102,7 @@ func resumen() -> Array[Dictionary]:
 	for ficha in LISTA:
 		var id: String = ficha["id"]
 		salida.append({
-			"texto": ficha["texto"],
+			"texto": _texto_de(id),
 			"hecho": esta_hecho(id),
 			"cuantos": _progreso.get(id, 0),
 			"meta": _meta_de(id),
@@ -111,11 +111,19 @@ func resumen() -> Array[Dictionary]:
 
 
 func _al_limpiar_arena(id: String) -> void:
-	# El guardián cuenta aparte: es el cierre, no una arena más.
+	# EL GUARDIÁN CUENTA EN LOS DOS SITIOS.
+	#
+	# Antes contaba solo como «Derrota al guardián», así que «Despeja los tres
+	# caminos» únicamente podía recibir dos: las otras dos arenas. El objetivo
+	# era **imposible de terminar** y con él el nivel entero, porque la puerta
+	# espera a que estén los seis.
+	#
+	# Y las tres arenas son tres: dos de camino y la del guardián. Que limpiarla
+	# marque dos casillas a la vez no es un fallo — es el final de la lista, y
+	# que se cierren dos cosas de golpe ahí está bien.
 	if id.ends_with("guardian"):
 		anotar("guardian")
-	else:
-		anotar("arenas")
+	anotar("arenas")
 
 
 func _al_coger_estrella(total: int) -> void:
@@ -123,11 +131,7 @@ func _al_coger_estrella(total: int) -> void:
 
 
 func _anunciar(id: String) -> void:
-	var texto := ""
-	for ficha in LISTA:
-		if ficha["id"] == id:
-			texto = ficha["texto"]
-			break
+	var texto := _texto_de(id)
 	objetivo_cumplido.emit(id, cuantos_hechos(), LISTA.size())
 	if avisar:
 		# EL RECUENTO VA EN SU PROPIA LÍNEA Y DICE DE QUÉ ES.
@@ -153,7 +157,42 @@ func _comprobar_final() -> void:
 		EventBus.show_message.emit("¡El camino al siguiente lugar se ha abierto!", 3.5)
 
 
+## Corrige cuántos hacen falta de algo, y su texto.
+##
+## LAS METAS ESCRITAS A MANO SE QUEDAN VIEJAS Y NADIE SE ENTERA.
+##
+## La lista pedía cuatro rincones y seis faroles porque eso era lo que había el
+## día que se escribió. En cuanto se añade uno, o uno no cabe y se descarta al
+## generar el nivel, el número deja de cuadrar — y un objetivo que pide más de
+## lo que existe no se puede terminar, ni hay forma de notarlo jugando salvo
+## dando vueltas por el parque buscando algo que no está.
+##
+## Ahora quien coloca las cosas dice cuántas colocó. La lista solo pone el texto.
+func fijar_meta(id: String, cuantos: int, texto: String = "") -> void:
+	if not _progreso.has(id) or cuantos <= 0:
+		return
+	_metas[id] = cuantos
+	if not texto.is_empty():
+		_textos[id] = texto
+	_progreso[id] = mini(_progreso[id], cuantos)
+
+
+var _metas: Dictionary = {}
+var _textos: Dictionary = {}
+
+
+func _texto_de(id: String) -> String:
+	if _textos.has(id):
+		return _textos[id]
+	for ficha in LISTA:
+		if ficha["id"] == id:
+			return ficha["texto"]
+	return id
+
+
 func _meta_de(id: String) -> int:
+	if _metas.has(id):
+		return _metas[id]
 	for ficha in LISTA:
 		if ficha["id"] == id:
 			return ficha["meta"]

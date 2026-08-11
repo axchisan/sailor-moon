@@ -118,9 +118,18 @@ func _atajo_tactil(evento: InputEvent) -> void:
 	# él. Los contadores del HUD que hay en esa esquina no estorban: todo el HUD
 	# va con `MOUSE_FILTER_IGNORE` y deja pasar el toque.
 	var ancho := get_viewport().get_visible_rect().size.x
+	var alto := get_viewport().get_visible_rect().size.y
 	if _panel.visible and toque.position.x > ancho - ESQUINA_DEV.x \
 			and toque.position.y < ESQUINA_DEV.y:
 		_siguiente_prueba()
+		return
+
+	# Esquina inferior DERECHA con el panel abierto: derecho al jefe. Probar el
+	# final del acto obliga si no a rehacer el nivel entero cada vez, y eso son
+	# veinte minutos por cada cosa que se quiera mirar del guardián.
+	if _panel.visible and toque.position.x > ancho - ESQUINA_DEV.x \
+			and toque.position.y > alto - ESQUINA_DEV.y:
+		ir_al_jefe()
 		return
 
 	if toque.position.x > ESQUINA_DEV.x or toque.position.y > ESQUINA_DEV.y:
@@ -131,6 +140,52 @@ func _atajo_tactil(evento: InputEvent) -> void:
 	if _toques >= TOQUES_PARA_ABRIR:
 		_toques = 0
 		_panel.visible = not _panel.visible
+
+
+## SALTAR AL JEFE (F10, o abajo a la derecha con el panel abierto).
+##
+## Para probar el final del acto había que jugárselo entero: tres arenas, seis
+## faroles repartidos por el parque, las siete Estrellas y los cuatro rincones.
+## Veinte minutos largos por cada cosa que se quiera mirar del guardián, y como
+## nadie los va a repetir diez veces seguidas, el jefe se acaba probando poco y
+## tarde — que es como se quedan los fallos dentro.
+##
+## Deja la lista hecha, cura y coloca a la jugadora en el claro para ver salir al
+## guardián desde donde se ve de verdad.
+func ir_al_jefe() -> void:
+	var objetivos := get_tree().get_first_node_in_group("objetivos") as ObjetivosNivel
+	if objetivos == null:
+		EventBus.show_message.emit("[dev] este nivel no tiene objetivos", 2.0)
+		return
+
+	var claro: Arena = null
+	for nodo in get_tree().get_nodes_in_group("arenas"):
+		var a := nodo as Arena
+		if a != null and a.arena_id.ends_with("claro"):
+			claro = a
+
+	# Primero la jugadora al sitio, y luego se cumple la lista: así le da tiempo
+	# a llegar antes de que el guardián se levante, y se ve la escena entera.
+	var jugador := get_tree().get_first_node_in_group("player") as Node3D
+	if jugador != null and claro != null:
+		jugador.global_position = claro.global_position + Vector3(0.0, 1.0, 9.0)
+		if jugador is CharacterBody3D:
+			(jugador as CharacterBody3D).velocity = Vector3.ZERO
+
+	# Las puertas y barreras que hubiera por el camino, abiertas: si no, el
+	# atajo deja encerrada a la jugadora en un sitio al que ha llegado volando.
+	for nodo in get_tree().get_nodes_in_group("arenas"):
+		var a := nodo as Arena
+		if a != null and a.bloqueada:
+			a.desbloquear()
+
+	GameManager.reset_health()
+	GameManager.add_special_charge(99)
+
+	for ficha: Dictionary in ObjetivosNivel.LISTA:
+		objetivos.fijar(ficha["id"], objetivos._meta_de(ficha["id"]))
+
+	EventBus.show_message.emit("[dev] lista completa — aquí viene", 2.4)
 
 
 func _unhandled_input(evento: InputEvent) -> void:
@@ -149,6 +204,7 @@ func _unhandled_input(evento: InputEvent) -> void:
 		KEY_F7: _limpiar_enemigos()
 		KEY_F8: _siguiente_prueba()
 		KEY_F9: _copiar_informe()
+		KEY_F10: ir_al_jefe()
 		_: return
 	get_viewport().set_input_as_handled()
 
@@ -399,6 +455,7 @@ func _informe() -> String:
 		_prueba, PRUEBAS.size() - 1, PRUEBAS[_prueba]])
 	lineas.append("F1 panel · F2 invuln · F3 vida · F4 especial")
 	lineas.append("F5 tramo · F6 colisiones · F7 matar · F8 prueba · F9 copiar")
+	lineas.append("F10 AL JEFE  ·  en el móvil: toca abajo a la derecha")
 	lineas.append("(toca este panel para copiar los datos)")
 	return "\n".join(lineas)
 

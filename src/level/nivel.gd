@@ -241,6 +241,7 @@ func _ready() -> void:
 				var local := p - _terreno.global_position
 				return _terreno.altura_en(local.x, local.z) + _terreno.global_position.y)
 
+	_posar_los_rincones()
 	_montar_objetivos()
 
 	EventBus.arena_cleared.connect(_al_limpiar_arena)
@@ -289,9 +290,24 @@ func _montar_objetivos() -> void:
 		(nodo as Encuentro).encuentro_terminado.connect(func(_id: String) -> void:
 			_objetivos.anotar("mercury"))
 
-	for nodo in find_children("*", "Rincon", true, false):
+	var rincones := find_children("*", "Rincon", true, false)
+	for nodo in rincones:
 		(nodo as Rincon).visitado.connect(func(_id: String) -> void:
 			_objetivos.anotar("rincones"))
+
+	# LO QUE PIDE LA LISTA SALE DE LO QUE HAY PUESTO.
+	#
+	# Los números estaban escritos a mano en `ObjetivosNivel.LISTA`, y en cuanto
+	# se añade o se quita algo dejan de cuadrar. Pedir cuatro rincones donde hay
+	# tres, o seis faroles donde hay cinco, deja el nivel sin terminar y sin
+	# forma de enterarse salvo dando vueltas buscando lo que no existe.
+	_objetivos.fijar_meta("rincones", rincones.size(),
+		"Recorre los %s rincones del parque" % _en_letra(rincones.size()))
+	if _faroles_totales > 0:
+		_objetivos.fijar_meta("faroles", _faroles_totales,
+			"Enciende los %s faroles" % _en_letra(_faroles_totales))
+	_objetivos.fijar_meta("estrellas", estrellas_del_nivel,
+		"Reúne las %d Estrellas de Sueño" % estrellas_del_nivel)
 
 	_portal = get_node_or_null("PortalSalida") as PortalSalida
 	if _portal != null:
@@ -367,6 +383,30 @@ func rescatar() -> void:
 ## Se mantiene al día con cada farol: llegar a una puerta cerrada sin saber por
 ## qué es lo que hace que una niña de ocho años deje de jugar. Decirle que
 ## faltan dos faroles la manda a buscarlos, que es justo lo que se quiere.
+## Números pequeños escritos con letra. «Enciende los 6 faroles» se lee como un
+## marcador; «los seis faroles» se lee como una frase, que es lo que es.
+func _en_letra(n: int) -> String:
+	const LETRAS := ["cero", "un", "dos", "tres", "cuatro", "cinco", "seis",
+		"siete", "ocho", "nueve", "diez"]
+	if n >= 0 and n < LETRAS.size():
+		return LETRAS[n]
+	return str(n)
+
+
+## Deja los rincones sobre el suelo.
+##
+## Estaban clavados a y=0 en la escena, y el terreno no está a cero en ningún
+## sitio: uno acababa hundido casi dos metros y otro flotando uno y pico. Al que
+## se hunde se le entierra la baliza —que es lo único que dice que ese sitio
+## existe— y encontrarlo pasa a ser cuestión de tropezarse.
+func _posar_los_rincones() -> void:
+	if _constructor == null:
+		return
+	for nodo in find_children("*", "Rincon", true, false):
+		var r := nodo as Node3D
+		r.global_position = _constructor.posar_en_el_terreno(r.global_position, 0.0)
+
+
 ## EL GUARDIÁN DEL PORTAL: LO ÚLTIMO DEL ACTO.
 ##
 ## Con la lista completa, la ruina no se enciende — se levanta. El guardián sale

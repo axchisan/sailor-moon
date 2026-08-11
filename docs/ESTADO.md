@@ -856,6 +856,19 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
    lo que estaba mal era la frase. Antes de buscar un bug en un contador, leer en
    voz alta lo que sale por pantalla.
 
+97. **Un objetivo con la meta escrita a mano se queda viejo y bloquea el nivel.**
+   «Despeja los tres caminos» pedía tres y solo podía recibir dos, porque la
+   arena del guardián contaba en otro objetivo distinto: imposible de terminar,
+   y con él el nivel entero, porque la puerta espera a que estén los seis.
+   Jugando no hay forma de notarlo salvo dando vueltas buscando algo que no
+   existe. Ahora las metas las fija quien coloca las cosas (`fijar_meta`), no
+   una constante. Regla: **si algo se genera, su cuenta se genera con ello**.
+98. **Para probar el final hay que poder saltar al final.** El jefe estaba
+   detrás de tres arenas, seis faroles, siete Estrellas y cuatro rincones —
+   veinte minutos por cada cosa que se quiera mirar. Lo que cuesta veinte
+   minutos probar se prueba poco y tarde, que es como se quedan los fallos
+   dentro. `F10` (o abajo a la derecha en el móvil, con el panel abierto).
+
 ## 7. Decisiones tomadas y por qué
 
 | Decisión | Motivo |
