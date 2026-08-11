@@ -16,7 +16,16 @@ signal encuentro_terminado(id: String)
 ## Quién espera. Si se pone, se monta su modelo con física de pelo incluida.
 @export var personaje: CharacterData
 @export var dialogo: Dialogo
-## Solo puede ocurrir una vez por partida.
+## El encuentro solo CUENTA una vez para los objetivos.
+##
+## Ojo, no es lo mismo que «solo se puede hablar una vez», que es lo que
+## significaba antes y estaba mal: bastaba cerrar el cuadro a mitad para
+## quedarse sin poder volver a hablar con el personaje nunca más. Y cerrar sin
+## querer es facilísimo — el aspa está justo donde se toca para avanzar.
+##
+## Ahora se puede volver a hablar siempre, saliendo del área y entrando otra
+## vez. Lo que no se repite es el aviso a los objetivos: hablar dos veces con
+## Mercury no cuenta por dos.
 @export var una_sola_vez: bool = true
 ## Gira hacia la jugadora al hablar.
 @export var mirar_al_hablar: bool = true
@@ -44,6 +53,11 @@ var _jugador: Node3D = null
 var _visual: PersonajeVisual = null
 var _aviso: Node3D = null
 var _tiempo: float = 0.0
+## Respiro tras cerrar, para que el toque que cierra no vuelva a abrirlo.
+var _enfriamiento: float = 0.0
+
+## Cuánto dura ese respiro.
+const RESPIRO_TRAS_CERRAR := 0.8
 
 
 func _ready() -> void:
@@ -60,6 +74,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_tiempo += delta
+	_enfriamiento = maxf(0.0, _enfriamiento - delta)
 	if _aviso != null:
 		_aviso.position.y = 2.3 + sin(_tiempo * 3.0) * 0.12
 		_aviso.rotate_y(delta * 1.5)
@@ -134,7 +149,10 @@ func _montar_aviso() -> void:
 
 
 func _al_entrar(cuerpo: Node3D) -> void:
-	if _hablando or (_hecho and una_sola_vez):
+	# Ya NO se mira `_hecho`: se puede volver a hablar todas las veces que se
+	# quiera. Lo único que frena es estar hablando ya, o acabar de cerrar —
+	# sin ese respiro, el mismo toque que cierra el cuadro lo reabre.
+	if _hablando or _enfriamiento > 0.0:
 		return
 	if not cuerpo.is_in_group("player"):
 		return
@@ -153,7 +171,6 @@ func empezar() -> void:
 		return
 
 	_hablando = true
-	_hecho = true
 	_congelar_jugador(true)
 	if mirar_al_hablar:
 		_mirarse()
@@ -235,11 +252,20 @@ func _esperar_gesto(del_jugador: bool, estado: String) -> void:
 
 func _al_terminar(_id_dialogo: String) -> void:
 	_hablando = false
+	_enfriamiento = RESPIRO_TRAS_CERRAR
 	# Los dos vuelven a estar de pie. Sin esto se quedan gesticulando solos
 	# después de que el cuadro de diálogo se haya cerrado.
 	_animar(true, "locomocion")
 	_animar(false, "locomocion")
 	_congelar_jugador(false)
+	# El aviso vuelve, para que se vea que aquí se puede seguir hablando.
+	if _aviso != null:
+		_aviso.visible = true
+	# Pero a los objetivos solo se les avisa la primera vez: hablar dos veces
+	# con Mercury no cuenta por dos.
+	if _hecho and una_sola_vez:
+		return
+	_hecho = true
 	encuentro_terminado.emit(id)
 
 
