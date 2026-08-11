@@ -47,7 +47,7 @@ El trabajo se organiza por el **plan maestro**
 | **C bis** | Objetivos, portal y rincones | ✅ (falta el mapa de escenarios) |
 | **C ter** | Que el nivel EXPLIQUE lo que pide | ⬜ **nueva.** Avisos en las puertas, cinemática del portal, panel de objetivos y el jefe guardián del portal |
 | **D** | Rendimiento | ✅ dos pasadas. 60 fps en el móvil |
-| **E** | Movimiento y combate | 🟡 **en curso.** E1 salto, E2 doble salto y E3 trepar cornisas hechos. Falta E4 (Cofrecito) |
+| **E** | Movimiento y combate | ✅ **cerrada.** Salto en tres partes, doble salto, trepar cornisas y el Cofrecito rodeable |
 | **F** | Conversación viva | ⬜ |
 | **G** | Menú, guardado, vidas | ⬜ |
 | **H** | Historia y cinemática | ⬜ guion escrito, sin montar |
@@ -83,11 +83,11 @@ detalle en [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md)):
 
 ### Lo siguiente, en orden
 
-1. **Fase E4** — que al Cofrecito se le pueda pegar por el costado
+1. **Fase F** — conversación viva: retratos, animación de hablar, audio de
+   Mercury. Las animaciones ya están en la librería
 2. **Salientes para trepar** — la mecánica está, pero el parque tiene una sola
    plataforma y queda baja. Trepar abre el diseño de nivel solo si hay a dónde
    subir y algo arriba que lo merezca
-3. **Fase F** — retratos en el diálogo, animación de hablar, audio de Mercury
 4. **Fase G** — menú, guardado, corazones de vida escondidos
 5. **Fase H** — cinemática de historieta y narrador
 6. **Mapa de escenarios** — el portal ya se abre pero no lleva a ninguna parte

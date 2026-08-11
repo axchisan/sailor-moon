@@ -61,6 +61,10 @@ class_name Enemy
 @onready var hurtbox: Hurtbox = $Hurtbox
 @onready var state_machine: StateMachine = $StateMachine
 
+## Escudo abajo tras parar un golpe. Mientras está así se le entra por donde
+## sea, y ese hueco es lo que hace al Cofrecito enseñable en vez de solo duro.
+var escudo_bajado: bool = false
+
 var health: int = 0
 var defeated: bool = false
 var target: Node3D = null
@@ -267,6 +271,10 @@ func reset_color() -> void:
 func _bloquea(golpe: Hitbox) -> bool:
 	if shield_arc <= 0.0 or defeated:
 		return false
+	# Con el escudo abajo se le entra por donde sea. Es el hueco que deja tras
+	# haber parado un golpe, y es lo que hace que valga la pena insistir.
+	if escudo_bajado:
+		return false
 	if golpe.attack != null and golpe.attack.breaks_shield:
 		return false
 
@@ -280,11 +288,31 @@ func _bloquea(golpe: Hitbox) -> bool:
 	return angulo <= shield_arc * 0.5
 
 
-## Aguanta el golpe: ni daño ni retroceso ni interrupción. Lo único que cambia
-## es el aviso, para que se entienda a la primera que por delante no se puede.
+## Aguanta el golpe… y se queda descolocado un momento, con el escudo abajo.
+##
+## POR QUÉ EL BLOQUEO TIENE QUE PREMIAR
+##
+## Antes bloquear no le costaba nada: aguantaba el golpe y seguía a lo suyo,
+## girando para encararte. Con eso, machacar de frente no funcionaba y rodear
+## tampoco —te encaraba antes de que llegaras al costado—, así que el Cofrecito
+## solo caía con el especial. Un enemigo que solo tiene una respuesta no enseña
+## nada: enseña a esperar a que se cargue la barra.
+##
+## Ahora, cada vez que para un golpe se queda un momento quieto y con el escudo
+## bajado. Eso convierte el bloqueo en una INVITACIÓN: pegas de frente, ves que
+## rebota, y en ese hueco te da tiempo a rodearlo. La lección se aprende sola,
+## sin un cartel que la explique.
+##
+## Se reutiliza el `Stagger` porque ya hace exactamente esto —frenar, guardar la
+## hitbox y no contraatacar— solo que durando más.
+const ATURDIMIENTO_BLOQUEO := 0.65
+
+
 func _al_bloquear() -> void:
 	CombatFeel.block(global_position + Vector3.UP * 0.7)
 	_destello_escudo()
+	escudo_bajado = true
+	state_machine.transition_to("Stagger", {"duracion": ATURDIMIENTO_BLOQUEO})
 
 
 func _destello_escudo() -> void:

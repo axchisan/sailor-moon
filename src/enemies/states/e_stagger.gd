@@ -7,11 +7,15 @@ extends State
 const STAGGER_TIME := 0.22
 
 var _timer: float = 0.0
+var _duracion: float = STAGGER_TIME
 
 
 func enter(msg: Dictionary = {}) -> void:
 	var e := actor as Enemy
 	_timer = 0.0
+	# El aturdimiento de después de bloquear dura más que el de recibir un
+	# golpe: ahí es donde tiene que caber rodearlo.
+	_duracion = msg.get("duracion", STAGGER_TIME)
 
 	var knockback: Vector3 = msg.get("knockback", Vector3.ZERO)
 	var up: float = msg.get("up", 0.0)
@@ -28,7 +32,10 @@ func physics_update(delta: float) -> String:
 	e.brake(delta)
 
 	_timer += delta
-	if _timer >= STAGGER_TIME and e.is_on_floor():
+	if _timer >= _duracion and e.is_on_floor():
+		# Recomponerse levanta el escudo otra vez. Si no, se queda abierto para
+		# siempre en cuanto bloquea una vez.
+		e.escudo_bajado = false
 		return "Approach"
 
 	return ""

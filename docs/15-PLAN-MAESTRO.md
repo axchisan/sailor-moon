@@ -20,23 +20,21 @@ por lo que desbloquea a lo demás.
 | **B** | Texturas reciclables | ✅ | Todo lo que se construya después las usará. Hacerlo tarde obliga a repintar |
 | **C** | Mundo abierto, límites naturales | ✅ | Necesita las texturas de B para que los taludes y las rocas se lean |
 | **C bis** | Objetivos, portal y rincones | ✅ | El nivel necesitaba un cierre y sitios a los que ir |
-| **D** | Rendimiento | ✅ 1ª pasada | Se mide cuando el escenario ya tiene su carga real, no antes |
-| **E** | Movimiento y combate | ⬜ **bloqueada** | Depende de las animaciones de Mixamo, que las bajas tú |
+| **C ter** | Que el nivel EXPLIQUE lo que pide | ⬜ | El nivel tiene objetivos pero no los dice en ninguna parte |
+| **D** | Rendimiento | ✅ dos pasadas | Se mide cuando el escenario ya tiene su carga real, no antes |
+| **E** | Movimiento y combate | ✅ | Salto, doble salto, trepar cornisas y el Cofrecito rodeable |
 | **F** | Conversación viva | ⬜ | Depende de E (librería de animaciones montada) |
 | **G** | Marco: menú, guardado, vidas | ⬜ | Necesita que el juego ya sea agradable de jugar |
 | **H** | Historia y cinemática | ⬜ | Lo último que se monta, lo primero que se ve |
 
-> **Dónde estamos:** el escenario del Nivel 1 está terminado. De aquí en
-> adelante ya no se toca el mapa: se trabaja sobre el personaje, la
-> conversación, el marco del juego y la historia.
+> **Dónde estamos:** el escenario y el movimiento están hechos. Lo siguiente es
+> la **Fase F** —que la conversación deje de ser texto y gestos sueltos— y la
+> **C ter**, que el nivel explique lo que pide.
 >
-> **Lo único que bloquea:** las animaciones de Mixamo. Sin ellas la Fase E no
-> se puede empezar, y F depende de E. Ver
-> [`17-ANIMACIONES.md`](17-ANIMACIONES.md).
+> Nada bloquea: las 25 animaciones están en la librería compartida.
 
-**Lo que se puede hacer en paralelo:** bajar animaciones de Mixamo (A→E) y
-generar el arte de la cinemática (H). Ninguna de las dos me bloquea a mí, y las
-dos te bloquean a ti si se dejan para el final.
+**Lo que puede ir en paralelo, y depende de ti:** el arte de la cinemática (H).
+No me bloquea a mí y te bloquea a ti si se deja para el final.
 
 ---
 
@@ -418,15 +416,23 @@ esquina del muro.
 > salientes a los que subir y algo arriba que merezca la pena — eso toca al
 > repasar el escenario.
 
-### E4. Cofrecito
+### E4. Cofrecito ✅ hecho
 
-Tiene un escudo frontal de **130°** y gira a **2,2 rad/s**: te encara antes de
-que llegues al costado, y por eso solo cae con el especial.
+Tenía un escudo frontal de **130°** y giraba a **2,2 rad/s**: te encaraba antes
+de que llegaras al costado, así que solo caía con el especial. Un enemigo con
+una sola respuesta no enseña nada — enseña a esperar a que se cargue la barra.
 
-- Estrechar el escudo a ~80°
-- Bajar el giro a ~1,1 rad/s
-- **Aturdimiento tras bloquear**: si para un golpe, se queda quieto un momento
-  con el escudo bajado. Así el bloqueo enseña a rodear en vez de castigar
+- Escudo de 130° a **80°**
+- Giro de 2,2 a **1,1 rad/s**
+- **Aturdimiento tras bloquear**: cada vez que para un golpe se queda 0,65 s
+  quieto y con el escudo abajo, y durante ese hueco se le entra por donde sea
+
+Lo tercero es lo que lo cambia todo, porque convierte el bloqueo en una
+INVITACIÓN: pegas de frente, ves que rebota, y en ese hueco te da tiempo a
+rodearlo. La lección se aprende sola, sin un cartel que la explique.
+
+Se reutiliza el estado `Stagger`, que ya hacía exactamente eso —frenar, guardar
+la hitbox y no contraatacar— solo que durando menos.
 
 ---
 

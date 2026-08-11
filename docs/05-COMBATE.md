@@ -13,6 +13,8 @@
 | Que apunte mejor o peor a los enemigos | `get_attack_target()` en `player.gd` |
 | Cuántos enemigos pueden atacar a la vez | `max_attackers` en `src/autoload/combat_director.gd` |
 | Cuánto avisa un enemigo antes de pegar | `windup` en `assets/data/attacks/enemy_basic.tres` |
+| Que al Cofrecito se le pueda rodear o no | `shield_arc` y `turn_speed` en `scenes/enemies/cofrecito.tscn` |
+| Cuánto dura el hueco tras bloquear | `ATURDIMIENTO_BLOQUEO` en `src/enemies/enemy.gd` |
 | Oleadas y tamaño de la arena | exports de `src/level/arena.gd` |
 | Tamaño y posición de los botones táctiles | `scenes/ui/game_ui.tscn` |
 
