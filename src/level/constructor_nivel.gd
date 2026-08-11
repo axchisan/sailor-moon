@@ -250,11 +250,13 @@ var sitios_encuentro: Array[Vector3] = []
 ##
 ## Se apartan los cuerpos propios para que el rayo no se pare en un muro y deje
 ## el farol subido encima del seto.
-func posar_en_el_terreno(sitio: Vector3, alto: float) -> Vector3:
+func posar_en_el_terreno(sitio: Vector3, alto: float,
+		tambien_apartar: Array[RID] = []) -> Vector3:
 	var espacio := get_world_3d().direct_space_state
 	if espacio == null:
 		return sitio
 	var apartar: Array[RID] = []
+	apartar.append_array(tambien_apartar)
 	for hijo in get_children():
 		var cuerpo := hijo as StaticBody3D
 		if cuerpo != null:
@@ -280,8 +282,18 @@ func posar_lo_colocado() -> void:
 		var nodo := get_parent().get_node_or_null(ficha["nodo"]) as Node3D
 		if nodo == null:
 			continue
+		# SE APARTA A SÍ MISMA DEL RAYO, y esto no es un detalle.
+		#
+		# Un `Encuentro` lleva un `StaticBody3D` con cápsula para que no se le
+		# atraviese (trampa 37). El rayo que la posa sale de muy arriba y baja
+		# en vertical… así que lo primero que encuentra es su propio cuerpo, y
+		# el personaje se posa sobre sí mismo: quedaba metro y pico en el aire.
+		# Peor todavía, cada vez que se volviera a posar subiría otro tanto.
+		var propios: Array[RID] = []
+		for cuerpo in nodo.find_children("*", "StaticBody3D", true, false):
+			propios.append((cuerpo as StaticBody3D).get_rid())
 		nodo.global_position = posar_en_el_terreno(
-			nodo.global_position, ficha.get("alto", 0.0))
+			nodo.global_position, ficha.get("alto", 0.0), propios)
 		sitios_encuentro.append(nodo.global_position)
 
 

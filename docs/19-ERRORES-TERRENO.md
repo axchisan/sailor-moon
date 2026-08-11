@@ -52,6 +52,26 @@ Lo que pidió el usuario para ellas:
   `PaletaTerreno` y otra textura de máscara, que ya está montado para eso
 - Cositas sueltas que den motivo a acercarse
 
+### Y salientes para trepar
+
+**Va en esta misma etapa.** La mecánica de trepar cornisas está hecha y probada
+(Fase E3), pero el parque tiene **una sola plataforma y queda baja** — 0,7 m
+sobre el terreno, por debajo del mínimo agarrable. Así que ahora mismo no hay
+dónde usarla.
+
+Lo que hace falta al poblar las zonas vacías:
+
+- **Salientes de 1,2 a 2,2 m**, que es el rango en el que la cornisa se agarra
+  (`alto_cornisa_min` y `alto_cornisa_max` en `player.gd`)
+- **Algo arriba que lo merezca**: una Estrella, un corazón, unas vistas. Trepar
+  a un sitio vacío se hace una vez y no se repite
+- Rocas grandes, muretes bajos, el borde de una plataforma de piedra — cosas
+  que en un parque son creíbles y de paso rompen lo llano
+
+Es lo que convierte trepar de «una mecánica que está ahí» en algo que se usa.
+
+### Cuándo
+
 Hay que hacerlo **después** de cerrar lo que está en marcha: el usuario no
 quiere quedarse atascado en el terreno. Cuando toque, el sitio es
 `decorador_nivel.gd` — probablemente una siembra nueva parecida a los rincones,

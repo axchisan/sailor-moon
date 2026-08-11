@@ -1019,31 +1019,31 @@ func sitio_del_estanque(constructor: ConstructorNivel) -> Vector3:
 ## los primeros en sembrarse, después de la puerta: si fueran al final, el hueco
 ## que el propio encuentro tiene reservado se lo habría comido otra cosa.
 func _arboles_de_los_encuentros() -> void:
-	# Detrás, un poco a cada lado y a distinta distancia: tres en línea recta se
-	# leen como una valla, no como una arboleda.
-	const RAMILLETE := [
-		{"fondo": 3.2, "lado": -2.0, "escala": 1.25},
-		{"fondo": 4.1, "lado": 0.6, "escala": 1.5},
-		{"fondo": 3.0, "lado": 2.4, "escala": 1.15},
-	]
+	# UNO SOLO, y grande. Se probó con tres y el pasillo se saturaba: entre el
+	# muro, el personaje y la arboleda no quedaba por dónde pasar, y encima
+	# alguno caía fuera del pasillo, en el campo, donde no pinta nada.
+	#
+	# Con uno basta: la frase dice «detrás de esos árboles» y lo que hace falta
+	# es que haya algo que la tape al acercarse, no un bosque.
+	const FONDO := 2.6
+	const ESCALA := 1.45
+
 	for sitio: Vector3 in _sitios_encuentro:
 		var desde_camino := sitio - _punto_del_recorrido_mas_cercano(sitio)
 		desde_camino.y = 0.0
 		if desde_camino.length_squared() < 0.01:
 			desde_camino = Vector3.FORWARD
 		desde_camino = desde_camino.normalized()
-		var costado := Vector3(-desde_camino.z, 0.0, desde_camino.x)
 
-		for arbol: Dictionary in RAMILLETE:
-			var punto := sitio + desde_camino * float(arbol["fondo"]) \
-				+ costado * float(arbol["lado"])
-			var escala: float = arbol["escala"]
-			_plantar({
-				"pieza": "arbol_cerezo",
-				"escala": [escala, escala],
-				"hundir": 0.15,
-				"pie": 0.35,
-			}, _posar(punto), _rng.randf() * TAU, Vector3.ZERO)
+		var punto := _posar(sitio + desde_camino * FONDO)
+		if punto.y == INF or _dentro_de_un_estorbo(punto, 0.4):
+			continue
+		_plantar({
+			"pieza": "arbol_cerezo",
+			"escala": [ESCALA, ESCALA],
+			"hundir": 0.15,
+			"pie": 0.35,
+		}, punto, _rng.randf() * TAU, Vector3.ZERO)
 
 
 ## ¿Cabe algo de este tamaño aquí sin pisar el recorrido ni una arena?

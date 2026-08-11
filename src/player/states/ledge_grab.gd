@@ -24,10 +24,29 @@ extends State
 ## Cuánto hay que empujar hacia atrás para soltarse. Alto a propósito: con un
 ## roce se soltaría sin querer al intentar orientarse.
 const SOLTARSE := 0.55
-## A qué distancia del canto se queda colgada, hacia dentro de la pared.
+## A qué distancia del canto se queda el CUERPO, separado de la pared.
+##
+## No baja de aquí porque la cápsula del jugador tiene 0,32 de radio: pegarla
+## más sería meterla dentro del muro y la física la escupiría hacia fuera.
 const AGARRE_FONDO := 0.42
 ## Cuánto por debajo del canto quedan los pies.
-const AGARRE_ALTO := 1.55
+##
+## Medido con los huesos, no a ojo: con 1,55 las manos quedaban a 2,69 y el
+## borde estaba a 2,60 — nueve centímetros agarrada al aire por encima del
+## canto. Bajándola esos nueve centímetros, las manos caen sobre el borde.
+const AGARRE_ALTO := 1.64
+## Cuánto se acerca el MODELO a la pared, además del cuerpo.
+##
+## El cuerpo no puede pegarse más (ver `AGARRE_FONDO`), pero Serena es bastante
+## más estrecha que su cápsula, así que colgaba con un palmo de aire entre el
+## pecho y el muro. Se acerca solo lo que se ve; la cápsula se queda donde la
+## física la deja y nadie se entera.
+##
+## Ojo con pasarse: se probó con 0,30 y, aunque el HUESO de la espina quedaba a
+## tres centímetros de la pared, la cara y el pecho —que sobresalen bastante por
+## delante del hueso— se metieron dentro del muro. Lo que hay que dejar libre no
+## es el esqueleto, es la carne.
+const ACERCAR_MODELO := 0.15
 
 var _canto := Vector3.ZERO
 var _normal := Vector3.FORWARD
@@ -67,6 +86,9 @@ func enter(msg: Dictionary = {}) -> void:
 	hacia.y = 0.0
 	if hacia.length_squared() > 0.001:
 		p.model.rotation.y = atan2(-hacia.x, -hacia.z)
+	# El modelo se arrima a la pared. El `Model` es hijo del cuerpo, que no rota
+	# nunca, así que un desplazamiento en coordenadas del mundo vale tal cual.
+	p.model.position = -_normal * ACERCAR_MODELO
 	p.play("ledge_grab")
 
 
@@ -89,6 +111,10 @@ func physics_update(_delta: float) -> String:
 
 
 func exit() -> void:
+	var p := actor as Player
 	# El segundo salto se repone al agarrarse: una cornisa es tan buen sitio de
 	# apoyo como el suelo, y sin esto trepar y saltar seguido no sale.
-	(actor as Player).doble_salto_disponible = true
+	p.doble_salto_disponible = true
+	# Y el modelo vuelve a su sitio. Si se queda arrimado, el personaje anda el
+	# resto de la partida con el cuerpo desplazado un palmo de su propia sombra.
+	p.model.position = Vector3.ZERO
