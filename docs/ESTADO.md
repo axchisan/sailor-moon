@@ -4,9 +4,9 @@
 > retoma tras un tiempo, lee esto primero y luego el documento específico que
 > necesites.
 >
-> **Última actualización:** 2026-08-10 · Fase E: salto en tres partes, doble
-> salto y trepar cornisas. Antes: dos pasadas de
-> rendimiento y el blockout dejando de verse
+> **Última actualización:** 2026-08-11 · Fases E y F cerradas y C ter empezada.
+> Antes: dos pasadas de rendimiento, el blockout dejando de verse y la tanda de
+> arreglos de geometría
 
 ---
 
@@ -45,10 +45,10 @@ El trabajo se organiza por el **plan maestro**
 | **B** | Texturas reciclables | ✅ |
 | **C** | Mundo abierto, límites naturales | ✅ |
 | **C bis** | Objetivos, portal y rincones | ✅ (falta el mapa de escenarios) |
-| **C ter** | Que el nivel EXPLIQUE lo que pide | ⬜ **nueva.** Avisos en las puertas, cinemática del portal, panel de objetivos y el jefe guardián del portal |
+| **C ter** | Que el nivel EXPLIQUE lo que pide | 🟡 **en curso.** Avisos ✅ y cinemática del portal ✅ (falta pulir encuadre). Quedan el panel de objetivos y el jefe guardián |
 | **D** | Rendimiento | ✅ dos pasadas. 60 fps en el móvil |
 | **E** | Movimiento y combate | ✅ **cerrada.** Salto en tres partes, doble salto, trepar cornisas y el Cofrecito rodeable |
-| **F** | Conversación viva | ⬜ |
+| **F** | Conversación viva | ✅ **cerrada** salvo F5 (audio de Mercury, depende de ti) |
 | **G** | Menú, guardado, vidas | ⬜ |
 | **H** | Historia y cinemática | ⬜ guion escrito, sin montar |
 
@@ -83,14 +83,50 @@ detalle en [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md)):
 
 ### Lo siguiente, en orden
 
-1. **Fase F** — conversación viva: retratos, animación de hablar, audio de
-   Mercury. Las animaciones ya están en la librería
-2. **Salientes para trepar** — la mecánica está, pero el parque tiene una sola
+1. **C ter 4 — el jefe guardián del portal.** Con la lista completa el portal no
+   se abre sin más: aparece un jefe y se abre al ganarle. Es lo más gordo que
+   queda del nivel y lo que le da cierre
+2. **Pulir el encuadre de la cinemática del portal** — funciona, pero el plano
+   no siempre deja la ruina centrada (`_presentar()` en `portal_salida.gd`)
+3. **Salientes para trepar** — la mecánica está, pero el parque tiene una sola
    plataforma y queda baja. Trepar abre el diseño de nivel solo si hay a dónde
    subir y algo arriba que lo merezca
 4. **Fase G** — menú, guardado, corazones de vida escondidos
 5. **Fase H** — cinemática de historieta y narrador
 6. **Mapa de escenarios** — el portal ya se abre pero no lleva a ninguna parte
+
+### Lo que se hizo en la sesión del 10-11 de agosto
+
+**Rendimiento** — se descubrió que el cuello no era la geometría sino el coste
+por píxel. El cielo hacía 32 `sin()` por píxel (la trampa 52 sin corregir ahí) y
+el terreno 28 evaluaciones de ruido. Con eso arreglado, el móvil pasó de 25-41
+fps a 60. Los recortes van **solo en Android** y limitan en vez de eliminar.
+
+**Geometría** — el blockout dejó de dibujarse: el terreno sube hasta la cara de
+arriba de las losas y el camino se pinta con una máscara. Después hubo una tanda
+larga de arreglos de todo lo que se apoyaba en el blockout (muros flotando,
+props en el aire, colisiones invisibles), con `tools/auditar_nivel.gd` como red.
+
+**Fase E entera** — salto en tres partes con aterrizaje, doble salto, trepar
+cornisas y el Cofrecito rodeable.
+
+**Fase F casi entera** — retratos en vivo que siguen al que habla, bucle de
+conversación por turnos, transiciones suaves y la transformación en tres tiempos.
+
+**C ter empezada** — las puertas dicen qué falta y el portal se presenta.
+
+### Pendientes concretos, por si se retoma en frío
+
+| Qué | Dónde |
+|---|---|
+| **Jefe guardián del portal** | Sin empezar. Ver C ter 4 en el plan maestro |
+| **Panel de objetivos** | Esperando a que haya interfaz — decisión del usuario |
+| Encuadre de la cinemática | `_presentar()` en `portal_salida.gd` |
+| Sonido propio de la transformación | `SFX_TRANSFORMACION` en `combat_feel.gd`. Va prestado del especial |
+| Audio de Mercury (F5) | Depende del usuario: fish.audio, texto en `14-VOCES.md` |
+| Zonas vacías y salientes para trepar | [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md) |
+| El APK pesa 132 MB | Subió al meter las animaciones. Sin diagnosticar |
+| Dos rincones no caben | `AltarGato` y `Vivero`. Salen por consola en cada carga |
 
 ## 3. Índice de documentación
 
@@ -115,6 +151,7 @@ detalle en [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md)):
 | [`16-GUION.md`](16-GUION.md) | ⭐ **La historia completa**, escena por escena |
 | [`17-ANIMACIONES.md`](17-ANIMACIONES.md) | ⭐ **Qué archivo subir a Mixamo** y con qué ajustes. Bloquea la Fase E |
 | [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md) | ⭐ **Estado del Nivel 1:** cómo se monta, qué hay, qué falta, rendimiento |
+| [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md) | ⭐ Fallos de montaje del escenario, cómo se arreglaron, y **las zonas vacías y los salientes que faltan** |
 | [`CREDITOS.md`](CREDITOS.md) | Atribuciones de assets |
 
 ---
@@ -170,6 +207,10 @@ tools/blender_kit_parque.py        Kit 1: árboles, rocas, mobiliario
 tools/blender_kit_expansion.py     Kit 2: portal, puente, detalle de suelo
 tools/blender_kit_vida.py          Kit 3: puestos, materas, fuente, juegos
 tools/validar_scripts.sh           ⭐ Compila todo. Usar SIEMPRE antes de probar
+tools/auditar_nivel.gd             ⭐ Recorre el mapa buscando fallos de montaje,
+                                     con coordenadas. Pasarla al tocar el
+                                     recorrido o el terreno
+tools/generar_textura_ruido.gd     Hornea el patrón de las superficies
 ```
 
 ### Cómo se monta un nivel
