@@ -27,7 +27,7 @@ const ESTADOS := [
 	"locomocion", "jump", "fall", "land", "double_jump",
 	"ledge_grab", "ledge_climb",
 	"attack_1", "attack_2", "attack_3", "special",
-	"hurt", "dizzy", "victory", "transform",
+	"hurt", "dizzy", "victory", "transform", "transform_start",
 	"talk", "talk_gesture", "nod", "shake_head", "point", "surprised",
 	"thinking",
 ]
@@ -39,7 +39,8 @@ const ANIMACION_DE := {
 	"ledge_grab": "ledge_grab", "ledge_climb": "ledge_climb",
 	"attack_1": "attack_1", "attack_2": "attack_2", "attack_3": "attack_3",
 	"special": "special", "hurt": "hurt", "dizzy": "dizzy",
-	"victory": "victory", "transform": "transform_pose",
+	"victory": "victory",
+	"transform_start": "transform_start", "transform": "transform_pose",
 	"talk": "talk_idle", "talk_gesture": "talk_gesture",
 	"nod": "nod", "shake_head": "shake_head", "point": "point",
 	"surprised": "surprised", "thinking": "thinking",

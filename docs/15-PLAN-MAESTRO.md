@@ -467,10 +467,27 @@ Lo de Mercury («¿hay alguien ahí?» y salta la de alerta de golpe) es que se
 viaja al estado sin fundido. Todas las transiciones de conversación con mezcla
 de 0,25-0,35 s.
 
-### F4. Transformación
+### F4. Transformación ✅ hecha (falta su sonido)
 
-La animación actual no da la sensación. Hace falta una de verdad, con su pose
-final, más efecto de partículas, destello y un buen golpe de sonido.
+Era una sola pose: se saltaba a `transform_pose` y ahí se quedaba, sin efecto
+ninguno. Se leía como «ha cambiado de postura», no como que acaba de convertirse
+en Sailor Mercury.
+
+Ahora son tres tiempos, con los tiempos medidos de las propias animaciones —si
+un día se cambia `transform_start` por otra más larga, esto sigue cuadrando:
+
+1. **Alza el broche** (`transform_start`) y sube un remolino de chispas doradas
+2. **El destello**, justo en el corte entre una animación y otra: estallido
+   blanco, el tiempo se para 0,16 s y la cámara se sacude. Aquí es donde pasa
+3. **La pose**, sostenida mientras cae la purpurina
+
+El hit stop va DESPUÉS del destello y no antes: parar el tiempo justo cuando la
+luz llena la pantalla es lo que hace que el momento se sienta importante.
+
+> **Le falta su sonido.** Ahora mismo va prestado del ataque especial, y no es lo
+> mismo: el especial es un golpe y esto es una aparición. Hace falta uno propio
+> —campanillas subiendo, un golpe de arpa, algo con brillo— y se cambian dos
+> líneas en `combat_feel.gd` (`SFX_TRANSFORMACION` y `SFX_TRANSFORMACION_INICIO`).
 
 ### F5. Audio de Mercury
 

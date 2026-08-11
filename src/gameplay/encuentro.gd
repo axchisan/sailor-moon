@@ -272,6 +272,13 @@ func _al_mostrar_linea(indice: int) -> void:
 		_animar(habla_el_jugador, BUCLE_HABLAR)
 		return
 
+	# La transformación no es un gesto más: es LA escena.
+	if linea.animacion == "transform":
+		await _transformar(habla_el_jugador)
+		if _hablando:
+			_animar(habla_el_jugador, BUCLE_HABLAR)
+		return
+
 	_animar(habla_el_jugador, linea.animacion)
 	await _esperar_gesto(habla_el_jugador, linea.animacion)
 	# Y de vuelta al bucle, si la conversación sigue viva. Sin esto, el
@@ -323,6 +330,44 @@ func _seguir_al_que_habla(quien: String) -> void:
 	_retrato.soltar(_enfocado)
 	if _retrato.enfocar(objetivo):
 		_enfocado = objetivo
+
+
+## La transformación, en tres tiempos.
+##
+## Antes era una sola pose: se saltaba a `transform_pose` y ahí se quedaba, sin
+## efecto ninguno. Se leía como «ha cambiado de postura», no como que acaba de
+## convertirse en Sailor Mercury — que es la escena que la jugadora va a querer
+## volver a ver.
+##
+## Ahora son tres:
+##
+##   1. **Alza el broche** (`transform_start`) y sube un remolino de chispas
+##   2. **El destello**: estallido blanco, el tiempo se para un instante y la
+##      cámara se sacude. Aquí es donde pasa
+##   3. **La pose**, que se sostiene mientras cae la purpurina
+##
+## Los tiempos se miden de las propias animaciones, no van a ojo: si un día se
+## cambia `transform_start` por otra más larga, esto sigue cuadrando.
+func _transformar(del_jugador: bool) -> void:
+	var quien: Node3D = _jugador if del_jugador else _visual
+	var sitio := quien.global_position if quien != null else global_position
+
+	_animar(del_jugador, "transform_start")
+	CombatFeel.transformacion(sitio, "arranque")
+	await _esperar_gesto(del_jugador, "transform_start")
+	if not _hablando:
+		return
+
+	# El destello va justo en el cambio de una animación a la otra: es el corte
+	# lo que hay que tapar, y de paso es donde el golpe de luz tiene sentido.
+	CombatFeel.transformacion(sitio, "destello")
+	_animar(del_jugador, "transform")
+	await get_tree().create_timer(0.35).timeout
+	if not _hablando:
+		return
+
+	CombatFeel.transformacion(sitio, "pose")
+	await _esperar_gesto(del_jugador, "transform")
 
 
 ## Pide una animación a quien corresponda. El jugador y el personaje del

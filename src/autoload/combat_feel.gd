@@ -19,6 +19,14 @@ const SFX_HURT := preload("res://assets/audio/sfx/hurt.wav")
 const SFX_DEFEAT := preload("res://assets/audio/sfx/purify.wav")
 const SFX_BLOCK := preload("res://assets/audio/sfx/block.wav")
 const SFX_SPECIAL := preload("res://assets/audio/sfx/special.wav")
+## La transformación va PRESTADA de momento: no hay sonido propio y hace falta.
+##
+## Es el momento más importante del juego y suena a ataque especial, que no es
+## lo mismo — el especial es un golpe y esto es una aparición. Cuando se genere
+## el suyo (campanillas subiendo, un golpe de arpa, algo con brillo), se cambian
+## estas dos líneas y ya está.
+const SFX_TRANSFORMACION_INICIO := preload("res://assets/audio/sfx/purify.wav")
+const SFX_TRANSFORMACION := preload("res://assets/audio/sfx/special.wav")
 
 ## Presets de impacto por tipo de golpe.
 const IMPACT_LIGHT := {"stop": 0.04, "shake": 0.15, "shake_time": 0.12}
@@ -92,6 +100,41 @@ func special(world_position: Vector3) -> void:
 		shake(IMPACT_SPECIAL["shake"], IMPACT_SPECIAL["shake_time"])
 	spawn_impact_particles(world_position, Color(1.0, 0.85, 1.0), 60, 2.2)
 	AudioManager.play_sfx(SFX_SPECIAL, 0.0, 0.0)
+
+
+## La transformación: el momento más importante que tiene el juego.
+##
+## No es un golpe más, así que no se parece a ninguno. Un impacto va de contarlo
+## en dos fotogramas —congelar, sacudir, ya está—; esto va de lo contrario, de
+## que dure y se mire. Es la escena que la jugadora va a querer volver a ver.
+##
+## Tres tandas de partículas encadenadas en vez de un estallido:
+##
+##   1. Al alzar el broche sube un remolino desde los pies, flojo
+##   2. En el destello, el estallido grande y blanco
+##   3. Y una lluvia lenta que cae mientras se sostiene la pose
+##
+## El hit stop va DESPUÉS del destello y no antes: parar el tiempo justo cuando
+## la luz llena la pantalla es lo que hace que el momento se sienta importante.
+func transformacion(world_position: Vector3, fase: String) -> void:
+	var centro := world_position + Vector3.UP * 0.9
+	match fase:
+		"arranque":
+			spawn_impact_particles(centro, Color(1.0, 0.92, 0.55), 22, 1.4)
+			if juice_enabled:
+				shake(0.05, 0.35)
+			AudioManager.play_sfx(SFX_TRANSFORMACION_INICIO, -3.0, 0.0)
+		"destello":
+			spawn_impact_particles(centro, Color(1.0, 1.0, 1.0), 70, 2.6)
+			spawn_impact_particles(centro, Color(1.0, 0.78, 0.95), 45, 2.0)
+			if juice_enabled:
+				hit_stop(0.16)
+				shake(0.35, 0.5)
+			AudioManager.play_sfx(SFX_TRANSFORMACION, 0.0, 0.0)
+		"pose":
+			spawn_impact_particles(centro, Color(1.0, 0.9, 0.7), 30, 1.8)
+		_:
+			push_warning("CombatFeel: fase de transformación desconocida '%s'" % fase)
 
 
 # --- Piezas ------------------------------------------------------------------
