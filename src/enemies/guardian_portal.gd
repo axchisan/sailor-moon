@@ -62,18 +62,18 @@ signal vida_cambiada(actual: int, maxima: int)
 ## respuesta sería siempre la misma y daría igual cuál viniera.
 const REPERTORIO := [
 	{"id": "puno", "anim": "golpe", "aviso": 0.95, "activo": 0.22, "resto": 0.85,
-		"cerca": 0.0, "lejos": 5.0, "peso": 3.0,
-		"sigue": 1.0, "hasta": 0.7, "temblor": 0.5,
+		"cerca": 0.0, "lejos": 4.4, "peso": 3.0,
+		"sigue": 1.0, "hasta": 0.7, "temblor": 0.5, "avanza": 4.2,
 		"caja": Vector3(3.0, 2.2, 2.8), "alcance": 1.6, "centro_y": 1.3,
 		"dano": "normal"},
 	{"id": "barrido", "anim": "barrido", "aviso": 1.0, "activo": 0.3, "resto": 0.9,
-		"cerca": 0.0, "lejos": 5.5, "peso": 2.5,
-		"sigue": 0.45, "hasta": 0.55, "temblor": 0.6,
+		"cerca": 0.0, "lejos": 4.8, "peso": 2.5,
+		"sigue": 0.45, "hasta": 0.55, "temblor": 0.6, "avanza": 3.4,
 		"caja": Vector3(6.2, 1.0, 3.4), "alcance": 1.4, "centro_y": 0.45,
 		"dano": "normal", "aviso_texto": "bajo"},
 	{"id": "gancho", "anim": "gancho", "aviso": 1.15, "activo": 0.26, "resto": 1.0,
-		"cerca": 0.0, "lejos": 4.6, "peso": 2.0,
-		"sigue": 0.8, "hasta": 0.65, "temblor": 0.7,
+		"cerca": 0.0, "lejos": 4.2, "peso": 2.0,
+		"sigue": 0.8, "hasta": 0.65, "temblor": 0.7, "avanza": 3.8,
 		"caja": Vector3(3.6, 3.2, 3.0), "alcance": 1.5, "centro_y": 2.4,
 		"dano": "normal", "aviso_texto": "alto"},
 	{"id": "suelo", "anim": "golpe_suelo", "aviso": 1.55, "activo": 0.26, "resto": 1.15,
@@ -303,7 +303,11 @@ func _physics_process(delta: float) -> void:
 		return
 	if velocity.length() < 0.6:
 		_hasta_el_paso = 0.25
+		if _animador != null:
+			_animador.ritmo_normal()
 		return
+	if _animador != null:
+		_animador.ritmo_de_paso(velocity.length(), _velocidad_base)
 	_hasta_el_paso -= delta
 	if _hasta_el_paso <= 0.0:
 		_hasta_el_paso = PASO_CADA / maxf(BRIO[fase], 0.1)

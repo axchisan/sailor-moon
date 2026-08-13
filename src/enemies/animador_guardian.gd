@@ -136,5 +136,23 @@ func _al_terminar(nombre: String) -> void:
 		poner("reposo")
 
 
+## AJUSTA EL RITMO DEL PASO A LA VELOCIDAD REAL.
+##
+## La animación de andar está hecha para una velocidad concreta. En cuanto el
+## guardián corre más —cada fase acelera— el cuerpo avanza más rápido que las
+## piernas y se ve **patinar**: los pies resbalan por el suelo en vez de
+## empujarlo. Estirando el ritmo al compás de lo que se mueve de verdad, el paso
+## cae donde tiene que caer.
+func ritmo_de_paso(velocidad: float, referencia: float) -> void:
+	if _reproductor == null or _actual != "andar":
+		return
+	_reproductor.speed_scale = clampf(velocidad / maxf(referencia, 0.1), 0.45, 2.2)
+
+
+func ritmo_normal() -> void:
+	if _reproductor != null:
+		_reproductor.speed_scale = 1.0
+
+
 func esta_ocupado() -> bool:
 	return _bloqueado

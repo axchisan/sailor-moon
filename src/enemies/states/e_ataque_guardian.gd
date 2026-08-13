@@ -81,7 +81,21 @@ func physics_update(delta: float) -> String:
 			var ventana: float = _ficha.get("hasta", 0.75)
 			if t < ventana and sigue > 0.01:
 				jefe.face_target(delta * sigue)
-			jefe.brake(delta, 12.0)
+			# BUSCA PEGAR: en el último tramo de la carga ya va acercándose.
+			#
+			# Frenar en seco durante todo el aviso hacía que el guardián atacara
+			# desde donde estaba, y si te habías apartado medio metro el golpe
+			# salía al aire. Ahora los últimos instantes los usa para meterse,
+			# que es lo que hace un bicho que quiere alcanzarte y no uno que
+			# ejecuta una animación.
+			var acerca: float = _ficha.get("avanza", 0.0)
+			if acerca > 0.0 and t > 0.55:
+				var hacia := jefe.direction_to_target()
+				var fuerza := acerca * 0.42
+				jefe.velocity.x = hacia.x * fuerza
+				jefe.velocity.z = hacia.z * fuerza
+			else:
+				jefe.brake(delta, 12.0)
 			jefe.set_telegraph_pulse(t)
 			if _marca != null:
 				_crecer_el_aviso(t)
