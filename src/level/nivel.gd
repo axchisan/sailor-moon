@@ -437,6 +437,7 @@ func _despertar_al_guardian() -> void:
 	# mucho menos de lo que es.
 	_jefe.global_position = _portal.global_position
 	_portal.visible = false
+	_portal.callado = true
 	if claro != null:
 		claro.poner_barrera(true)
 	_apartar_a_luna(claro)
@@ -496,6 +497,7 @@ func _al_caer_el_guardian(claro: Arena) -> void:
 	# Y la puerta vuelve donde estaba él. Lo que se ha ganado no es «matar al
 	# jefe»: es que la piedra se vuelva a sentar, y esta vez abierta.
 	if _portal != null:
+		_portal.callado = false
 		_portal.visible = true
 		_portal.scale = Vector3(0.6, 0.6, 0.6)
 		var t := create_tween()

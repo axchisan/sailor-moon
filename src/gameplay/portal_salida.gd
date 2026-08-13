@@ -78,7 +78,7 @@ func _montar_zona_de_aviso() -> void:
 	forma.shape = esfera
 	zona.add_child(forma)
 	zona.body_entered.connect(func(cuerpo: Node3D) -> void:
-		if _activo or not cuerpo.is_in_group("player"):
+		if callado or _activo or not cuerpo.is_in_group("player"):
 			return
 		if not _presentado:
 			_presentar(cuerpo)
@@ -214,8 +214,17 @@ func activar() -> void:
 		EventBus.show_message.emit(aviso, 4.0)
 
 
+## Se calla mientras haya una pelea en marcha.
+##
+## Durante el combate con el guardián el portal sigue ahí —invisible, pero con
+## su zona de aviso puesta—, así que cruzar el centro del claro esquivando un
+## golpe soltaba el cartel de los objetivos en plena pelea. Un recordatorio de
+## deberes justo cuando hay que estar mirando dónde caen los puños.
+var callado: bool = false
+
+
 func _al_entrar(cuerpo: Node3D) -> void:
-	if not cuerpo.is_in_group("player"):
+	if callado or not cuerpo.is_in_group("player"):
 		return
 	# Dormido NO se calla: dice qué falta.
 	#

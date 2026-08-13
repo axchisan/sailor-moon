@@ -63,7 +63,35 @@ func handle_input(event: InputEvent) -> void:
 		transition_to(next)
 
 
+## Cuántos cambios de estado se permiten en un mismo fotograma antes de dar por
+## hecho que algo se ha enredado.
+##
+## UN BUCLE DE ESTADOS CUELGA EL JUEGO ENTERO, sin error y sin pantalla: se queda
+## congelado y hay que matar el proceso. Pasó con el guardián — un estado devolvía
+## su propio nombre cuando no encajaba ningún ataque, así que entraba, preguntaba,
+## no encajaba nada y volvía a entrar, todo dentro del mismo fotograma.
+##
+## Ocho es más de lo que ninguna transición legítima necesita encadenar, y a
+## cambio el peor caso pasa de «se cuelga» a «un aviso por consola y sigue
+## jugándose». En un juego que va a estar en manos de una niña de ocho años, esa
+## diferencia no es un detalle.
+const CAMBIOS_POR_FOTOGRAMA := 8
+
+var _cambios: int = 0
+var _fotograma: int = -1
+
+
 func transition_to(state_name: String, msg: Dictionary = {}) -> void:
+	var ahora := Engine.get_process_frames()
+	if ahora != _fotograma:
+		_fotograma = ahora
+		_cambios = 0
+	_cambios += 1
+	if _cambios > CAMBIOS_POR_FOTOGRAMA:
+		push_error("[FSM %s] bucle de estados cortado en '%s' (%d cambios en un fotograma)"
+			% [get_path(), state_name, _cambios])
+		return
+
 	var next := get_node_or_null(NodePath(state_name)) as State
 	if next == null:
 		push_error("Estado inexistente: '%s' en %s" % [state_name, get_path()])

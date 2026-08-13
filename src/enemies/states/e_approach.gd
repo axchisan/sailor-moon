@@ -21,7 +21,7 @@ func physics_update(delta: float) -> String:
 
 	e.move_towards(e.direction_to_target(), delta)
 
-	if distance <= e.attack_range:
+	if distance <= e.alcance_de_ataque():
 		if CombatDirector.request_token(e):
 			return _que_ataque(e)
 		return "Wait"
@@ -33,5 +33,8 @@ func physics_update(delta: float) -> String:
 ## tienen dónde elegir y van siempre al mismo.
 func _que_ataque(e: Enemy) -> String:
 	if e.has_method("siguiente_ataque"):
+		# Puede devolver "" si a esta distancia no le sirve ningún ataque; "" en
+		# la máquina de estados significa «sigue como estás», que es justo lo que
+		# hay que hacer.
 		return str(e.call("siguiente_ataque"))
 	return "Telegraph"

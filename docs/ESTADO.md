@@ -959,3 +959,13 @@ shading emborrona los contornos duros y se ve peor que en un juego fotográfico
 Sailor Moon es propiedad de Naoko Takeuchi / Kodansha / Toei Animation. Regalo
 personal, no distribuido ni monetizado. **No publicar en Google Play, itch.io ni
 ninguna tienda.** Instalación por sideload en el dispositivo de la prima.
+
+
+99. **Un estado que devuelve su propio nombre cuelga el juego entero.** Sin
+   error, sin pantalla: se congela y hay que matar el proceso. El guardián lo
+   hizo — cuando a cierta distancia no le encajaba ningún ataque devolvía
+   «Approach», y como es `EApproach` quien pregunta, entraba, preguntaba, no
+   encajaba nada y volvía a entrar, todo en el mismo fotograma. Ahora
+   `StateMachine` corta a los ocho cambios por fotograma y lo deja en un aviso
+   por consola. **Nunca devolver el nombre del estado que pregunta**: para «sigue
+   como estás» está la cadena vacía.

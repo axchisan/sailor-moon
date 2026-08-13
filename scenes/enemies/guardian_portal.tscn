@@ -38,13 +38,15 @@ display_name = "Guardián del Portal"
 max_health = 38
 move_speed = 2.6
 attack_range = 3.9
-wait_distance = 4.2
+wait_distance = 2.8
 detection_range = 20.0
-turn_speed = 2.6
+turn_speed = 4.2
 attack = ExtResource("18_ataque")
 ataque_al_suelo = ExtResource("19_suelo")
 sparkles_on_defeat = 24
 knockback_friction = 26.0
+orbita = 0.12
+paso_de_espera = 0.95
 base_color = Color(0.58, 0.6, 0.63, 1)
 telegraph_color = Color(1, 0.42, 0.62, 1)
 

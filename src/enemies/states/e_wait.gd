@@ -27,12 +27,13 @@ func physics_update(delta: float) -> String:
 	# Se mantiene a `wait_distance`: si esta muy cerca retrocede, si lejos avanza.
 	var radial := to_player * signf(distance - e.wait_distance)
 	var tangent := Vector3(-to_player.z, 0.0, to_player.x) * _orbit_dir
-	e.move_towards((radial + tangent * 0.9).normalized(), delta, 0.55)
+	e.move_towards((radial + tangent * e.orbita).normalized(), delta,
+		e.paso_de_espera)
 
 	_retry += delta
 	if _retry >= 0.4:
 		_retry = 0.0
-		if distance <= e.attack_range + 0.6 and CombatDirector.request_token(e):
+		if distance <= e.alcance_de_ataque() + 0.6 and CombatDirector.request_token(e):
 			# El jefe elige entre su golpe normal y el del suelo; los demás
 			# enemigos no tienen dónde elegir y van siempre al mismo.
 			if e.has_method("siguiente_ataque"):

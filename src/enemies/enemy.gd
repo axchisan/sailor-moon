@@ -21,6 +21,17 @@ class_name Enemy
 @export var attack: AttackData
 @export var sparkles_on_defeat: int = 3
 @export var knockback_friction: float = 8.0
+## Cuánto se mueve de lado mientras espera turno, de 0 a 1.
+##
+## Los enemigos normales orbitan alrededor de la jugadora: se ve intenso y
+## disimula que solo pueden pegar tres a la vez. Pero orbitar es **andar de lado
+## mirando al frente**, y en algo con piernas de piedra eso se lee como que
+## camina en diagonal, que fue exactamente lo que pasó con el guardián. Un golem
+## va de frente o no va.
+@export_range(0.0, 1.0) var orbita: float = 0.9
+## A qué parte de su velocidad se mueve mientras espera. Los normales van a
+## medio gas para no agobiar; el guardián es uno solo y tiene que llegar.
+@export_range(0.1, 1.0) var paso_de_espera: float = 0.55
 
 @export_group("Vuelo")
 ## Flota en vez de andar: ignora la gravedad y se mantiene a `altura_vuelo`.
@@ -169,6 +180,12 @@ func get_target() -> Node3D:
 		return target
 	target = get_tree().get_first_node_in_group("player") as Node3D
 	return target
+
+
+## Desde dónde se plantea atacar. Por defecto es su alcance, pero el jefe tiene
+## ataques que salen de mucho más lejos y necesita que se le pregunte antes.
+func alcance_de_ataque() -> float:
+	return attack_range
 
 
 func distance_to_target() -> float:

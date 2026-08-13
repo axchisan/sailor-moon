@@ -163,17 +163,30 @@ func siguiente_ataque() -> String:
 	var d := distance_to_target()
 	var posibles: Array[Dictionary] = []
 	var total := 0.0
-	for ficha: Dictionary in REPERTORIO:
-		if d < float(ficha["cerca"]) or d > float(ficha["lejos"]):
-			continue
-		if ficha["id"] == _ultimo_ataque and REPERTORIO.size() > 1:
-			continue
-		posibles.append(ficha)
-		total += float(ficha["peso"]) * _apetito(ficha)
+	# Dos pasadas: la primera descarta el último usado, y solo si eso deja la
+	# lista vacía se permite repetir.
+	#
+	# NO DEVOLVER NUNCA EL NOMBRE DE QUIEN PREGUNTA. La primera versión devolvía
+	# «Approach» cuando no encajaba nada, y como es `EApproach` quien llama, se
+	# transicionaba a sí mismo, volvía a preguntar y volvía a no encajar nada:
+	# el juego se colgaba entero en un fotograma. Pasa solo a ciertas distancias
+	# y con cierto ataque previo, que es lo que lo hacía difícil de ver venir.
+	for pasada in 2:
+		for ficha: Dictionary in REPERTORIO:
+			if d < float(ficha["cerca"]) or d > float(ficha["lejos"]):
+				continue
+			if pasada == 0 and ficha["id"] == _ultimo_ataque:
+				continue
+			posibles.append(ficha)
+			total += float(ficha["peso"]) * _apetito(ficha)
+		if not posibles.is_empty():
+			break
 
 	if posibles.is_empty():
-		# Nada encaja a esta distancia: se acerca en vez de quedarse pasmado.
-		return "Approach"
+		# A esta distancia no le sirve ninguno. Se queda como está —el estado que
+		# preguntó seguirá acercándose— y suelta la ficha para no bloquear turno.
+		CombatDirector.release_token(self)
+		return ""
 
 	var dado := randf() * total
 	_elegida = posibles[posibles.size() - 1]
@@ -201,6 +214,22 @@ func _apetito(ficha: Dictionary) -> float:
 
 var _elegida: Dictionary = {}
 var _ultimo_ataque: String = ""
+
+
+## HASTA DÓNDE SE PLANTEA ATACAR.
+##
+## Su `attack_range` son 3,9 m, y con eso el repertorio solo se consultaba a esa
+## distancia: la embestida, que existe justamente para salir de lejos, **no se
+## elegía nunca**. El guardián se quedaba plantado a cinco metros sin hacer nada
+## mientras le pegaban desde fuera.
+##
+## Ahora el alcance sale del ataque de más largo que tenga. Si mañana se le añade
+## uno que llegue a veinte metros, esto lo recoge solo.
+func alcance_de_ataque() -> float:
+	var mayor := attack_range
+	for ficha: Dictionary in REPERTORIO:
+		mayor = maxf(mayor, float(ficha["lejos"]))
+	return mayor
 
 
 func ficha_elegida() -> Dictionary:

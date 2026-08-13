@@ -72,7 +72,10 @@ func physics_update(delta: float) -> String:
 			# a que se comprometa antes de apartarse. Eso es lo que hace que haya
 			# que mirar QUÉ ataque viene, en vez de reaccionar siempre igual.
 			var t := clampf(_tiempo / maxf(aviso, 0.01), 0.0, 1.0)
-			var sigue: float = _ficha.get("sigue", 1.0)
+			# El `sigue` de la ficha se calibró con un giro base de 2,6; ahora es
+			# 4,2 para que persiga bien, así que aquí se descuenta. Lo que se
+			# quería lento era la corrección DURANTE el ataque, no el perseguir.
+			var sigue: float = float(_ficha.get("sigue", 1.0)) * 0.62
 			# Deja de corregir en el último tramo: un ataque que te persigue
 			# hasta el instante del impacto no se puede esquivar, solo aguantar.
 			var ventana: float = _ficha.get("hasta", 0.75)
