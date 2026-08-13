@@ -43,3 +43,17 @@
 ---
 
 **Propiedad intelectual:** Sailor Moon (Bishōjo Senshi Sērā Mūn) es propiedad de Naoko Takeuchi, Kodansha y Toei Animation. Este proyecto es una obra derivada personal sin ánimo de lucro, no distribuida públicamente ni monetizada.
+
+
+## Sonido
+
+**Efectos** — [Kenney](https://kenney.nl) · licencia **CC0** (dominio público).
+Packs usados: *Impact Sounds*, *RPG Audio*, *Interface Sounds*, *Music Jingles*.
+CC0 no exige atribución; se cita igualmente porque el trabajo es suyo.
+
+**Música** — pendiente. La fuente prevista es
+[Incompetech / Kevin MacLeod](https://incompetech.com), licencia **CC-BY**, que
+sí obliga a citar autor y título de cada pieza. Al añadir la primera canción hay
+que anotarla aquí — esa atribución es la condición de uso, no una cortesía.
+
+El plan completo está en [`21-SONIDO-Y-MUSICA.md`](21-SONIDO-Y-MUSICA.md).

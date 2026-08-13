@@ -64,6 +64,25 @@ var _giro_base: float = 0.0
 
 var _golpes_dados: int = 0
 
+## SUS SONIDOS.
+##
+## Un jefe mudo de dos metros y medio no pesa: la mitad de que algo se lea como
+## grande está en lo que suena al moverse, no en lo que mide. Los pasos son los
+## que más trabajan aunque nadie los escuche a propósito.
+const SFX_DESPERTAR := preload("res://assets/audio/sfx/jefe/despertar.ogg")
+const SFX_PASO := [
+	preload("res://assets/audio/sfx/jefe/paso_1.ogg"),
+	preload("res://assets/audio/sfx/jefe/paso_2.ogg"),
+]
+const SFX_PUNO := preload("res://assets/audio/sfx/jefe/puno.ogg")
+const SFX_TEMBLOR := preload("res://assets/audio/sfx/jefe/temblor.ogg")
+const SFX_DERRUMBE := preload("res://assets/audio/sfx/jefe/derrumbe.ogg")
+
+## Cada cuánto pisa mientras anda. Sale de la animación: dos pasos por vuelta de
+## `andar`, que dura dos segundos.
+const PASO_CADA := 1.0
+var _hasta_el_paso: float = 0.0
+
 ## El ataque de área usa sus propios números: pega más y empuja mucho más, que
 ## es lo que justifica salir corriendo en vez de aguantar.
 @export var ataque_al_suelo: AttackData
@@ -117,12 +136,33 @@ func despertar() -> void:
 		_animador.poner("despertar", true)
 	EventBus.show_message.emit("El guardián de la puerta despierta…", 3.2)
 	CombatFeel.shake(0.5, 0.9)
+	# Grave y sin variar el tono: es piedra de verdad, no un efecto de dibujos.
+	AudioManager.play_sfx(SFX_DESPERTAR, -2.0, 0.0)
 	await get_tree().create_timer(despertar_dura).timeout
 	if defeated:
 		return
 	set_physics_process(true)
 	hurtbox.set_deferred("monitorable", true)
 	_aplicar_fase(0)
+
+
+## Los pasos, contados a mano.
+##
+## Lo suyo sería dispararlos desde la animación con una pista de llamadas, pero
+## las animaciones vienen de un `.glb` y ahí no hay dónde meterlas. Contando el
+## tiempo mientras se mueve de verdad se consigue lo mismo, y si algún día se
+## queda atascado contra un muro tampoco sonarán pasos: no se mueve, no pisa.
+func _physics_process(delta: float) -> void:
+	super(delta)
+	if not despierto or defeated:
+		return
+	if velocity.length() < 0.6:
+		_hasta_el_paso = 0.25
+		return
+	_hasta_el_paso -= delta
+	if _hasta_el_paso <= 0.0:
+		_hasta_el_paso = PASO_CADA / maxf(BRIO[fase], 0.1)
+		AudioManager.play_sfx(SFX_PASO[randi() % SFX_PASO.size()], -6.0, 0.06)
 
 
 func _on_hurtbox_hit(player_hitbox: Hitbox) -> void:
@@ -179,5 +219,6 @@ func defeat() -> void:
 	# El temblor largo es lo que dice que ha caído algo grande. Con el mismo
 	# golpecito que un peluche, el jefe se muere igual que la morralla.
 	CombatFeel.shake(1.2, 1.4)
+	AudioManager.play_sfx(SFX_DERRUMBE, 0.0, 0.0)
 	EventBus.show_message.emit("El guardián se inclina. La puerta está libre.", 4.0)
 	derrotado.emit()
