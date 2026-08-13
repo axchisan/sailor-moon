@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://src/enemies/guardian_portal.gd" id="1_jefe"]
 [ext_resource type="Script" path="res://src/core/state_machine.gd" id="2_fsm"]
@@ -17,6 +17,7 @@
 [ext_resource type="Resource" path="res://assets/data/attacks/enemy_guardian.tres" id="18_ataque"]
 [ext_resource type="Resource" path="res://assets/data/attacks/enemy_guardian_suelo.tres" id="19_suelo"]
 [ext_resource type="Script" path="res://src/enemies/states/e_golpe_suelo.gd" id="20_golpesuelo"]
+[ext_resource type="Script" path="res://src/enemies/states/e_ataque_guardian.gd" id="21_ataque"]
 
 [sub_resource type="CapsuleShape3D" id="Shape_body"]
 radius = 0.78
@@ -109,6 +110,9 @@ script = ExtResource("14_attack")
 
 [node name="GolpeSuelo" type="Node" parent="StateMachine"]
 script = ExtResource("20_golpesuelo")
+
+[node name="Ataque" type="Node" parent="StateMachine"]
+script = ExtResource("21_ataque")
 
 [node name="Stagger" type="Node" parent="StateMachine"]
 script = ExtResource("15_stagger")

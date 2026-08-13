@@ -27,7 +27,9 @@ const POR_ESTADO := {
 	"Wait": "andar",
 	"Telegraph": "rugido",
 	"Attack": "golpe",
-	"GolpeSuelo": "golpe_suelo",
+	# El estado de ataque del jefe elige él mismo su animación según el ataque
+	# que toque, así que aquí no se le pone ninguna: mapearlo obligaría a poner
+	# una sola y perderíamos las cinco.
 	"Stagger": "dano",
 	"Defeated": "derrota",
 }
@@ -37,7 +39,8 @@ const POR_ESTADO := {
 const MEZCLA := 0.18
 
 ## Las que no se repiten: al acabar se vuelve a reposo por su cuenta.
-const DE_UNA_VEZ := ["golpe", "golpe_suelo", "dano", "despertar", "rugido"]
+const DE_UNA_VEZ := ["golpe", "golpe_suelo", "dano", "despertar", "rugido",
+	"barrido", "gancho", "embestida"]
 
 @export var reproductor_path: NodePath = ^"../Model/AnimationPlayer"
 
@@ -89,6 +92,10 @@ func _process(_delta: float) -> void:
 
 func _al_cambiar_estado(_desde: String, hacia: String) -> void:
 	if _bloqueado:
+		return
+	# «Ataque» no está en la tabla a propósito: la pone el propio estado, que es
+	# quien sabe cuál de los cinco toca.
+	if hacia == "Ataque":
 		return
 	poner(POR_ESTADO.get(hacia, "reposo"))
 

@@ -113,7 +113,10 @@ de dos millones de triángulos no es una opción.
 | `andar` | El peso está en el balanceo lateral, no en la zancada |
 | `despertar` | Cinco segundos desde el ovillo hasta ponerse de pie. Es su presentación |
 | `golpe` | Anticipación larga y bajada seca |
-| `golpe_suelo` | Los dos puños arriba y abajo. Sin usar todavía |
+| `golpe_suelo` | Los dos puños arriba y abajo — el ataque de área |
+| `barrido` | El brazo a ras de suelo, cruzando. **Se salta** |
+| `gancho` | Las dos manos de abajo arriba. Saltar aquí es lo peor que se puede hacer |
+| `embestida` | Baja el hombro y va. Castiga quedarse lejos pegando |
 | `rugido` | El aviso entre fases |
 | `dano` | Corto y con poco recorrido: si se tambalea con cada golpe, deja de imponer |
 | `derrota` | No explota. Se le apaga la luz y se sienta a quedarse quieto otra vez |
@@ -133,11 +136,50 @@ Sirve para partir una pelea larga en tres tramos —una barra que baja sin que
 pase nada se hace eterna a los ocho años— y para avisar de que la cosa cambia
 antes de que cambie, en vez de después.
 
+### Cinco ataques, y cada uno pide otra cosa
+
+Con uno solo la pelea se resolvía de una manera y ya: alejarse un paso,
+acercarse a pegar, repetir. **Un jefe con un ataque no tiene ritmo, tiene un
+bucle** — y en cuanto se le pilla, deja de haber pelea.
+
+| Ataque | Cuándo lo usa | Qué hay que hacer |
+|---|---|---|
+| Puño | Cerca | Rodearlo |
+| Barrido | Cerca | **Saltar** — apartarse no basta, es ancho |
+| Gancho | Muy cerca | **Salir de delante** — saltar es meterse en él |
+| Golpe al suelo | Media | **Alejarse**: es un círculo entero |
+| Embestida | Lejos | Apartarse **cuando ya se ha lanzado** |
+
+Se elige filtrando por distancia y descartando el último usado. Lo de descartar
+el último es lo que más se nota: sin eso el azar repite, y dos barridos seguidos
+se leen como que el juego está roto, no como mala suerte.
+
+**El seguimiento es distinto en cada uno**, y ahí está la mitad del asunto. El
+barrido apenas corrige la puntería, así que esquivarlo de lado funciona; la
+embestida corrige mucho al principio y nada al final, así que hay que esperar a
+que se comprometa. Si todos siguieran igual, la respuesta sería siempre la misma
+y daría lo mismo cuál viniera.
+
+Ninguno persigue hasta el instante del impacto. Un ataque que te sigue hasta el
+final no se puede esquivar, solo aguantar.
+
+### El aguante: sin esto no había pelea
+
+Cada golpe recibido lo mandaba a `Stagger`, así que **pegando rápido se le
+encadenaba indefinidamente** y no llegaba a atacar ni una vez. «Ni se pudo
+defender» era literal, no una forma de hablar.
+
+Ahora encaja tres seguidos sin inmutarse y acusa el cuarto —cinco en la última
+fase—. Se sigue viendo que le entran, con su parpadeo y su chispa, pero no se le
+puede dejar clavado. Y **en plena carga de un ataque no se aturde nunca**: lo
+que ha empezado, lo termina. Ese es el trato — le puedes meter todo lo que
+quieras, pero el golpe que ya viene te llega.
+
 ## Lo que queda
 
 - **Barra de vida del jefe.** Sin ella la pelea no dice cuánto falta. Va con el
   panel de objetivos, cuando haya interfaz.
-- **`golpe_suelo` sin usar.** La animación está; falta darle un ataque de área
-  con su aviso en el suelo.
 - **Música propia.** Es el único sitio del acto que la pide.
-- **Sonido**: pasos, el puño contra el suelo, la piedra al despertar.
+- **Sonido de verdad.** Lo que suena ahora es provisional y de juego retro; hace
+  falta grabación realista. La lista de qué descargar está en
+  [`21-SONIDO-Y-MUSICA.md`](21-SONIDO-Y-MUSICA.md).

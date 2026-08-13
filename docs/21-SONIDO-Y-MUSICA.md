@@ -16,46 +16,90 @@ Lo primero fue probar qué se puede descargar de verdad, porque media internet d
 «recursos gratis para juegos» son páginas muertas o que piden cuenta. Lo de
 abajo está **comprobado descargando**, no leído en una lista.
 
-### Efectos: Kenney — lo primero que hay que mirar siempre
+### Efectos: hacen falta REALISTAS, y eso cambia dónde buscar
 
-**[kenney.nl/assets/category:Audio](https://kenney.nl/assets/category:Audio)** ·
-Licencia **CC0** (dominio público: sin atribución, sin condiciones, sin letra
-pequeña) · Descarga directa por HTTP, sin cuenta.
+Los de Kenney (CC0, ya descargados en `audio_fuentes/`) están bien hechos, pero
+son **sonido de juego retro**: sintetizados, cortos, de dibujos animados. Para
+menús y avisos sirven de sobra. Para que un guardián de piedra de dos metros y
+medio pese, no — ahí hace falta grabación de verdad.
 
-Ya están descargados en `audio_fuentes/kenney/`, **368 sonidos en `.ogg`** —que
-es el formato nativo de Godot, sin conversiones— y cinco megas en total:
+Los que hay puestos ahora en el jefe son **provisionales**, para que no esté
+mudo mientras se prueba. Se sustituyen todos.
 
-| Pack | Cuántos | Para qué |
+#### Dónde bajarlos tú
+
+**[freesound.org](https://freesound.org)** es la referencia para audio realista:
+grabaciones de campo de gente que sale a grabar cosas. Pide cuenta gratis para
+descargar —por eso lo bajas tú y yo lo ajusto—, y tiene filtro de licencia:
+**pon siempre el filtro en CC0** y no hay que preocuparse de nada más.
+
+Al buscar, dos cosas importan más que el nombre del sonido:
+
+- **Filtrar por CC0** (a la izquierda, «License»). Lo demás obliga a citar y a
+  llevar la cuenta de quién.
+- **Ordenar por duración corta** para los golpes. Un impacto de ocho segundos
+  con reverberación de sala trae el eco de otro sitio pegado.
+
+Alternativas sin cuenta, por si te resulta más cómodo:
+
+- **[Pixabay](https://pixabay.com/sound-effects/)** — realista y libre, sin
+  registro. Menos variedad que Freesound pero más rápido de usar.
+- **[Sonniss GDC Bundle](https://sonniss.com/gameaudiogdc)** — packs
+  profesionales que regalan cada año. Son descargas de varios gigas y vienen sin
+  ordenar, pero la calidad es de estudio.
+
+#### La lista de la compra
+
+Búscalos con estos términos —en inglés, que es donde está todo— y guárdalos como
+vengan, con el nombre que traigan. Yo los recorto, les ajusto el volumen, los
+convierto a `.ogg` y les pongo nombre.
+
+**El guardián** (lo más urgente):
+
+| Archivo | Qué buscar en Freesound | Cómo tiene que sonar |
 |---|---|---|
-| `impact-sounds` | 130 | Golpes, pasos sobre distintos suelos, impactos |
-| `rpg-audio` | 50 | Pasos, tela, metal, madera, cofres |
-| `interface-sounds` | 100 | Menús, confirmaciones, avisos |
-| `music-jingles` | 85 | Fanfarrias cortas de logro y de derrota |
+| `guardian_paso` | `heavy stone footstep`, `boulder thud` | Grave y sordo, con algo de grava. **2 o 3 variantes** |
+| `guardian_puno` | `rock impact`, `stone hit heavy` | Seco, corto, con peso |
+| `guardian_suelo` | `boulder crash`, `earth impact rumble` | Lo más gordo del acto: golpe + retumbe que se aleja |
+| `guardian_carga` | `stone grind`, `rock scrape low` | El roce mientras levanta los brazos |
+| `guardian_despertar` | `stone door open`, `heavy rock grinding` | Largo, 4-5 s. Piedra que lleva siglos quieta |
+| `guardian_encaje` | `rock chip`, `stone crack short` | Cuando le entra un golpe: piedra que se astilla |
+| `guardian_derrumbe` | `rubble collapse`, `stone debris fall` | Al caer: se desmorona y luego silencio |
+| `guardian_rugido` | `low rumble growl`, `deep earth groan` | Grave, sin ser animal. Es piedra, no bestia |
 
-La carpeta lleva un `.gdignore` a propósito: **son la despensa, no el
-inventario**. Godot no los importa, no pesan en el APK y no ensucian el buscador
-de recursos. Lo que se usa se copia a `assets/audio/` con un nombre que diga qué
-es —`guardian_paso.ogg`, no `footstep07.ogg`—, y así el proyecto solo carga con
-lo que de verdad suena.
+**El mundo:**
 
-### Música: Incompetech (Kevin MacLeod)
+| Archivo | Qué buscar |
+|---|---|
+| `pasos_hierba` | `grass footstep` — 4 variantes |
+| `pasos_tierra` | `dirt footstep` — 4 variantes |
+| `salto` / `aterrizaje` | `jump cloth`, `landing thud soft` |
+| `farol` | `fire whoosh small`, `torch ignite` |
+| `estrella` | `magic chime sparkle` |
+| `portal` | `magic portal hum low` |
+| `puerta_magica` | `magic barrier dissolve` |
 
-**[incompetech.com](https://incompetech.com/music/royalty-free/music.html)** ·
-Licencia **CC-BY** (gratis, incluso comercial, **a cambio de citar al autor**) ·
-Descarga directa de `.mp3`, sin cuenta.
+**Ambiente** (bucles largos, 1-2 min):
 
-Patrón de descarga, comprobado:
+| Archivo | Qué buscar |
+|---|---|
+| `parque` | `park ambience birds`, `forest ambience light wind` |
+| `agua` | `small stream loop` |
+| `fuego_farol` | `small fire crackle loop` |
 
-```
-https://incompetech.com/music/royalty-free/mp3-royaltyfree/<Titulo>.mp3
-```
+#### Qué hago yo cuando los tengas
 
-La atribución es obligatoria y va en [`CREDITOS.md`](CREDITOS.md). No es un
-trámite: es la condición con la que nos dejan usarla.
+Los dejas en una carpeta —`audio_fuentes/descargas/` vale— y me dices que están.
+Yo me encargo de:
 
-> **FreePD.com cerró en 2025** tras diecisiete años. Sale en todas las listas de
-> «música libre» que hay por ahí y ya no existe; si aparece en algún tutorial,
-> saltárselo.
+- Recortar el silencio del principio, que es lo que hace que un sonido llegue
+  tarde aunque se dispare a tiempo.
+- Igualar volúmenes entre ellos: descargados de sitios distintos, cada uno viene
+  a un nivel y unos tapan a otros.
+- Convertir a `.ogg`, que es lo que Godot usa sin recodificar.
+- Ponerles nombre y enchufarlos donde toca.
+- Comprobar que se oyen **en el altavoz del móvil**, que es lo que de verdad
+  importa: lo que en cascos es un grave precioso, ahí no existe.
 
 ### Si hace falta algo que no esté
 
