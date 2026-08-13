@@ -37,6 +37,7 @@ var _terreno: TerrenoNivel = null
 var _objetivos: ObjetivosNivel = null
 var _portal: PortalSalida = null
 var _jefe: GuardianPortal = null
+var _barra: BarraJefe = null
 var _limpias: int = 0
 var _ultimo_suelo: Vector3 = Vector3.ZERO
 var _camara_plano: Camera3D = null
@@ -425,27 +426,81 @@ func _despertar_al_guardian() -> void:
 	await get_tree().create_timer(2.6).timeout
 
 	var claro := _arena_del_claro()
-	var sitio := _portal.global_position
-	if claro != null:
-		sitio = claro.global_position
 
 	_jefe = escena_guardian.instantiate() as GuardianPortal
 	add_child(_jefe)
-	# Entre la jugadora y la puerta, mirándola: es lo que dice «por aquí no».
-	_jefe.global_position = sitio + Vector3(0.0, 0.2, 4.0)
+	# NACE DONDE ESTABA LA PUERTA, Y LA PUERTA DESAPARECE.
+	#
+	# Es la misma piedra: no hay dos cosas, hay una que estaba quieta y se ha
+	# puesto de pie. Verlos a la vez —la ruina detrás y el guardián delante—
+	# rompe justo eso y lo deja en «un bicho que vigila una puerta», que es
+	# mucho menos de lo que es.
+	_jefe.global_position = _portal.global_position
+	_portal.visible = false
 	if claro != null:
 		claro.poner_barrera(true)
+	_apartar_a_luna(claro)
+
+	_barra = BarraJefe.new()
+	add_child(_barra)
+	_barra.montar(_jefe.display_name, GuardianPortal.FASES)
+	_barra.poner(_jefe.health, _jefe.max_health)
+	_jefe.vida_cambiada.connect(func(a: int, m: int) -> void:
+		if _barra != null:
+			_barra.poner(a, m))
+
 	_jefe.derrotado.connect(_al_caer_el_guardian.bind(claro))
 	_jefe.despertar()
 
 
+## Luna, fuera del ruedo mientras dura la pelea.
+##
+## Sigue a la jugadora a todas partes, y en una arena de doce metros con un jefe
+## de dos metros y medio eso es un gato metiéndose entre las piernas justo cuando
+## hay que salir corriendo. Se queda fuera mirando, que además es lo que haría.
+func _apartar_a_luna(claro: Arena) -> void:
+	if claro == null:
+		return
+	for nodo in find_children("*", "Companero", true, false):
+		var c := nodo as CharacterBody3D
+		if c == null:
+			continue
+		var fuera := claro.global_position \
+			+ Vector3(0.0, 0.0, claro.barrier_radius + 3.5)
+		if _constructor != null:
+			fuera = _constructor.posar_en_el_terreno(fuera, 0.0)
+		c.global_position = fuera
+		c.velocity = Vector3.ZERO
+		c.set_physics_process(false)
+
+
+## Devuelve a Luna a lo suyo.
+func _devolver_a_luna() -> void:
+	for nodo in find_children("*", "Companero", true, false):
+		var c := nodo as CharacterBody3D
+		if c != null:
+			c.set_physics_process(true)
+
+
 func _al_caer_el_guardian(claro: Arena) -> void:
+	# Con calma: la barrera se queda mientras se desploma. Que se abra en el
+	# mismo golpe en que cae le quita el final a la pelea.
+	if _barra != null:
+		_barra.quitar()
+		_barra = null
+	await get_tree().create_timer(2.2).timeout
 	if claro != null:
-		# Con calma: la barrera se queda mientras se desploma. Que se abra en el
-		# mismo golpe en que cae le quita el final a la pelea.
-		await get_tree().create_timer(2.2).timeout
 		claro.poner_barrera(false)
+	_devolver_a_luna()
+
+	# Y la puerta vuelve donde estaba él. Lo que se ha ganado no es «matar al
+	# jefe»: es que la piedra se vuelva a sentar, y esta vez abierta.
 	if _portal != null:
+		_portal.visible = true
+		_portal.scale = Vector3(0.6, 0.6, 0.6)
+		var t := create_tween()
+		t.tween_property(_portal, "scale", Vector3.ONE, 0.8) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		_portal.activar()
 
 

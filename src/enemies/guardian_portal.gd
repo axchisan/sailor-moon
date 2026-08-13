@@ -36,6 +36,16 @@ const BRIO := [1.0, 1.22, 1.45]
 signal fase_cambiada(fase: int)
 ## La suelta al caer. El nivel escucha esto para abrir la puerta.
 signal derrotado
+## Para la barra de vida.
+signal vida_cambiada(actual: int, maxima: int)
+
+## Cada cuántos golpes normales mete uno al suelo, por fase.
+##
+## En la primera es raro —uno de cada cuatro— y a partir de ahí se va cerrando.
+## Es lo que hace que la pelea deje de resolverse rodeándolo: el golpe normal se
+## esquiva girando, este obliga a salir corriendo, y cuanto más avanza más hay
+## que moverse de verdad.
+const CADA_CUANTOS_AL_SUELO := [4, 3, 2]
 
 @export_group("Guardián")
 ## Lo que tarda en despertar. Mientras dura no se mueve ni se le puede hacer
@@ -52,13 +62,38 @@ var _velocidad_base: float = 0.0
 var _giro_base: float = 0.0
 
 
+var _golpes_dados: int = 0
+
+## El ataque de área usa sus propios números: pega más y empuja mucho más, que
+## es lo que justifica salir corriendo en vez de aguantar.
+@export var ataque_al_suelo: AttackData
+
+
 func _ready() -> void:
 	super()
 	_animador = get_node_or_null("Animador") as AnimadorGuardian
+	_ataque_normal = attack
 	_velocidad_base = move_speed
 	_giro_base = turn_speed
 	add_to_group("jefes")
 	_dormir()
+
+
+## Lo consulta `EWait` para saber a qué ataque ir. Cuando toca el del suelo se
+## cambia el `attack` entero, porque el estado lee de ahí el daño y el empujón.
+func siguiente_ataque() -> String:
+	_golpes_dados += 1
+	var cada: int = CADA_CUANTOS_AL_SUELO[clampi(fase, 0, CADA_CUANTOS_AL_SUELO.size() - 1)]
+	if ataque_al_suelo != null and _golpes_dados % cada == 0:
+		attack = ataque_al_suelo
+		hitbox.attack = attack
+		return "GolpeSuelo"
+	attack = _ataque_normal
+	hitbox.attack = attack
+	return "Telegraph"
+
+
+var _ataque_normal: AttackData = null
 
 
 ## Dormido: quieto, sin pegar y sin recibir. Empieza así aunque la arena ya
@@ -94,6 +129,7 @@ func _on_hurtbox_hit(player_hitbox: Hitbox) -> void:
 	if not despierto or defeated:
 		return
 	super(player_hitbox)
+	vida_cambiada.emit(health, max_health)
 	if defeated:
 		return
 	_revisar_fase()

@@ -16,14 +16,22 @@ func physics_update(delta: float) -> String:
 	# perseguirlos y rompen la monotonia de quedarse machacando el boton.
 	if e.huir_si_esta_cerca(delta):
 		if CombatDirector.request_token(e):
-			return "Telegraph"
+			return _que_ataque(e)
 		return ""
 
 	e.move_towards(e.direction_to_target(), delta)
 
 	if distance <= e.attack_range:
 		if CombatDirector.request_token(e):
-			return "Telegraph"
+			return _que_ataque(e)
 		return "Wait"
 
 	return ""
+
+
+## El jefe elige entre su golpe normal y el del suelo; los demás enemigos no
+## tienen dónde elegir y van siempre al mismo.
+func _que_ataque(e: Enemy) -> String:
+	if e.has_method("siguiente_ataque"):
+		return str(e.call("siguiente_ataque"))
+	return "Telegraph"

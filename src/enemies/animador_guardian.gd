@@ -11,15 +11,25 @@ class_name AnimadorGuardian
 ## que el padre, así que en `_ready()` el `state_machine` del enemigo todavía no
 ## existe. Se conecta en el primer fotograma que lo encuentre.
 
-## Qué animación va con cada estado. Lo que no esté aquí se queda en reposo.
+## Qué animación va con cada estado.
+##
+## Las claves son los NOMBRES DE LOS NODOS del `StateMachine` en la escena
+## —«Idle», «Attack»—, que es lo que devuelve `get_state_name()`. Estaban puestos
+## los nombres de las clases («EIdle», «EAttack») y no casaba ninguno, así que el
+## guardián se pasó su primera pelea entera en reposo: andaba sin mover las
+## piernas y pegaba sin mover el brazo.
+##
+## No dio ningún error, claro. Una clave que no está en un diccionario devuelve
+## el valor por defecto tan tranquila.
 const POR_ESTADO := {
-	"EIdle": "reposo",
-	"EApproach": "andar",
-	"EWait": "reposo",
-	"ETelegraph": "rugido",
-	"EAttack": "golpe",
-	"EStagger": "dano",
-	"EDefeated": "derrota",
+	"Idle": "reposo",
+	"Approach": "andar",
+	"Wait": "andar",
+	"Telegraph": "rugido",
+	"Attack": "golpe",
+	"GolpeSuelo": "golpe_suelo",
+	"Stagger": "dano",
+	"Defeated": "derrota",
 }
 
 ## Cuánto tarda en pasar de una animación a otra. Un golem no cambia de postura
@@ -37,6 +47,9 @@ var _actual: String = ""
 ## Mientras dura una animación que manda —despertar, el golpe al suelo— el
 ## estado no puede pisarla.
 var _bloqueado: bool = false
+## Lo que se pidió antes de que hubiera reproductor.
+var _pendiente: String = ""
+var _pendiente_manda: bool = false
 
 
 func _ready() -> void:
@@ -58,6 +71,12 @@ func _process(_delta: float) -> void:
 			if a != null:
 				a.loop_mode = Animation.LOOP_LINEAR
 		_reproductor.animation_finished.connect(_al_terminar)
+		if not _pendiente.is_empty():
+			var q := _pendiente
+			var m := _pendiente_manda
+			_pendiente = ""
+			poner(q, m)
+			return
 
 	if _enemigo == null:
 		_enemigo = owner as Enemy
@@ -78,7 +97,17 @@ func _al_cambiar_estado(_desde: String, hacia: String) -> void:
 ## cambio de estado la corte a la mitad — es lo que hace que el despertar se vea
 ## entero aunque por debajo el guardián ya esté decidiendo a quién pegar.
 func poner(nombre: String, manda: bool = false) -> void:
-	if _reproductor == null or not _reproductor.has_animation(nombre):
+	if _reproductor == null:
+		# TODAVÍA NO HAY REPRODUCTOR: SE GUARDA LA PETICIÓN.
+		#
+		# El jefe se crea y se le manda despertar en el mismo fotograma, antes de
+		# que este nodo haya corrido su primer `_process` y haya encontrado el
+		# `AnimationPlayer`. Descartar la petición ahí se llevaba por delante
+		# justo la animación que más importa: la presentación del guardián.
+		_pendiente = nombre
+		_pendiente_manda = manda
+		return
+	if not _reproductor.has_animation(nombre):
 		return
 	if nombre == _actual and _reproductor.is_playing():
 		return

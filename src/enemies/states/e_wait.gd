@@ -33,6 +33,10 @@ func physics_update(delta: float) -> String:
 	if _retry >= 0.4:
 		_retry = 0.0
 		if distance <= e.attack_range + 0.6 and CombatDirector.request_token(e):
+			# El jefe elige entre su golpe normal y el del suelo; los demás
+			# enemigos no tienen dónde elegir y van siempre al mismo.
+			if e.has_method("siguiente_ataque"):
+				return str(e.call("siguiente_ataque"))
 			return "Telegraph"
 
 	if distance > e.detection_range:

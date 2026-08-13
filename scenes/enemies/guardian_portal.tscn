@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://src/enemies/guardian_portal.gd" id="1_jefe"]
 [ext_resource type="Script" path="res://src/core/state_machine.gd" id="2_fsm"]
@@ -15,6 +15,8 @@
 [ext_resource type="Script" path="res://src/enemies/states/e_stagger.gd" id="15_stagger"]
 [ext_resource type="Script" path="res://src/enemies/states/e_defeated.gd" id="16_defeated"]
 [ext_resource type="Resource" path="res://assets/data/attacks/enemy_guardian.tres" id="18_ataque"]
+[ext_resource type="Resource" path="res://assets/data/attacks/enemy_guardian_suelo.tres" id="19_suelo"]
+[ext_resource type="Script" path="res://src/enemies/states/e_golpe_suelo.gd" id="20_golpesuelo"]
 
 [sub_resource type="CapsuleShape3D" id="Shape_body"]
 radius = 0.78
@@ -32,13 +34,14 @@ collision_layer = 4
 collision_mask = 7
 script = ExtResource("1_jefe")
 display_name = "Guardián del Portal"
-max_health = 24
-move_speed = 2.1
-attack_range = 3.4
-wait_distance = 4.6
+max_health = 38
+move_speed = 2.6
+attack_range = 3.9
+wait_distance = 4.2
 detection_range = 20.0
 turn_speed = 2.6
 attack = ExtResource("18_ataque")
+ataque_al_suelo = ExtResource("19_suelo")
 sparkles_on_defeat = 24
 knockback_friction = 26.0
 base_color = Color(0.58, 0.6, 0.63, 1)
@@ -103,6 +106,9 @@ script = ExtResource("13_telegraph")
 
 [node name="Attack" type="Node" parent="StateMachine"]
 script = ExtResource("14_attack")
+
+[node name="GolpeSuelo" type="Node" parent="StateMachine"]
+script = ExtResource("20_golpesuelo")
 
 [node name="Stagger" type="Node" parent="StateMachine"]
 script = ExtResource("15_stagger")
