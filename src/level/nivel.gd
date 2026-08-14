@@ -249,8 +249,12 @@ func _ready() -> void:
 	# los faroles para ponerles su sonido encima.
 	_ambiente = AmbienteNivel.new()
 	add_child(_ambiente)
-	if decorador != null and decorador.has_method("sitio_del_estanque"):
-		var lago: Vector3 = decorador.call("sitio_del_estanque")
+	# `sitio_del_estanque()` pide el constructor: llamarlo sin él lanzaba una
+	# excepción que **abortaba `_ready()` entero** justo aquí, y con ella se caía
+	# todo lo que venía detrás. Por eso el ambiente «no se creaba» y el nivel
+	# parecía colgado: no estaba colgado, estaba muerto a partir de esta línea.
+	if decorador != null and _constructor != null:
+		var lago := decorador.sitio_del_estanque(_constructor)
 		if lago != Vector3.ZERO:
 			_ambiente.agua_en(lago)
 	var sitios_farol: Array[Vector3] = []

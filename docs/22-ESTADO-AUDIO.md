@@ -20,24 +20,13 @@ Qué suena hoy, qué está a medias y qué falta. Se actualiza al tocar sonido.
 | **Estrella** al recogerla | 1 | |
 | Voces de Mercury | varias | Pendiente regenerarlas (F5) |
 
-## 🟡 A medias
+## ✅ El ambiente, funcionando
 
-**El ambiente.** Los `.mp3` están recortados en `assets/audio/ambiente/`
-—bosque, agua, fuego, portal— y `AmbienteNivel` está escrito con sonido
-posicional 3D. Pero **el nodo no llega a crearse**: el código está en
-`nivel._ready()`, compila, y en ejecución no aparece en la escena.
+Fondo de parque en bucle, más agua y fuego con posición en el mundo — suben al
+acercarse y bajan al alejarse solos, sin una línea que lo gestione.
 
-Ya se descartó:
-
-- Reconectar `finished` a `play()` (un sonido que no carga se llama a sí mismo
-  sin parar) — quitado, no era.
-- Decodificar siete mp3 dentro de `_ready()` — ahora arranca diferido y se usa
-  **un solo reproductor de fuego** que se mueve al farol más cercano, en vez de
-  seis. Sigue sin aparecer.
-
-Lo siguiente que hay que mirar: si `_ready()` del nivel llega hasta esa línea
-(un `print` justo antes lo dice en un minuto), y si `AmbienteNivel.new()` está
-fallando en silencio por el `class_name`.
+**Un solo reproductor de fuego** que se mueve al farol más cercano, en vez de
+uno por farol: suena exactamente igual y cuesta la sexta parte.
 
 ## ⬜ Falta
 

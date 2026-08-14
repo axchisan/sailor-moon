@@ -123,7 +123,7 @@ conversación por turnos, transiciones suaves y la transformación en tres tiemp
 | Ataque de área del jefe | La animación `golpe_suelo` está hecha y sin usar |
 | **Panel de objetivos** | Esperando a que haya interfaz — decisión del usuario |
 | Encuadre de la cinemática | `_presentar()` en `portal_salida.gd` |
-| Sonido | Efectos ✅. Ambiente a medias, música sin empezar. Ver [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) |
+| Sonido | Efectos y ambiente ✅. Falta la música. Ver [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) |
 | Sonido propio de la transformación | `SFX_TRANSFORMACION` en `combat_feel.gd`. Va prestado del especial |
 | Audio de Mercury (F5) | Depende del usuario: fish.audio, texto en `14-VOCES.md` |
 | Zonas vacías y salientes para trepar | [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) | ⭐ Qué suena hoy, qué está a medias y qué falta |
@@ -973,6 +973,15 @@ ninguna tienda.** Instalación por sideload en el dispositivo de la prima.
    como estás» está la cadena vacía.
 
 
+100. **Una excepción en `_ready()` mata todo lo que venga detrás, en silencio.**
+   Una llamada con `call()` y un argumento de menos —`sitio_del_estanque()` pide
+   el constructor— tiraba el resto del `_ready()` del nivel entero. El síntoma no
+   se parecía en nada a la causa: «el nodo de ambiente no se crea», y el nodo se
+   creaba tres líneas más abajo de donde reventaba. Se persiguió como si fuera un
+   problema de audio.
+   **`call("nombre")` no comprueba la firma al compilar**: usar la llamada
+   directa (`decorador.sitio_del_estanque(x)`) lo habría cantado al validar.
+
 ---
 
 ## Orden de las próximas sesiones
@@ -981,17 +990,14 @@ Una cosa por sesión, cerrada y probada antes de pasar a la siguiente. El motivo
 de escribirlo es que cada tema de abajo depende del anterior, y hacerlos a la
 vez obliga a rehacer trabajo.
 
-### 1. Arreglar el ambiente
-Está a un `print` de saberse. Ver [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md).
-
-### 2. El sistema de menús
+### 1. El sistema de menús
 Título, pausa, ajustes y el panel de objetivos —que lleva esperando desde que se
 decidió que iría «cuando haya interfaz»—. **Va antes que la música a propósito**:
 la música de menú no se puede colocar ni probar sin menú, y la estructura de
 pistas depende de cuántas pantallas haya y de cómo se pase de una a otra.
 
-### 3. La banda sonora
-Solo cuando 2 esté hecho. Mezcla de piezas libres y generadas con IA, con:
+### 2. La banda sonora
+Solo cuando 1 esté hecho. Mezcla de piezas libres y generadas con IA, con:
 
 - El esquema de qué suena en cada pantalla y en cada momento del nivel — la
   primera versión está en [`21-SONIDO-Y-MUSICA.md`](21-SONIDO-Y-MUSICA.md) §3.
@@ -1000,9 +1006,9 @@ Solo cuando 2 esté hecho. Mezcla de piezas libres y generadas con IA, con:
   el prompt del guardián: la mitad del prompt son requisitos técnicos, no gustos.
 - Qué se busca en bancos libres y qué se genera.
 
-### 4. Rematar el sonido que falta
+### 3. Rematar el sonido que falta
 La lista de ⬜ en [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md).
 
-### 5. Dar vida al parque
+### 4. Dar vida al parque
 Las zonas vacías y los salientes para trepar de
 [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md).
