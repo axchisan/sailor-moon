@@ -38,6 +38,7 @@ var _objetivos: ObjetivosNivel = null
 var _portal: PortalSalida = null
 var _jefe: GuardianPortal = null
 var _barra: BarraJefe = null
+var _ambiente: AmbienteNivel = null
 var _limpias: int = 0
 var _ultimo_suelo: Vector3 = Vector3.ZERO
 var _camara_plano: Camera3D = null
@@ -242,6 +243,20 @@ func _ready() -> void:
 				var local := p - _terreno.global_position
 				return _terreno.altura_en(local.x, local.z) + _terreno.global_position.y)
 
+	# EL AMBIENTE ESTÁ APAGADO: CUELGA EL JUEGO.
+	#
+	# Los efectos y los pasos funcionan; esto no. Con los siete reproductores de
+	# fondo en marcha —el bosque, el agua y un fuego por farol— el juego se
+	# queda congelado al cargar el nivel, y no da error: simplemente no llega a
+	# pintar el primer fotograma.
+	#
+	# La primera sospecha era reconectar `finished` a `play()` —un sonido que no
+	# carga termina en el mismo instante en que empieza y se llama a sí mismo sin
+	# parar—, y quitarlo no bastó. Queda por mirar si es el bucle sobre recursos
+	# `preload` compartidos entre los siete reproductores.
+	#
+	# Se deja montado y sin arrancar en vez de borrarlo: el trabajo hecho está y
+	# los `.mp3` recortados también. Falta encontrar el cuelgue.
 	_posar_los_rincones()
 	_montar_objetivos()
 

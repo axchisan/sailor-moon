@@ -25,6 +25,8 @@ const FUERZA := 0.85
 
 
 func enter(_msg: Dictionary = {}) -> void:
+	if actor.has_method("sonar_salto"):
+		actor.call("sonar_salto")
 	var p := actor as Player
 	# Se borra lo que hubiera de caída: el segundo salto sube igual se pida
 	# arriba del todo o ya cayendo.

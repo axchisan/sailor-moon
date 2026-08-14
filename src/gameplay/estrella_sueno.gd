@@ -15,6 +15,8 @@ class_name EstrellaSueno
 ## Se ve de lejos porque gira, flota y brilla. Ver una a lo lejos es lo que hace
 ## que te desvíes del camino.
 
+const SFX := preload("res://assets/audio/sfx/mundo/estrella.wav")
+
 ## Radio en el que empieza a venirse hacia la jugadora.
 @export var radio_iman: float = 3.2
 ## Diferencia de altura máxima para que el imán tire.
@@ -75,6 +77,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _al_entrar(cuerpo: Node3D) -> void:
+	AudioManager.play_sfx(SFX, -10.0, 0.10)
 	if cuerpo.is_in_group("player"):
 		_recoger()
 

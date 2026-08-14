@@ -23,6 +23,8 @@ signal encendido(farol: Farol)
 ## Fuerza de la luz. En un parque al atardecer no hace falta más.
 @export var potencia: float = 2.2
 
+const SFX := preload("res://assets/audio/sfx/mundo/farol.wav")
+
 var esta_encendido: bool = false
 
 var _luz: OmniLight3D = null
@@ -106,6 +108,7 @@ func encender() -> void:
 	if esta_encendido:
 		return
 	esta_encendido = true
+	AudioManager.play_sfx(SFX, -8.0, 0.06)
 	set_process(true)
 	if _llama != null:
 		_llama.visible = true

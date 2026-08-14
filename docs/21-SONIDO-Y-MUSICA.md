@@ -312,3 +312,19 @@ tanto andando como corriendo, y el pie cae donde suena.
 
 Pasos de tierra (están cortados, sin usar — hace falta saber qué se pisa), y
 toda la música.
+
+
+## 8. El ambiente está hecho y APAGADO
+
+Los `.mp3` de fondo están recortados y en `assets/audio/ambiente/`, y
+`AmbienteNivel` está escrito. Pero **cuelga el juego**: con los siete
+reproductores en marcha —bosque, agua y un fuego por farol— el nivel no llega a
+pintar el primer fotograma. Sin error: se queda congelado.
+
+La primera sospecha fue reconectar `finished` a `play()` —un sonido que no carga
+termina en el mismo instante en que empieza y se llama a sí mismo sin parar— y
+quitarlo no bastó. Queda por mirar si son los recursos `preload` compartidos
+entre los siete reproductores.
+
+Se deja montado y sin arrancar (`if false` en `nivel.gd`), no borrado. Lo demás
+del sonido funciona.

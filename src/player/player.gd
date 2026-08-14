@@ -154,24 +154,52 @@ const SFX_PASOS := [
 	preload("res://assets/audio/sfx/mundo/paso_hierba_3.wav"),
 	preload("res://assets/audio/sfx/mundo/paso_hierba_4.wav"),
 ]
-## Cada cuántos metros recorridos suena una pisada. Por distancia y no por
-## tiempo: así el paso va con lo que se anda, sea despacio o corriendo.
+## Corriendo suena distinto, no solo más deprisa. Una pisada de carrera es más
+## seca y más corta; usar la de andar acelerada se nota enseguida y es de las
+## cosas que hacen que un juego parezca barato sin saber por qué.
+const SFX_CARRERA := [
+	preload("res://assets/audio/sfx/mundo/correr_1.wav"),
+	preload("res://assets/audio/sfx/mundo/correr_2.wav"),
+	preload("res://assets/audio/sfx/mundo/correr_3.wav"),
+]
+const SFX_SALTO := [
+	preload("res://assets/audio/sfx/jugadora/salto_1.wav"),
+	preload("res://assets/audio/sfx/jugadora/salto_2.wav"),
+	preload("res://assets/audio/sfx/jugadora/salto_3.wav"),
+]
+
+## Cada cuántos metros suena una pisada. Por distancia y no por tiempo: así el
+## ritmo sale solo tanto andando como corriendo, y el pie cae donde suena.
 const CADA_METROS := 1.9
+## A partir de qué velocidad se considera que va corriendo.
+const VELOCIDAD_CARRERA := 5.0
 
 var _andado: float = 0.0
 
 
 func _sonar_los_pasos(delta: float) -> void:
 	if not is_on_floor():
+		# A media zancada al despegar: así la primera pisada al caer no llega
+		# inmediatamente, que es lo que sonaría a tropiezo.
 		_andado = CADA_METROS * 0.55
 		return
 	var plano := Vector2(velocity.x, velocity.z).length()
 	if plano < 0.6:
 		return
 	_andado += plano * delta
-	if _andado >= CADA_METROS:
-		_andado = 0.0
+	if _andado < CADA_METROS:
+		return
+	_andado = 0.0
+	if plano >= VELOCIDAD_CARRERA:
+		AudioManager.play_sfx(SFX_CARRERA[randi() % SFX_CARRERA.size()], -12.0, 0.14)
+	else:
 		AudioManager.play_sfx(SFX_PASOS[randi() % SFX_PASOS.size()], -13.0, 0.14)
+
+
+## Lo llama el estado de salto. Va aquí y no allí porque las tomas son de la
+## jugadora, no del salto: si mañana hay otro personaje, cambia una lista.
+func sonar_salto() -> void:
+	AudioManager.play_sfx(SFX_SALTO[randi() % SFX_SALTO.size()], -14.0, 0.12)
 
 
 func _physics_process(delta: float) -> void:

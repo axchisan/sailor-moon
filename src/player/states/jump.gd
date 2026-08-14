@@ -7,6 +7,8 @@ const RELEASE_DAMPING := 0.45
 
 
 func enter(_msg: Dictionary = {}) -> void:
+	if actor.has_method("sonar_salto"):
+		actor.call("sonar_salto")
 	var p := actor as Player
 	p.play("jump")
 	p.do_jump()
