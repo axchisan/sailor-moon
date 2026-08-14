@@ -24,7 +24,16 @@ const PORTAL := preload("res://assets/audio/ambiente/portal.mp3")
 
 
 func _ready() -> void:
-	_fondo()
+	# ARRANCA DIFERIDO, NO DENTRO DE `_ready()`.
+	#
+	# Poner siete sonidos largos a sonar en mitad del montaje del nivel —que ya
+	# está generando terreno, decorado y multimallas— dejaba el juego sin pintar
+	# el primer fotograma durante tanto rato que parecía colgado. No lo estaba:
+	# estaba decodificando.
+	#
+	# Un fotograma de margen basta para que el nivel termine de montarse y el
+	# ambiente entre cuando ya hay algo en pantalla.
+	_fondo.call_deferred()
 
 
 func _fondo() -> void:
@@ -58,11 +67,48 @@ func en_un_sitio(cual: AudioStream, donde: Vector3, alcance: float,
 
 
 func agua_en(donde: Vector3) -> void:
-	en_un_sitio(AGUA, donde, 26.0, volumen_agua)
+	en_un_sitio.call_deferred(AGUA, donde, 26.0, volumen_agua)
 
 
-func fuego_en(donde: Vector3) -> void:
-	en_un_sitio(FUEGO, donde, 9.0, volumen_fuego)
+## UN SOLO FUEGO, QUE VA SIGUIENDO AL FAROL MÁS CERCANO.
+##
+## Había uno por farol: seis reproductores con el mismo crepitar de veinticinco
+## segundos, decodificándose seis veces para que solo se oiga el que se tiene al
+## lado. Con uno que se mueve al farol más próximo suena exactamente igual y
+## cuesta la sexta parte.
+func faroles_en(sitios: Array[Vector3]) -> void:
+	_faroles = sitios
+	if sitios.is_empty():
+		return
+	_fuego = en_un_sitio(FUEGO, sitios[0], 9.0, volumen_fuego)
+	set_process(true)
+
+
+var _faroles: Array[Vector3] = []
+var _fuego: AudioStreamPlayer3D = null
+var _cada_poco: float = 0.0
+
+
+func _process(delta: float) -> void:
+	if _fuego == null or _faroles.is_empty():
+		return
+	# Cuatro veces por segundo sobra: nadie recorre veinte metros en un cuarto
+	# de segundo, y hacerlo en cada fotograma es gastar por gastar.
+	_cada_poco -= delta
+	if _cada_poco > 0.0:
+		return
+	_cada_poco = 0.25
+	var oyente := get_viewport().get_camera_3d()
+	if oyente == null:
+		return
+	var mejor := _faroles[0]
+	var corta := INF
+	for sitio in _faroles:
+		var d := oyente.global_position.distance_squared_to(sitio)
+		if d < corta:
+			corta = d
+			mejor = sitio
+	_fuego.global_position = mejor
 
 
 func portal_en(donde: Vector3) -> void:

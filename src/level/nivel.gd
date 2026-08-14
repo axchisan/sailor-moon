@@ -243,20 +243,21 @@ func _ready() -> void:
 				var local := p - _terreno.global_position
 				return _terreno.altura_en(local.x, local.z) + _terreno.global_position.y)
 
-	# EL AMBIENTE ESTÁ APAGADO: CUELGA EL JUEGO.
+	# EL PARQUE, SONANDO.
 	#
-	# Los efectos y los pasos funcionan; esto no. Con los siete reproductores de
-	# fondo en marcha —el bosque, el agua y un fuego por farol— el juego se
-	# queda congelado al cargar el nivel, y no da error: simplemente no llega a
-	# pintar el primer fotograma.
-	#
-	# La primera sospecha era reconectar `finished` a `play()` —un sonido que no
-	# carga termina en el mismo instante en que empieza y se llama a sí mismo sin
-	# parar—, y quitarlo no bastó. Queda por mirar si es el bucle sobre recursos
-	# `preload` compartidos entre los siete reproductores.
-	#
-	# Se deja montado y sin arrancar en vez de borrarlo: el trabajo hecho está y
-	# los `.mp3` recortados también. Falta encontrar el cuelgue.
+	# Va después del decorado porque necesita saber dónde acabaron el estanque y
+	# los faroles para ponerles su sonido encima.
+	_ambiente = AmbienteNivel.new()
+	add_child(_ambiente)
+	if decorador != null and decorador.has_method("sitio_del_estanque"):
+		var lago: Vector3 = decorador.call("sitio_del_estanque")
+		if lago != Vector3.ZERO:
+			_ambiente.agua_en(lago)
+	var sitios_farol: Array[Vector3] = []
+	for nodo in get_tree().get_nodes_in_group("faroles"):
+		sitios_farol.append((nodo as Node3D).global_position + Vector3.UP * 1.2)
+	_ambiente.faroles_en(sitios_farol)
+
 	_posar_los_rincones()
 	_montar_objetivos()
 
