@@ -139,7 +139,43 @@ func _recalculate_jump() -> void:
 	fall_gravity = (-2.0 * jump_height) / (jump_time_to_fall * jump_time_to_fall)
 
 
+## LOS PASOS. Es lo que más se nota y lo que menos se escucha a propósito.
+##
+## Sin ellos andar por el parque es flotar: el suelo deja de existir. Van cuatro
+## tomas sorteadas —con una sola, veinte pasos seguidos suenan a tictac de
+## reloj— y solo cuando se está de verdad en el suelo y moviéndose.
+##
+## El ritmo sale de la velocidad: corriendo se pisa más a menudo. Es la misma
+## idea que el guardián, y por lo mismo — si el paso no cae donde cae el pie, se
+## ve patinar aunque no se sepa por qué.
+const SFX_PASOS := [
+	preload("res://assets/audio/sfx/mundo/paso_hierba_1.wav"),
+	preload("res://assets/audio/sfx/mundo/paso_hierba_2.wav"),
+	preload("res://assets/audio/sfx/mundo/paso_hierba_3.wav"),
+	preload("res://assets/audio/sfx/mundo/paso_hierba_4.wav"),
+]
+## Cada cuántos metros recorridos suena una pisada. Por distancia y no por
+## tiempo: así el paso va con lo que se anda, sea despacio o corriendo.
+const CADA_METROS := 1.9
+
+var _andado: float = 0.0
+
+
+func _sonar_los_pasos(delta: float) -> void:
+	if not is_on_floor():
+		_andado = CADA_METROS * 0.55
+		return
+	var plano := Vector2(velocity.x, velocity.z).length()
+	if plano < 0.6:
+		return
+	_andado += plano * delta
+	if _andado >= CADA_METROS:
+		_andado = 0.0
+		AudioManager.play_sfx(SFX_PASOS[randi() % SFX_PASOS.size()], -13.0, 0.14)
+
+
 func _physics_process(delta: float) -> void:
+	_sonar_los_pasos(delta)
 	_tick_timers(delta)
 	state_machine.physics_update(delta)
 	move_and_slide()

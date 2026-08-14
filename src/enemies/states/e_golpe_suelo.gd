@@ -70,7 +70,6 @@ func physics_update(delta: float) -> String:
 				_agrandar_la_caja()
 				e.hitbox.enable(e.attack)
 				CombatFeel.shake(0.85, 0.5)
-				AudioManager.play_sfx(GuardianPortal.SFX_TEMBLOR, 1.0, 0.0)
 				if _material != null:
 					_material.albedo_color = Color(1.0, 0.95, 0.75, 0.75)
 		1:

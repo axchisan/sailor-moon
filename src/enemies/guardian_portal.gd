@@ -123,15 +123,40 @@ var _golpes_dados: int = 0
 ## Un jefe mudo de dos metros y medio no pesa: la mitad de que algo se lea como
 ## grande está en lo que suena al moverse, no en lo que mide. Los pasos son los
 ## que más trabajan aunque nadie los escuche a propósito.
-const SFX_DESPERTAR := preload("res://assets/audio/sfx/jefe/despertar.ogg")
+const SFX_DESPERTAR := preload("res://assets/audio/sfx/jefe/despertar.wav")
+const SFX_CARGA := preload("res://assets/audio/sfx/jefe/carga.wav")
+const SFX_RUGIDO := preload("res://assets/audio/sfx/jefe/rugido.wav")
+const SFX_DERRUMBE := preload("res://assets/audio/sfx/jefe/derrumbe.wav")
+## VARIAS DE CADA UNA, Y SE SORTEAN.
+##
+## El mismo golpe repetido idéntico veinte veces se vuelve ruido de fondo por
+## mucho que la primera vez sonara bien. Con tres tomas y la variación de tono
+## que ya aplica el `AudioManager`, cada golpe suena parecido pero nunca igual —
+## que es lo que hace un sitio de verdad.
 const SFX_PASO := [
-	preload("res://assets/audio/sfx/jefe/paso_1.ogg"),
-	preload("res://assets/audio/sfx/jefe/paso_2.ogg"),
+	preload("res://assets/audio/sfx/jefe/paso_1.wav"),
+	preload("res://assets/audio/sfx/jefe/paso_2.wav"),
+	preload("res://assets/audio/sfx/jefe/paso_3.wav"),
 ]
-const SFX_PUNO := preload("res://assets/audio/sfx/jefe/puno.ogg")
-const SFX_TEMBLOR := preload("res://assets/audio/sfx/jefe/temblor.ogg")
-const SFX_DERRUMBE := preload("res://assets/audio/sfx/jefe/derrumbe.ogg")
-const SFX_ENCAJE := preload("res://assets/audio/sfx/jefe/paso_2.ogg")
+const SFX_PUNO := [
+	preload("res://assets/audio/sfx/jefe/puno_1.wav"),
+	preload("res://assets/audio/sfx/jefe/puno_2.wav"),
+	preload("res://assets/audio/sfx/jefe/puno_3.wav"),
+]
+const SFX_SUELO := [
+	preload("res://assets/audio/sfx/jefe/suelo_1.wav"),
+	preload("res://assets/audio/sfx/jefe/suelo_2.wav"),
+	preload("res://assets/audio/sfx/jefe/suelo_3.wav"),
+]
+const SFX_ENCAJE := [
+	preload("res://assets/audio/sfx/jefe/encaje_1.wav"),
+	preload("res://assets/audio/sfx/jefe/encaje_2.wav"),
+]
+
+
+static func _una(lista: Array) -> AudioStream:
+	return lista[randi() % lista.size()]
+
 
 ## Cada cuánto pisa mientras anda. Sale de la animación: dos pasos por vuelta de
 ## `andar`, que dura dos segundos.
@@ -248,13 +273,17 @@ func datos_de(ficha: Dictionary) -> AttackData:
 func avisar_ataque(ficha: Dictionary) -> void:
 	if _animador != null:
 		_animador.poner(str(ficha["anim"]), true)
+	# El roce de la piedra al cargar. Es el aviso que llega **sin mirar**, y en
+	# una pelea donde hay que estar pendiente de dónde pisas, eso vale más que
+	# cualquier destello.
+	AudioManager.play_sfx(SFX_CARGA, -9.0, 0.10)
 
 
 func sonar_impacto(ficha: Dictionary) -> void:
 	if bool(ficha.get("area", false)) or str(ficha["id"]) == "embestida":
-		AudioManager.play_sfx(SFX_TEMBLOR, 1.0, 0.0)
+		AudioManager.play_sfx(_una(SFX_SUELO), -2.0, 0.05)
 	else:
-		AudioManager.play_sfx(SFX_PUNO, -2.0, 0.06)
+		AudioManager.play_sfx(_una(SFX_PUNO), -4.0, 0.08)
 
 
 var _ataque_normal: AttackData = null
@@ -311,7 +340,7 @@ func _physics_process(delta: float) -> void:
 	_hasta_el_paso -= delta
 	if _hasta_el_paso <= 0.0:
 		_hasta_el_paso = PASO_CADA / maxf(BRIO[fase], 0.1)
-		AudioManager.play_sfx(SFX_PASO[randi() % SFX_PASO.size()], -6.0, 0.06)
+		AudioManager.play_sfx(_una(SFX_PASO), -7.0, 0.07)
 
 
 ## AGUANTA LOS GOLPES EN VEZ DE ENCADENARSE.
@@ -337,7 +366,7 @@ func _on_hurtbox_hit(player_hitbox: Hitbox) -> void:
 
 	CombatFeel.impact_from_attack(global_position + Vector3.UP * 1.4, golpe)
 	CombatFeel.flash(mesh)
-	AudioManager.play_sfx(SFX_ENCAJE, -5.0, 0.12)
+	AudioManager.play_sfx(_una(SFX_ENCAJE), -6.0, 0.12)
 	vida_cambiada.emit(health, max_health)
 
 	if health <= 0:
@@ -387,6 +416,7 @@ func _aplicar_fase(nueva: int) -> void:
 func _rugir() -> void:
 	if _animador != null:
 		_animador.poner("rugido", true)
+	AudioManager.play_sfx(SFX_RUGIDO, -3.0, 0.0)
 	CombatFeel.shake(0.55, 0.75)
 	set_color(telegraph_color)
 	var t := create_tween()
@@ -405,6 +435,6 @@ func defeat() -> void:
 	# El temblor largo es lo que dice que ha caído algo grande. Con el mismo
 	# golpecito que un peluche, el jefe se muere igual que la morralla.
 	CombatFeel.shake(1.2, 1.4)
-	AudioManager.play_sfx(SFX_DERRUMBE, 0.0, 0.0)
+	AudioManager.play_sfx(SFX_DERRUMBE, -1.0, 0.0)
 	EventBus.show_message.emit("El guardián se inclina. La puerta está libre.", 4.0)
 	derrotado.emit()

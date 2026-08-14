@@ -23,8 +23,8 @@ son **sonido de juego retro**: sintetizados, cortos, de dibujos animados. Para
 menús y avisos sirven de sobra. Para que un guardián de piedra de dos metros y
 medio pese, no — ahí hace falta grabación de verdad.
 
-Los que hay puestos ahora en el jefe son **provisionales**, para que no esté
-mudo mientras se prueba. Se sustituyen todos.
+**Ya sustituidos** por grabación real (agosto 2026). Los de Kenney quedan solo
+como despensa para menús y avisos, que es donde sí encajan.
 
 #### Dónde bajarlos tú
 
@@ -54,7 +54,7 @@ Búscalos con estos términos —en inglés, que es donde está todo— y guárd
 vengan, con el nombre que traigan. Yo los recorto, les ajusto el volumen, los
 convierto a `.ogg` y les pongo nombre.
 
-**El guardián** (lo más urgente):
+**El guardián** — ✅ hecho, queda aquí como referencia de qué se buscó:
 
 | Archivo | Qué buscar en Freesound | Cómo tiene que sonar |
 |---|---|---|
@@ -67,7 +67,7 @@ convierto a `.ogg` y les pongo nombre.
 | `guardian_derrumbe` | `rubble collapse`, `stone debris fall` | Al caer: se desmorona y luego silencio |
 | `guardian_rugido` | `low rumble growl`, `deep earth groan` | Grave, sin ser animal. Es piedra, no bestia |
 
-**El mundo:**
+**El mundo** (los pasos ✅, el resto pendiente):
 
 | Archivo | Qué buscar |
 |---|---|
@@ -280,3 +280,35 @@ Por cuánto cambian el juego, no por cuánto cuestan:
   por lo grave y lo lento, no por dar un susto.
 - **Un sonido por acción, y siempre el mismo.** Si recoger una Estrella suena
   distinto cada vez, deja de significar «has recogido una Estrella».
+
+
+---
+
+## 7. Lo que ya está puesto
+
+Procesado con `ffmpeg`: recortado, normalizado a un volumen común con
+`loudnorm`, pasado a mono 44,1 kHz y a `.wav` — que Godot reproduce sin
+decodificar, y en efectos cortos eso ahorra la latencia justo donde más se nota.
+
+| Sonido | Tomas | De dónde |
+|---|---|---|
+| Paso del guardián | 3 | `heavy stone footstep` |
+| Puño | 3 | `rock impact`, partido del archivo con variantes |
+| Golpe al suelo | 3 | `guardian_suelo`, partido en tres |
+| Encaje (le entra un golpe) | 2 | del mismo `rock impact`, más corto y más flojo |
+| Despertar · carga · rugido · derrumbe | 1 c/u | grabaciones sueltas |
+| Pasos de Serena | 4 | recortados de una grabación continua de hierba |
+| Golpe, golpe fuerte, especial | 1 c/u | los sintéticos viejos, sustituidos |
+
+**Varias tomas de cada cosa y se sortean.** El mismo golpe repetido idéntico
+veinte veces se vuelve ruido de fondo por bueno que sea; con tres tomas y la
+variación de tono que ya aplica el `AudioManager`, cada golpe suena parecido y
+nunca igual.
+
+Los pasos van **por distancia recorrida, no por tiempo**: así el ritmo sale solo
+tanto andando como corriendo, y el pie cae donde suena.
+
+### Lo que falta
+
+Pasos de tierra (están cortados, sin usar — hace falta saber qué se pisa), y
+toda la música.

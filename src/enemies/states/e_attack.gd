@@ -13,9 +13,7 @@ func enter(_msg: Dictionary = {}) -> void:
 	_timer = 0.0
 
 	e.hitbox.enable(e.attack)
-	# El jefe suena al pegar; los enemigos normales ya suenan al acertar.
-	if e is GuardianPortal:
-		AudioManager.play_sfx(GuardianPortal.SFX_PUNO, -3.0, 0.05)
+
 
 	var lunge: float = e.attack.lunge if e.attack != null else 3.0
 	var forward := e.get_forward()
