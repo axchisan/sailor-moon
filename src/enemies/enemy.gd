@@ -456,4 +456,7 @@ func defeat() -> void:
 	sonar_voz(-16.0)
 
 	GameManager.collect_sparkle(sparkles_on_defeat)
+	# Y a veces un corazón. La probabilidad sube cuanta menos vida queda, así que
+	# ayuda justo cuando se está perdiendo y no estorba cuando se va sobrado.
+	Corazon.quizas_soltar(global_position, get_parent())
 	GameManager.register_defeat(display_name)

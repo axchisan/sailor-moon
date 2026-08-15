@@ -263,6 +263,8 @@ func _ready() -> void:
 		sitios_farol.append((nodo as Node3D).global_position + Vector3.UP * 1.2)
 	_ambiente.faroles_en(sitios_farol)
 
+	_sembrar_puntos_de_guardado()
+
 	# LA FLECHA QUE SEÑALA. Empieza apagada: solo sale cuando se elige un
 	# objetivo en la lista, porque una flecha permanente convierte el juego en ir
 	# detrás de una flecha y entonces el parque deja de mirarse.
@@ -721,3 +723,39 @@ func seguir_objetivo(id: String) -> void:
 func _al_cumplir_objetivo(id: String, _hechos: int, _total: int) -> void:
 	if _guia != null and _guia.objetivo == id:
 		_guia.seguir("")
+
+
+## UN SITIO DONDE DESCANSAR ANTES DE CADA PELEA.
+##
+## Van justo fuera de cada arena, en el borde por el que se entra. Es donde más
+## falta hacen: perder un combate no puede costar volver a cruzar medio parque,
+## y llegar con dos corazones a una arena de tres oleadas no es difícil, es
+## injusto.
+##
+## Se colocan por código a partir de dónde acabaron las arenas, no a mano en la
+## escena: el recorrido cambia de sitio cada vez que se toca el constructor, y
+## un punto de guardado clavado a unas coordenadas acabaría dentro de un seto.
+func _sembrar_puntos_de_guardado() -> void:
+	if _constructor == null:
+		return
+	var puestos := 0
+	for nodo in get_tree().get_nodes_in_group("arenas"):
+		var a := nodo as Arena
+		if a == null or a.waves.is_empty():
+			continue
+		# En el borde de la arena, del lado por el que se llega —hacia el punto
+		# de aparición—, y un poco fuera para no quedar dentro de la barrera.
+		var hacia := (_constructor.punto_inicio - a.global_position)
+		hacia.y = 0.0
+		if hacia.length_squared() < 0.01:
+			hacia = Vector3.FORWARD
+		hacia = hacia.normalized()
+		var sitio := a.global_position + hacia * (a.barrier_radius + 3.2)
+		sitio = _constructor.posar_en_el_terreno(sitio, 0.0)
+
+		var p := PuntoGuardado.new()
+		p.id = "%s_descanso" % a.arena_id
+		add_child(p)
+		p.global_position = sitio
+		puestos += 1
+	print("[Nivel] %d puntos de guardado" % puestos)

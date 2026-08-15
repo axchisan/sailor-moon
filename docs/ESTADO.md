@@ -4,9 +4,8 @@
 > retoma tras un tiempo, lee esto primero y luego el documento específico que
 > necesites.
 >
-> **Última actualización:** 2026-08-11 · Fases E y F cerradas y C ter empezada.
-> Antes: dos pasadas de rendimiento, el blockout dejando de verse y la tanda de
-> arreglos de geometría
+> **Última actualización:** 2026-08-14 · Menús, banda sonora y objetivos
+> seleccionables. Antes: el jefe guardián entero y toda la capa de sonido
 
 ---
 
@@ -33,7 +32,7 @@ DTO, signals ≈ event bus).
 |---|---|
 | **Fase 0 — Cimientos** | ✅ Cerrada. APK corriendo en el móvil real |
 | **Fase 1 — Combate** | ✅ Cerrada. Peluchín, Cofrecito y Hadita terminados |
-| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** El escenario está terminado: construido, decorado, poblado y optimizado. Falta el movimiento nuevo, la conversación viva, el menú y la cinemática |
+| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Escenario, combate, jefe, menús, sonido y música ✅. Faltan el sistema de vidas, dar vida al parque y montar la historia |
 | Fases 3–5 | ⬜ Sin empezar |
 
 El trabajo se organiza por el **plan maestro**
@@ -45,11 +44,11 @@ El trabajo se organiza por el **plan maestro**
 | **B** | Texturas reciclables | ✅ |
 | **C** | Mundo abierto, límites naturales | ✅ |
 | **C bis** | Objetivos, portal y rincones | ✅ (falta el mapa de escenarios) |
-| **C ter** | Que el nivel EXPLIQUE lo que pide | 🟡 Avisos ✅, cinemática ✅, jefe guardián ✅. Queda el panel de objetivos |
+| **C ter** | Que el nivel EXPLIQUE lo que pide | ✅ **cerrada.** Avisos, cinemática, panel de objetivos y jefe guardián |
 | **D** | Rendimiento | ✅ dos pasadas. 60 fps en el móvil |
 | **E** | Movimiento y combate | ✅ **cerrada.** Salto en tres partes, doble salto, trepar cornisas y el Cofrecito rodeable |
 | **F** | Conversación viva | ✅ **cerrada** salvo F5 (audio de Mercury, depende de ti) |
-| **G** | Menú, guardado, vidas | ⬜ |
+| **G** | Menú, guardado, vidas | ✅ **cerrada.** Menús, tres partidas guardadas, corazones y puntos de guardado |
 | **H** | Historia y cinemática | ⬜ guion escrito, sin montar |
 
 ### Lo que funciona hoy
@@ -115,25 +114,38 @@ conversación por turnos, transiciones suaves y la transformación en tres tiemp
 
 **C ter empezada** — las puertas dicen qué falta y el portal se presenta.
 
-### Pendientes concretos, por si se retoma en frío
+### Lo que falta, a 14 de agosto de 2026
 
-| Qué | Dónde |
-|---|---|
-| Barra de vida del jefe | Va con el panel de objetivos, cuando haya interfaz |
-| Ataque de área del jefe | La animación `golpe_suelo` está hecha y sin usar |
-| **Panel de objetivos** | Esperando a que haya interfaz — decisión del usuario |
-| Encuadre de la cinemática | `_presentar()` en `portal_salida.gd` |
-| Sonido y música | ✅ Ver [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) y [`24-BANDA-SONORA.md`](24-BANDA-SONORA.md). Faltan 3 piezas por generar con IA |
-| Sonido propio de la transformación | `SFX_TRANSFORMACION` en `combat_feel.gd`. Va prestado del especial |
-| Audio de Mercury (F5) | Depende del usuario: fish.audio, texto en `14-VOCES.md` |
-| Zonas vacías y salientes para trepar | [`24-BANDA-SONORA.md`](24-BANDA-SONORA.md) | ⭐ Qué suena en cada sitio, y los prompts de las piezas que faltan por generar |
-| [`23-MENUS.md`](23-MENUS.md) | Los menús: qué decide cada pantalla y por qué |
-| [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) | ⭐ Qué suena hoy, qué está a medias y qué falta |
-| [`21-SONIDO-Y-MUSICA.md`](21-SONIDO-Y-MUSICA.md) | ⭐ El plan de sonido y música: de dónde sale, qué suena en cada momento y en qué orden |
-| [`20-JEFE-GUARDIAN.md`](20-JEFE-GUARDIAN.md) | El jefe del Acto 1: concepto, prompt de imagen y qué hace falta |
-| [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md) |
-| El APK pesa 132 MB | Subió al meter las animaciones. Sin diagnosticar |
-| Dos rincones no caben | `AltarGato` y `Vivero`. Salen por consola en cada carga |
+Ordenado por lo que más cambia el juego. Lo de arriba es lo que se nota jugando;
+lo de abajo, remates.
+
+| Qué | Dónde | Quién |
+|---|---|---|
+| ~~El sistema de vidas~~ | ✅ Corazones que sueltan los enemigos y puntos de guardado antes de cada arena. Ver [`25-VIDAS.md`](25-VIDAS.md) | — |
+| **Dar vida al parque** | [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md): zonas vacías, senderos, y **salientes de 1,2–2,2 m para trepar** — la mecánica está y no hay dónde usarla | yo |
+| **Fase H — la historia** | Guion escrito en el GDD, sin montar. Es lo que convierte el nivel en un acto | yo |
+| Sonido que falta | Portal al abrirse, rincones, acto terminado, interfaz. Ver [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) | yo |
+| Encuadre de la cinemática del portal | `_presentar()` en `portal_salida.gd`. Funciona, no siempre centra la ruina | yo |
+| Dos rincones que no caben | `AltarGato` y `Vivero`. Avisan por consola en cada carga | yo |
+| El APK pesa 141 MB | Sin diagnosticar. No molesta, pero no se sabe por qué | yo |
+| Mapa de escenarios (C bis) | Cómo se encadenan los niveles | yo |
+| **Regrabar la victoria** | La grabación salió muda. Prompt en [`24-BANDA-SONORA.md`](24-BANDA-SONORA.md) | tú |
+| **Tema del título** | El único de los cuatro prompts sin generar | tú |
+| **Voz de Mercury (F5)** | fish.audio; los textos están en [`14-VOCES.md`](14-VOCES.md) | tú |
+
+### Lo que se cerró en agosto de 2026
+
+Todo esto estaba en la lista de pendientes y ya está hecho y probado:
+
+- **El jefe guardián**: modelo, esqueleto, once animaciones, cinco ataques con
+  respuesta distinta cada uno, tres fases, aguante y barra de vida.
+- **Los menús enteros**: principal con fondo animado, tres partidas guardadas,
+  ajustes que hacen algo, créditos y pausa.
+- **El panel de objetivos**, y encima seleccionables: tocar uno pone una flecha
+  que lo señala.
+- **Sonido**: efectos de grabación real, voz propia por bicho, ambiente con
+  posición en el mundo, y **banda sonora completa** con director de capas.
+- **La transformación** con pieza propia, ya no prestada del ataque especial.
 
 ## 3. Índice de documentación
 
@@ -158,6 +170,7 @@ conversación por turnos, transiciones suaves y la transformación en tres tiemp
 | [`16-GUION.md`](16-GUION.md) | ⭐ **La historia completa**, escena por escena |
 | [`17-ANIMACIONES.md`](17-ANIMACIONES.md) | ⭐ **Qué archivo subir a Mixamo** y con qué ajustes. Bloquea la Fase E |
 | [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md) | ⭐ **Estado del Nivel 1:** cómo se monta, qué hay, qué falta, rendimiento |
+| [`25-VIDAS.md`](25-VIDAS.md) | Corazones, puntos de guardado y por qué no hay game over |
 | [`24-BANDA-SONORA.md`](24-BANDA-SONORA.md) | ⭐ Qué suena en cada sitio, y los prompts de las piezas que faltan por generar |
 | [`23-MENUS.md`](23-MENUS.md) | Los menús: qué decide cada pantalla y por qué |
 | [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) | ⭐ Qué suena hoy, qué está a medias y qué falta |
