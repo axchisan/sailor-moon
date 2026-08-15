@@ -108,7 +108,6 @@ func _hacer_titulo() -> Control:
 func _boton(cadena: String, alpulsar: Callable, principal: bool = false) -> Button:
 	var b := Estilo.boton(cadena, 420.0, principal)
 	b.pressed.connect(alpulsar)
-	b.pressed.connect(_sonar)
 	_columna.add_child(b)
 	return b
 
@@ -142,7 +141,7 @@ func _hay_alguna_partida() -> bool:
 
 
 func _sonar() -> void:
-	AudioManager.play_sfx(preload("res://assets/audio/sfx/mundo/estrella.wav"),
+	AudioManager.play_sfx(preload("res://assets/audio/sfx/ui/toque.wav"),
 		-16.0, 0.06)
 
 

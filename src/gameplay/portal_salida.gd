@@ -20,6 +20,7 @@ class_name PortalSalida
 signal usado(destino: String)
 
 const MODELO: PackedScene = preload("res://assets/models/props/portal_antiguo.glb")
+const SFX_ABRE := preload("res://assets/audio/sfx/mundo/portal_abre.wav")
 
 @export var destino: String = ""
 @export var radio: float = 2.2
@@ -213,6 +214,7 @@ func activar() -> void:
 	if _luz != null:
 		_luz.light_color = color_activo
 		create_tween().tween_property(_luz, "light_energy", 3.0, 0.8)
+	AudioManager.play_sfx(SFX_ABRE, -6.0, 0.0)
 	if not aviso.is_empty():
 		EventBus.show_message.emit(aviso, 4.0)
 

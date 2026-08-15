@@ -49,15 +49,22 @@ acercarse y bajan al alejarse solos, sin una línea que lo gestione.
 **Un solo reproductor de fuego** que se mueve al farol más cercano, en vez de
 uno por farol: suena exactamente igual y cuesta la sexta parte.
 
+### La interfaz y los avisos
+
+| Qué | Dónde |
+|---|---|
+| Toque de botón | Todos los menús. Va en `Estilo.boton()`, no en cada pantalla: si cada una elige el suyo, a la tercera ya no suenan igual |
+| Rincón descubierto | Al pisar uno |
+| Objetivo cumplido | Cada uno de los seis |
+| Acto terminado | El mismo, más largo. Es el único sitio donde se puede ser grandilocuente |
+| Portal al despertar | Cuando se cumple la lista entera |
+
 ## ⬜ Falta
 
-- **Toda la música.** No hay ni una pieza. Es lo siguiente, después de los menús.
-- Portal al abrirse (`portal_abre.wav` está cortado, sin enchufar).
-- Pasos de tierra (cortados, sin usar: hace falta detectar la superficie).
+- Pasos de tierra (cortados, sin usar: hace falta detectar la superficie que se
+  pisa, que hoy no se sabe).
 - Agarrarse a una cornisa.
-- Rincones, objetivo cumplido, acto terminado.
-- Interfaz entera.
-- Sonido propio de la transformación (va prestado del especial).
+- **Regrabar la victoria** (el `.mov` salió mudo) y **el tema del título**.
 
 ## Los volúmenes, y por qué importan ahora
 

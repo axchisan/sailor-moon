@@ -11,6 +11,8 @@ class_name Rincon
 
 signal visitado(id: String)
 
+const SFX := preload("res://assets/audio/sfx/mundo/objetivo.wav")
+
 @export var id: String = ""
 @export var radio: float = 4.0
 ## Color de la baliza. Apagada cuando ya se ha visitado.
@@ -55,6 +57,7 @@ func _al_entrar(cuerpo: Node3D) -> void:
 	if _visitado or not cuerpo.is_in_group("player"):
 		return
 	_visitado = true
+	AudioManager.play_sfx(SFX, -12.0, 0.06)
 	visitado.emit(id)
 	_apagar()
 

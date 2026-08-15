@@ -37,6 +37,10 @@ const PANEL_CLARO := Color(0.32, 0.20, 0.48, 0.94)
 ## Texto apagado: para lo que acompaña pero no se lee de primeras.
 const TENUE := Color(0.78, 0.72, 0.88)
 
+## El toque de los botones. Va aquí y no en cada pantalla: si cada una elige su
+## sonido, a la tercera ya no suenan igual.
+const SFX_TOQUE := preload("res://assets/audio/sfx/ui/toque.wav")
+
 const FUENTE_TITULO := preload("res://assets/fonts/titulo.ttf")
 const FUENTE_TEXTO := preload("res://assets/fonts/texto.ttf")
 
@@ -102,6 +106,8 @@ static func boton(cadena: String, ancho: float = 380.0,
 	b.add_theme_stylebox_override("pressed", _caja(relleno.darkened(0.15), 3))
 	b.add_theme_stylebox_override("focus", _caja(relleno, 0, true))
 	b.add_theme_stylebox_override("disabled", _caja(Color(relleno, 0.35)))
+	b.pressed.connect(func() -> void:
+		AudioManager.play_sfx(SFX_TOQUE, -14.0, 0.05))
 	return b
 
 

@@ -24,6 +24,11 @@ class_name ObjetivosNivel
 ## enseña a la jugadora y de qué señal del `EventBus` se entera. Añadir uno
 ## nuevo es añadir una fila, no tocar código.
 
+## Cada objetivo cumplido suena, y el último suena distinto y más largo. Un
+## logro que se completa en silencio no se siente completado.
+const SFX_OBJETIVO := preload("res://assets/audio/sfx/mundo/objetivo.wav")
+const SFX_ACTO := preload("res://assets/audio/sfx/mundo/acto_terminado.wav")
+
 signal objetivo_cumplido(id: String, hechos: int, total: int)
 signal todos_cumplidos
 
@@ -133,6 +138,7 @@ func _al_coger_estrella(total: int) -> void:
 
 func _anunciar(id: String) -> void:
 	var texto := _texto_de(id)
+	AudioManager.play_sfx(SFX_OBJETIVO, -10.0, 0.0)
 	objetivo_cumplido.emit(id, cuantos_hechos(), LISTA.size())
 	if avisar:
 		# EL RECUENTO VA EN SU PROPIA LÍNEA Y DICE DE QUÉ ES.
@@ -153,6 +159,7 @@ func _comprobar_final() -> void:
 	if _cerrado or cuantos_hechos() < LISTA.size():
 		return
 	_cerrado = true
+	AudioManager.play_sfx(SFX_ACTO, -6.0, 0.0)
 	todos_cumplidos.emit()
 	if avisar:
 		EventBus.show_message.emit("¡El camino al siguiente lugar se ha abierto!", 3.5)

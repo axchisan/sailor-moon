@@ -15,7 +15,7 @@ class_name PantallaPausa
 ## traslada a quien juega una decisión que no debería tener que tomar: nadie
 ## quiere perder lo que lleva hecho.
 
-const SFX := preload("res://assets/audio/sfx/mundo/estrella.wav")
+const SFX := preload("res://assets/audio/sfx/ui/toque.wav")
 
 var _velo: ColorRect = null
 
@@ -58,9 +58,7 @@ func _montar() -> void:
 
 func _boton(cadena: String, alpulsar: Callable, principal: bool = false) -> Button:
 	var b := Estilo.boton(cadena, 380.0, principal)
-	b.pressed.connect(func() -> void:
-		AudioManager.play_sfx(SFX, -16.0, 0.06)
-		alpulsar.call())
+	b.pressed.connect(alpulsar)
 	return b
 
 

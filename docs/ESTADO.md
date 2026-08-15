@@ -124,7 +124,7 @@ lo de abajo, remates.
 | ~~El sistema de vidas~~ | ✅ Corazones que sueltan los enemigos y puntos de guardado antes de cada arena. Ver [`25-VIDAS.md`](25-VIDAS.md) | — |
 | ~~Dar vida al parque~~ | ✅ Nueve repechos trepables con premio arriba y senderillos. Queda poblar más las explanadas y los suelos de otra piedra | — |
 | **Fase H — la historia** | Guion escrito en el GDD, sin montar. Es lo que convierte el nivel en un acto | yo |
-| Sonido que falta | Portal al abrirse, rincones, acto terminado, interfaz. Ver [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) | yo |
+| Sonido que falta | Pasos de tierra (hace falta saber qué se pisa) y agarrarse a una cornisa. Lo demás ✅ | yo |
 | Encuadre de la cinemática del portal | `_presentar()` en `portal_salida.gd`. Funciona, no siempre centra la ruina | yo |
 | Dos rincones que no caben | `AltarGato` y `Vivero`. Avisan por consola en cada carga | yo |
 | El APK pesa 141 MB | Sin diagnosticar. No molesta, pero no se sabe por qué | yo |
