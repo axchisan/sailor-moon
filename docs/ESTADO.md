@@ -986,6 +986,14 @@ ninguna tienda.** Instalación por sideload en el dispositivo de la prima.
    **`call("nombre")` no comprueba la firma al compilar**: usar la llamada
    directa (`decorador.sitio_del_estanque(x)`) lo habría cantado al validar.
 
+101. **Dos fundidos de música solapados se pisan.** Cada uno acaba llamando a
+   `stop()` sobre el reproductor que salía; si llega un segundo cambio antes de
+   que termine el primero, ese `stop()` cae sobre el que el segundo acaba de
+   arrancar. Síntoma: la canción correcta, cargada, en su sitio, a 0 dB y con
+   `playing = false`. Pasaba solo donde hay dos cambios seguidos —callar la
+   música del guardián y pedir la suya— así que parecía cosa del jefe. Ahora el
+   fundido en marcha se guarda y se mata antes de empezar otro.
+
 ---
 
 ## Orden de las próximas sesiones

@@ -490,8 +490,11 @@ func _despertar_al_guardian() -> void:
 	Musica.callar()
 	_jefe.despertar()
 	await get_tree().create_timer(_jefe.despertar_dura * 0.75).timeout
-	Musica.destapar()
+	# El orden importa: se pide la del jefe ANTES de destapar. Al revés, soltar
+	# el silencio devuelve un instante la del parque y se encadenan dos cambios
+	# en dos fotogramas seguidos, que es justo lo que peor lleva un fundido.
 	Musica.pedir(Musica.Capa.JEFE, "jefe")
+	Musica.destapar()
 
 
 ## Luna, fuera del ruedo mientras dura la pelea.

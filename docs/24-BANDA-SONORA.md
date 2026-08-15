@@ -40,7 +40,7 @@ cortesía.
 
 | Dónde suena | Pieza | Por qué esa |
 |---|---|---|
-| Menú y pantallas | *Hidden Wonders* | Tiene movimiento sin meter prisa. Es lo que suena mientras se decide jugar |
+| Menú y pantallas | *Fairytale Waltz* | Un vals de cuento, que es el registro que pide el juego. La primera elección —*Hidden Wonders*— sonaba oriental, y eso no lo detecta ninguna medida de tempo |
 | El parque | *Enchanted Valley* | La más tranquila de todas — 27 acentos por minuto. Tiene que aguantar veinte minutos sin cansar |
 | Arenas de combate | *Mischief Maker* | Traviesa y con ritmo (136/min). Son peluches, no monstruos |
 | El guardián | *Heart of the Beast* | Lenta y pesada, como él |
@@ -53,9 +53,15 @@ detalle, y **8,4 MB en total** frente a los 60 que ocuparían sin comprimir.
 
 ### Cómo se eligieron sin poder escucharlas
 
-Midiendo **nivel medio y acentos por minuto** de cada candidata. No sustituye al
-oído, pero separa bien lo tranquilo de lo movido, que es la decisión que más
-importa aquí. Si alguna no encaja al oírla, se cambia una línea en `POR_CAPA`.
+Midiendo **nivel medio y acentos por minuto** de cada candidata. Separa bien lo
+tranquilo de lo movido, que es la decisión que más importa.
+
+Lo que **no** separa es el carácter: la primera pieza de menú tenía el tempo
+correcto y sonaba oriental, y eso no aparece en ninguna medida de energía. Para
+eso lo único que sirve es el nombre y la descripción —«vals de cuento» dice más
+del timbre que cualquier número— y, al final, escucharla.
+
+Hay una alternativa guardada en `menu_alt.mp3` por si esta tampoco convence.
 
 ## 3. Las generadas con IA
 

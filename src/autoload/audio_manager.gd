@@ -44,35 +44,62 @@ func _make_player(bus: String) -> AudioStreamPlayer:
 
 # --- Música ------------------------------------------------------------------
 
+## El fundido en marcha, si lo hay. Se guarda para poder matarlo.
+##
+## DOS FUNDIDOS SOLAPADOS SE PISAN.
+##
+## Cada uno termina llamando a `stop()` sobre el reproductor que estaba saliendo.
+## Si llega un segundo cambio antes de que acabe el primero, ese `stop()` cae
+## sobre el reproductor que el segundo acaba de arrancar — y la canción nueva se
+## queda cargada, en su sitio y muda.
+##
+## Pasaba justo en el guardián, que es donde hay dos cambios seguidos: se calla
+## la música mientras despierta y se pide la suya un instante después. La capa
+## decía «jefe», el volumen estaba bien y `playing` era `false`.
+var _fundido: Tween = null
+
+
+func _matar_fundido() -> void:
+	if _fundido != null and _fundido.is_valid():
+		_fundido.kill()
+	_fundido = null
+
+
 func play_music(stream: AudioStream, crossfade: bool = true) -> void:
 	if stream == null:
 		return
 	if _active_music.stream == stream and _active_music.playing:
 		return
 
+	_matar_fundido()
+	var saliente := _active_music
 	var incoming := _music_b if _active_music == _music_a else _music_a
 	incoming.stream = stream
 	incoming.volume_db = -40.0 if crossfade else 0.0
 	incoming.play()
 
 	if crossfade:
-		var tween := create_tween().set_parallel(true)
-		tween.tween_property(incoming, "volume_db", 0.0, CROSSFADE_TIME)
-		tween.tween_property(_active_music, "volume_db", -40.0, CROSSFADE_TIME)
-		tween.chain().tween_callback(_active_music.stop)
+		_fundido = create_tween().set_parallel(true)
+		_fundido.tween_property(incoming, "volume_db", 0.0, CROSSFADE_TIME)
+		_fundido.tween_property(saliente, "volume_db", -40.0, CROSSFADE_TIME)
+		# Sobre `saliente` y no sobre `_active_music`: para cuando el fundido
+		# termina, `_active_music` ya es otro.
+		_fundido.chain().tween_callback(saliente.stop)
 	else:
-		_active_music.stop()
+		saliente.stop()
 
 	_active_music = incoming
 
 
 func stop_music(fade: bool = true) -> void:
+	_matar_fundido()
 	if not fade:
 		_active_music.stop()
 		return
-	var tween := create_tween()
-	tween.tween_property(_active_music, "volume_db", -40.0, CROSSFADE_TIME)
-	tween.tween_callback(_active_music.stop)
+	var saliente := _active_music
+	_fundido = create_tween()
+	_fundido.tween_property(saliente, "volume_db", -40.0, CROSSFADE_TIME)
+	_fundido.tween_callback(saliente.stop)
 
 
 # --- Efectos -----------------------------------------------------------------
