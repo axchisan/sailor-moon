@@ -13,6 +13,14 @@ extends Control
 @onready var wave_label: Label = %WaveLabel
 
 var _banner_timer: float = 0.0
+## La victoria suena a victoria, no a pitido.
+##
+## `wave_cleared` y `arena_cleared` eran los únicos sitios donde quedaba sonido
+## de juego retro, y son de los pocos momentos donde el juego dice «lo has hecho
+## bien»: ahí es donde menos se puede permitir sonar barato.
+const SFX_OLEADA := preload("res://assets/audio/sfx/mundo/oleada.wav")
+const SFX_ARENA := preload("res://assets/audio/sfx/mundo/arena_limpia.wav")
+
 var _aviso: Label = null
 var _aviso_timer: float = 0.0
 
@@ -155,11 +163,14 @@ func _on_arena_started(_arena_id: String, wave_count: int) -> void:
 
 func _on_wave_cleared(index: int) -> void:
 	wave_label.text = "Oleada %d" % (index + 2)
+	AudioManager.play_sfx(SFX_OLEADA, -12.0, 0.0)
 
 
 func _on_arena_cleared(_arena_id: String) -> void:
 	wave_label.text = ""
 	show_banner("¡Arena limpia!", 2.5)
+	# Sin variación de tono: una fanfarria desafinada suena a error, no a premio.
+	AudioManager.play_sfx(SFX_ARENA, -9.0, 0.0)
 
 
 func _on_player_died() -> void:

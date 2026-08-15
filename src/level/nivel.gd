@@ -648,6 +648,17 @@ func _unhandled_input(evento: InputEvent) -> void:
 	if evento is InputEventKey and evento.pressed and not evento.echo \
 			and evento.keycode == KEY_P:
 		alternar_plano()
+	# La pausa vive en el nivel y no en un autoload: fuera de una partida —en el
+	# menú— no hay nada que pausar, y un botón de pausa que abre una pausa vacía
+	# es peor que no tenerlo.
+	if evento.is_action_pressed("pause"):
+		abrir_pausa()
+
+
+func abrir_pausa() -> void:
+	if get_tree().paused:
+		return
+	add_child(PantallaPausa.new())
 
 
 func _id_de(indice: int) -> String:

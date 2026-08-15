@@ -33,6 +33,7 @@ collision_layer = 4
 collision_mask = 7
 script = ExtResource("1_enemy")
 display_name = "Hadita"
+voz = "campanilla"
 max_health = 2
 move_speed = 3.0
 attack_range = 7.0

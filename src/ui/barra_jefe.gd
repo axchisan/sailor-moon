@@ -35,7 +35,7 @@ var _objetivo: float = 1.0
 func montar(titulo: String, cortes: Array) -> void:
 	layer = 15
 	_raiz = Control.new()
-	_raiz.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_raiz.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_raiz.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_raiz)
 

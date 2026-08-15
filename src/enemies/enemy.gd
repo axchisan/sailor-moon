@@ -41,18 +41,46 @@ const SFX_AVISO := [
 	preload("res://assets/audio/sfx/enemigos/aviso_2.wav"),
 ]
 
-## El jefe tiene los suyos, de piedra: este chillido no le pega nada.
-@export var tiene_voz: bool = true
+## CADA BICHO SUENA A LO QUE ES.
+##
+## El Peluchín chilla, el Cofrecito cruje como la madera que es y la Hadita
+## tintinea. Con una sola voz para los tres, la arena entera sonaba igual y el
+## sonido dejaba de decir **qué** tienes encima — que es justo lo que más falta
+## hace saber cuando hay cuatro alrededor y no da tiempo a mirarlos todos.
+const VOCES := {
+	"peluche": [
+		preload("res://assets/audio/sfx/enemigos/voz_1.wav"),
+		preload("res://assets/audio/sfx/enemigos/voz_2.wav"),
+		preload("res://assets/audio/sfx/enemigos/voz_3.wav"),
+	],
+	"madera": [
+		preload("res://assets/audio/sfx/enemigos/cofre_1.wav"),
+		preload("res://assets/audio/sfx/enemigos/cofre_2.wav"),
+	],
+	"campanilla": [
+		preload("res://assets/audio/sfx/enemigos/hada_1.wav"),
+		preload("res://assets/audio/sfx/enemigos/hada_2.wav"),
+	],
+}
+
+## Cuál de las voces usa. El guardián lo pone vacío: tiene las suyas, de piedra,
+## y un chillido de bicho pequeño no le pega nada a dos metros y medio.
+##
+## Vacío = sin voz. No se pone como opción del desplegable porque
+## `@export_enum` no admite una cadena vacía al final: se escribe a mano en la
+## escena del guardián, que es el único que la necesita.
+@export var voz: String = "peluche"
 
 
 func sonar_voz(volumen: float = -20.0) -> void:
-	if not tiene_voz:
+	if voz.is_empty() or not VOCES.has(voz):
 		return
-	AudioManager.play_sfx(SFX_VOZ[randi() % SFX_VOZ.size()], volumen, 0.16)
+	var lista: Array = VOCES[voz]
+	AudioManager.play_sfx(lista[randi() % lista.size()], volumen, 0.16)
 
 
 func sonar_aviso() -> void:
-	if not tiene_voz:
+	if voz.is_empty():
 		return
 	AudioManager.play_sfx(SFX_AVISO[randi() % SFX_AVISO.size()], -17.0, 0.14)
 ## Cuánto se mueve de lado mientras espera turno, de 0 a 1.

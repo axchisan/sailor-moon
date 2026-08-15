@@ -30,6 +30,7 @@ var _pressed_actions: Array[String] = []
 
 
 func _ready() -> void:
+	_montar_pausa.call_deferred()
 	if ocultar_en_escritorio and not mostrar_siempre and not OS.has_feature("mobile"):
 		hide()
 		# `hide()` no basta: este nodo escucha por `_input`, que sigue llegando
@@ -135,3 +136,40 @@ func _on_special_ready() -> void:
 func _on_special_used(_sailor_id: String, _attack_name: String) -> void:
 	special_button.modulate = Color(1, 1, 1, 0.45)
 	special_button.scale = Vector2.ONE
+
+
+## EL BOTÓN DE PAUSA, ARRIBA A LA IZQUIERDA.
+##
+## En el móvil no hay tecla Escape, así que sin esto no hay forma de pausar — ni
+## de guardar, ni de mirar los objetivos, ni de salir. Arriba a la izquierda es
+## donde no estorba: los controles de juego están abajo y los contadores a la
+## derecha.
+##
+## Pequeño y discreto a propósito. Tiene que poder encontrarse, no llamar la
+## atención mientras se juega.
+func _montar_pausa() -> void:
+	var b := Button.new()
+	b.text = "❚❚"
+	b.custom_minimum_size = Vector2(58, 58)
+	b.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	b.offset_left = 18.0
+	b.offset_top = 96.0
+	b.offset_right = 76.0
+	b.offset_bottom = 154.0
+	b.modulate.a = 0.55
+	var caja := StyleBoxFlat.new()
+	caja.bg_color = Color(0.16, 0.08, 0.26, 0.7)
+	caja.corner_radius_top_left = 16
+	caja.corner_radius_top_right = 16
+	caja.corner_radius_bottom_left = 16
+	caja.corner_radius_bottom_right = 16
+	b.add_theme_stylebox_override("normal", caja)
+	b.add_theme_stylebox_override("hover", caja)
+	b.add_theme_stylebox_override("pressed", caja)
+	b.add_theme_color_override("font_color", Color(1.0, 0.92, 0.97))
+	b.add_theme_font_size_override("font_size", 20)
+	b.pressed.connect(func() -> void:
+		var nivel := get_tree().current_scene
+		if nivel != null and nivel.has_method("abrir_pausa"):
+			nivel.call("abrir_pausa"))
+	add_child(b)

@@ -126,7 +126,8 @@ conversación por turnos, transiciones suaves y la transformación en tres tiemp
 | Sonido | Efectos y ambiente ✅. Falta la música. Ver [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) |
 | Sonido propio de la transformación | `SFX_TRANSFORMACION` en `combat_feel.gd`. Va prestado del especial |
 | Audio de Mercury (F5) | Depende del usuario: fish.audio, texto en `14-VOCES.md` |
-| Zonas vacías y salientes para trepar | [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) | ⭐ Qué suena hoy, qué está a medias y qué falta |
+| Zonas vacías y salientes para trepar | [`23-MENUS.md`](23-MENUS.md) | Los menús: qué decide cada pantalla y por qué |
+| [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) | ⭐ Qué suena hoy, qué está a medias y qué falta |
 | [`21-SONIDO-Y-MUSICA.md`](21-SONIDO-Y-MUSICA.md) | ⭐ El plan de sonido y música: de dónde sale, qué suena en cada momento y en qué orden |
 | [`20-JEFE-GUARDIAN.md`](20-JEFE-GUARDIAN.md) | El jefe del Acto 1: concepto, prompt de imagen y qué hace falta |
 | [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md) |
@@ -156,6 +157,7 @@ conversación por turnos, transiciones suaves y la transformación en tres tiemp
 | [`16-GUION.md`](16-GUION.md) | ⭐ **La historia completa**, escena por escena |
 | [`17-ANIMACIONES.md`](17-ANIMACIONES.md) | ⭐ **Qué archivo subir a Mixamo** y con qué ajustes. Bloquea la Fase E |
 | [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md) | ⭐ **Estado del Nivel 1:** cómo se monta, qué hay, qué falta, rendimiento |
+| [`23-MENUS.md`](23-MENUS.md) | Los menús: qué decide cada pantalla y por qué |
 | [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) | ⭐ Qué suena hoy, qué está a medias y qué falta |
 | [`21-SONIDO-Y-MUSICA.md`](21-SONIDO-Y-MUSICA.md) | ⭐ El plan de sonido y música: de dónde sale, qué suena en cada momento y en qué orden |
 | [`20-JEFE-GUARDIAN.md`](20-JEFE-GUARDIAN.md) | El jefe del Acto 1: concepto, prompt de imagen y qué hace falta |
@@ -990,14 +992,14 @@ Una cosa por sesión, cerrada y probada antes de pasar a la siguiente. El motivo
 de escribirlo es que cada tema de abajo depende del anterior, y hacerlos a la
 vez obliga a rehacer trabajo.
 
-### 1. El sistema de menús
+### ~~1. El sistema de menús~~ ✅ hecho
 Título, pausa, ajustes y el panel de objetivos —que lleva esperando desde que se
 decidió que iría «cuando haya interfaz»—. **Va antes que la música a propósito**:
 la música de menú no se puede colocar ni probar sin menú, y la estructura de
 pistas depende de cuántas pantallas haya y de cómo se pase de una a otra.
 
 ### 2. La banda sonora
-Solo cuando 1 esté hecho. Mezcla de piezas libres y generadas con IA, con:
+Ya se puede: los menús están. Mezcla de piezas libres y generadas con IA, con:
 
 - El esquema de qué suena en cada pantalla y en cada momento del nivel — la
   primera versión está en [`21-SONIDO-Y-MUSICA.md`](21-SONIDO-Y-MUSICA.md) §3.

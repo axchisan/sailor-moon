@@ -18,12 +18,17 @@ Qué suena hoy, qué está a medias y qué falta. Se actualiza al tocar sonido.
 ### Enemigos
 | Qué | Tomas |
 |---|---|
-| Voz al aparecer y al caer | 3 |
+| Voz al aparecer y al caer | 3 por bicho |
 | Aviso justo antes de atacar | 2 |
 | Bloqueo (Cofrecito) | 1 |
 
 El aviso es el que más trabaja: llega **sin mirar**, y en una arena con cuatro
 enemigos alrededor no se puede estar pendiente de todos a la vez.
+
+**Cada bicho suena a lo que es**: el Peluchín chilla, el Cofrecito cruje como la
+madera que es y la Hadita tintinea. Con una voz para los tres, la arena entera
+sonaba igual y el sonido dejaba de decir *qué* tienes encima — que es justo lo
+que más falta hace saber cuando no da tiempo a mirarlos todos.
 
 ### El guardián
 Pasos (3), puño (3), golpe al suelo (3), encaje (2), despertar, carga, rugido y
@@ -31,7 +36,9 @@ derrumbe. No usa la voz de los enemigos —`tiene_voz = false`—: el chillido d
 un bicho pequeño no le pega nada a dos metros y medio de piedra.
 
 ### El mundo
-Farol, Estrella, puerta mágica. Ambiente de parque en bucle, más agua y fuego
+Farol, Estrella, puerta mágica, y **fanfarrias de verdad** al limpiar una oleada
+y al cerrar una arena — eran los últimos sitios con sonido de juego retro, y son
+de los pocos momentos en que el juego dice «lo has hecho bien». Ambiente de parque en bucle, más agua y fuego
 con posición en el mundo.
 
 ## ✅ El ambiente, funcionando

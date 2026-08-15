@@ -61,13 +61,13 @@ func _montar(titulo: String, subtitulo: String,
 	# parque y se lee como un elemento más del HUD, no como una pausa.
 	_fondo = ColorRect.new()
 	_fondo.color = Color(0.04, 0.02, 0.09, 0.0)
-	_fondo.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fondo.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_fondo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_fondo)
 	create_tween().tween_property(_fondo, "color:a", 0.62, 0.35)
 
 	var centro := CenterContainer.new()
-	centro.set_anchors_preset(Control.PRESET_FULL_RECT)
+	centro.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	centro.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(centro)
 
