@@ -57,14 +57,26 @@ Midiendo **nivel medio y acentos por minuto** de cada candidata. No sustituye al
 oído, pero separa bien lo tranquilo de lo movido, que es la decisión que más
 importa aquí. Si alguna no encaja al oírla, se cambia una línea en `POR_CAPA`.
 
-## 3. Lo que falta, y va generado con IA
+## 3. Las generadas con IA
 
-Hay tres cosas que ninguna biblioteca va a tener, porque son de este juego:
+Tres piezas que ninguna biblioteca iba a tener porque son de este juego. Las
+generaste y las grabaste en vídeo; el audio se extrae del `.mov` con `ffmpeg`,
+se recorta el silencio de cabecera y se normaliza al nivel de las demás.
 
-### El tema del título
+| Pieza | Estado |
+|---|---|
+| **Créditos** | ✅ Puesta. Hay dos versiones; suena la v2 y la v1 queda guardada al lado — cambiar de una a otra es una línea en `musica.gd` |
+| **Transformación** | ✅ Puesta. Doce segundos que suben, brillan y cierran. Antes iba prestada del ataque especial, y la transformación sonaba igual que un golpe cualquiera |
+| **Victoria** | ⚠️ **El archivo está mudo.** Tiene pista de audio pero en silencio absoluto (−91 dB, el suelo digital): la grabación no capturó el sonido. Hay que volver a grabarla |
+
+### Los prompts, por si hay que rehacer alguna
+
+### El tema del título — todavía sin generar
 
 Lo que suena al abrir. Debería ser **la melodía del juego** — la que se
-reconozca, la que aparezca variada en el parque y en los créditos.
+reconozca, la que aparezca variada en el parque y en los créditos. Ahora mismo
+el menú usa una pieza de biblioteca (*Hidden Wonders*), que cumple pero no es
+suya.
 
 ```
 A gentle, dreamy main theme for a children's fantasy game. Music box and soft
@@ -125,7 +137,8 @@ que ya están**, o una pieza nueva sonará más alta que todo lo demás.
 
 ## 4. Lo que queda
 
-- Las tres piezas de arriba.
+- **Volver a grabar la victoria**, que salió muda.
+- **El tema del título**, sin generar.
 - Que la música del parque tenga **variante de noche o de zona** — hoy es una
   sola para todo el mapa.
 - Un remate corto al recoger la última Estrella y al encender el último farol.

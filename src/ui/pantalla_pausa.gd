@@ -78,6 +78,13 @@ func _objetivos() -> void:
 	var panel := PanelRequisitos.new()
 	panel.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(panel)
+	# Elegir un objetivo desde la pausa cierra la pausa entera: se ha elegido a
+	# dónde ir, así que lo que toca es ir, no volver al menú de pausa.
+	var nivel := get_tree().current_scene
+	if nivel.has_method("seguir_objetivo"):
+		panel.seguir.connect(func(id: String) -> void:
+			nivel.call("seguir_objetivo", id)
+			_seguir())
 	await panel.mostrar("LO QUE TE FALTA",
 		"Todo esto abre la puerta del final del parque.", o.resumen())
 

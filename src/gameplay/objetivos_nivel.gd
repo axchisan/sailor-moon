@@ -102,6 +102,7 @@ func resumen() -> Array[Dictionary]:
 	for ficha in LISTA:
 		var id: String = ficha["id"]
 		salida.append({
+			"id": id,
 			"texto": _texto_de(id),
 			"hecho": esta_hecho(id),
 			"cuantos": _progreso.get(id, 0),

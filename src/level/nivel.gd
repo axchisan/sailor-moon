@@ -39,6 +39,7 @@ var _portal: PortalSalida = null
 var _jefe: GuardianPortal = null
 var _barra: BarraJefe = null
 var _ambiente: AmbienteNivel = null
+var _guia: GuiaObjetivo = null
 var _limpias: int = 0
 var _ultimo_suelo: Vector3 = Vector3.ZERO
 var _camara_plano: Camera3D = null
@@ -262,6 +263,12 @@ func _ready() -> void:
 		sitios_farol.append((nodo as Node3D).global_position + Vector3.UP * 1.2)
 	_ambiente.faroles_en(sitios_farol)
 
+	# LA FLECHA QUE SEÑALA. Empieza apagada: solo sale cuando se elige un
+	# objetivo en la lista, porque una flecha permanente convierte el juego en ir
+	# detrás de una flecha y entonces el parque deja de mirarse.
+	_guia = GuiaObjetivo.new()
+	add_child(_guia)
+
 	Musica.pedir(Musica.Capa.FONDO, "parque")
 	_posar_los_rincones()
 	_montar_objetivos()
@@ -307,6 +314,8 @@ func _montar_objetivos() -> void:
 	for nodo in get_tree().get_nodes_in_group("faroles"):
 		(nodo as Farol).encendido.connect(func(_f: Farol) -> void:
 			_objetivos.anotar("faroles"))
+
+	_objetivos.objetivo_cumplido.connect(_al_cumplir_objetivo)
 
 	for nodo in find_children("*", "Encuentro", true, false):
 		(nodo as Encuentro).encuentro_terminado.connect(func(_id: String) -> void:
@@ -679,3 +688,33 @@ func _id_de(indice: int) -> String:
 		return ""
 	var nodo := get_node_or_null(arenas[indice]) as Arena
 	return nodo.arena_id if nodo != null else ""
+
+
+## Pone la flecha a señalar un objetivo. Lo llama la lista al tocar una línea.
+func seguir_objetivo(id: String) -> void:
+	if _guia == null:
+		return
+	if not Settings.show_guide_arrow:
+		EventBus.show_message.emit(
+			"La flecha de ayuda está apagada en los ajustes", 2.6)
+		return
+	# Tocar el que ya se seguía la quita: es la forma natural de decir «ya no».
+	if _guia.objetivo == id:
+		_guia.seguir("")
+		EventBus.show_message.emit("Ya no te señalo nada", 1.8)
+		return
+	_guia.seguir(id)
+	var comollama := id
+	if _objetivos != null:
+		for ficha: Dictionary in _objetivos.resumen():
+			if str(ficha.get("id", "")) == id:
+				comollama = str(ficha.get("texto", id))
+				break
+	EventBus.show_message.emit("Te señalo: %s" % comollama, 2.6)
+
+
+## Al cumplirse un objetivo, la flecha deja de señalarlo: quedarse apuntando a
+## algo que ya está hecho es peor que no apuntar.
+func _al_cumplir_objetivo(id: String, _hechos: int, _total: int) -> void:
+	if _guia != null and _guia.objetivo == id:
+		_guia.seguir("")

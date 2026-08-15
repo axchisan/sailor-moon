@@ -41,8 +41,11 @@ func golpe_al_aire() -> void:
 ## lo mismo — el especial es un golpe y esto es una aparición. Cuando se genere
 ## el suyo (campanillas subiendo, un golpe de arpa, algo con brillo), se cambian
 ## estas dos líneas y ya está.
-const SFX_TRANSFORMACION_INICIO := preload("res://assets/audio/sfx/purify.wav")
-const SFX_TRANSFORMACION := preload("res://assets/audio/sfx/special.wav")
+## GENERADA PARA ESTE JUEGO. Antes iba prestada del especial, y la
+## transformación sonaba igual que un ataque cualquiera — que es justo lo que no
+## es. Doce segundos que suben, brillan y cierran.
+const SFX_TRANSFORMACION_INICIO := preload("res://assets/audio/sfx/transformacion.wav")
+const SFX_TRANSFORMACION := preload("res://assets/audio/sfx/transformacion.wav")
 
 ## Presets de impacto por tipo de golpe.
 const IMPACT_LIGHT := {"stop": 0.04, "shake": 0.15, "shake_time": 0.12}

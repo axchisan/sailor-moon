@@ -178,6 +178,9 @@ func _abrir_la_lista() -> void:
 		return
 	var panel := PanelRequisitos.new()
 	get_tree().current_scene.add_child(panel)
+	var nivel := get_tree().current_scene
+	if nivel.has_method("seguir_objetivo"):
+		panel.seguir.connect(nivel.seguir_objetivo)
 	await panel.mostrar(
 		"LA PUERTA ANTIGUA DUERME",
 		"Estaba aquí antes que el parque. Despertará cuando todo esté hecho.",

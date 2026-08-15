@@ -1010,9 +1010,9 @@ Ya se puede: los menús están. Mezcla de piezas libres y generadas con IA, con:
   el prompt del guardián: la mitad del prompt son requisitos técnicos, no gustos.
 - Qué se busca en bancos libres y qué se genera.
 
-### 3. Rematar el sonido que falta
+### 2. Rematar el sonido que falta
 La lista de ⬜ en [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md).
 
-### 4. Dar vida al parque
+### 3. Dar vida al parque
 Las zonas vacías y los salientes para trepar de
 [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md).

@@ -28,6 +28,9 @@ const COMBATE := preload("res://assets/audio/musica/combate.mp3")
 const JEFE := preload("res://assets/audio/musica/jefe.mp3")
 const PORTAL := preload("res://assets/audio/musica/portal.mp3")
 const ENCUENTRO := preload("res://assets/audio/musica/encuentro.mp3")
+## Generada con IA para este juego. La v1 está guardada al lado por si algún día
+## se prefiere: cambiar de una a otra es cambiar esta línea.
+const CREDITOS := preload("res://assets/audio/musica/creditos.mp3")
 
 ## De menos a más importante. La que esté pedida y más abajo en esta lista es la
 ## que suena.
@@ -46,6 +49,7 @@ const POR_CAPA := {
 	"jefe": JEFE,
 	"portal": PORTAL,
 	"encuentro": ENCUENTRO,
+	"creditos": CREDITOS,
 }
 
 ## Cuánto dura el cruce entre canciones.

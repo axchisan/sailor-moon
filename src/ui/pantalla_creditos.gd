@@ -38,6 +38,9 @@ const LINEAS := [
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Su propia música, en la capa de momento: al cerrar la pantalla se suelta y
+	# vuelve sola la del menú, sin que nadie tenga que acordarse.
+	Musica.pedir(Musica.Capa.MOMENTO, "creditos")
 
 	var titulo := Estilo.texto_con_sombra("Créditos", 40, Estilo.CREMA, true, 700)
 	titulo.set_anchors_preset(Control.PRESET_CENTER_TOP)
@@ -91,6 +94,7 @@ func _ready() -> void:
 	volver.offset_bottom = -38.0
 	volver.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	volver.pressed.connect(func() -> void:
+		Musica.soltar(Musica.Capa.MOMENTO)
 		cerrada.emit()
 		queue_free())
 	add_child(volver)

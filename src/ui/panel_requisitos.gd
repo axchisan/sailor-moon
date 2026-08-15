@@ -25,6 +25,8 @@ class_name PanelRequisitos
 ## solo dice cuánto queda, y desanima.
 
 signal cerrado
+## La emite al tocar una línea: el nivel pone la flecha en ese objetivo.
+signal seguir(id: String)
 
 ## Cuánto tarda en irse solo, si no se toca nada.
 const SOLO := 6.0
@@ -111,7 +113,8 @@ func _montar(titulo: String, subtitulo: String,
 		columna.add_child(fila)
 		animables.append(fila)
 
-	var pie := _texto("Toca para continuar", 17, Color(0.6, 0.58, 0.68), 4)
+	var pie := _texto("Toca un objetivo para que te lo señale · o toca fuera para cerrar",
+		16, Color(0.6, 0.58, 0.68), 4)
 	pie.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	columna.add_child(pie)
 	animables.append(pie)
@@ -147,7 +150,9 @@ func _fila(ficha: Dictionary) -> Control:
 
 	var caja := HBoxContainer.new()
 	caja.add_theme_constant_override("separation", 16)
-	caja.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Los cumplidos no se pueden seguir: no hay a dónde ir.
+	caja.mouse_filter = Control.MOUSE_FILTER_IGNORE if hecho \
+		else Control.MOUSE_FILTER_STOP
 
 	var marca := "✦"
 	var tono := CREMA
@@ -173,6 +178,24 @@ func _fila(ficha: Dictionary) -> Control:
 
 	if hecho:
 		caja.modulate = Color(1, 1, 1, 0.72)
+		return caja
+
+	# SE TOCA PARA QUE TE LO SEÑALE.
+	#
+	# La lista dice QUÉ falta pero no DÓNDE, y el parque son doscientos sesenta
+	# metros de lado. Tocar una línea pone una flecha apuntando a lo más cercano
+	# de eso — la dirección, no el camino.
+	var id: String = ficha.get("id", "")
+	caja.gui_input.connect(func(evento: InputEvent) -> void:
+		var toque := evento is InputEventScreenTouch or evento is InputEventMouseButton
+		if toque and evento.is_pressed():
+			seguir.emit(id)
+			cerrar())
+	# Un realce al pasar por encima, para que se vea que se puede tocar.
+	caja.mouse_entered.connect(func() -> void:
+		caja.modulate = Color(1.14, 1.14, 1.14))
+	caja.mouse_exited.connect(func() -> void:
+		caja.modulate = Color.WHITE)
 	return caja
 
 

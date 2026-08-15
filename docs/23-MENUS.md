@@ -98,3 +98,29 @@ todos los grosores.
 - Cuando cambie el sistema de vidas: `Partidas` guarda progreso, no la sesión —
   la vida y la posición no están en el formato a propósito, así que añadir
   puntos de guardado tocará `datos_de_sesion()` y no las ranuras.
+
+## Los objetivos como misiones
+
+Tocar una línea de la lista pone una **flecha que señala** hacia lo más cercano
+de ese tipo. La lista decía *qué* falta pero no *dónde*, y el parque son
+doscientos sesenta metros de lado: «busca seis faroles repartidos» sin más pista
+es dar vueltas hasta cansarse.
+
+No es un mapa ni un minimapa: **es dirección y distancia, no camino**. Llegar
+sigue siendo cosa de quien juega, y por el camino se encuentran otras cosas.
+
+Tres decisiones que la hacen funcionar:
+
+- **Se elige, no aparece sola.** Una flecha permanente convierte el juego en ir
+  detrás de una flecha, y entonces el parque deja de mirarse.
+- **Se apaga al cumplir lo que señalaba.** Quedarse apuntando a algo ya hecho es
+  peor que no apuntar.
+- **Tocar el mismo objetivo otra vez la quita.** Es la forma natural de decir
+  «ya no».
+
+Cuanto más cerca está el destino, más pequeña y apagada se pone: es lo que dice
+«ya casi» sin escribir una distancia en pantalla. Y recalcula el destino cada
+fotograma en vez de guardarlo, porque los faroles se apagan y las Estrellas se
+recogen — un destino guardado apuntaría a algo que ya no cuenta.
+
+Respeta el ajuste **Flecha de ayuda**: si está apagado, avisa en vez de aparecer.

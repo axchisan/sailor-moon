@@ -62,6 +62,12 @@ func _al_entrar(cuerpo: Node3D) -> void:
 ## Al visitarlo, la baliza baja y se apaga. Es lo que distingue de un vistazo lo
 ## que falta de lo que ya está: sin apagarse, a la cuarta vuelta no se sabe cuál
 ## queda por ver.
+## Lo pregunta la flecha guía: señalar un rincón ya visitado sería mandar a
+## donde no hay nada que hacer.
+func ya_visitado() -> bool:
+	return _visitado
+
+
 func _apagar() -> void:
 	if _baliza == null:
 		return
