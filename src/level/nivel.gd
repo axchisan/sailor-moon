@@ -262,6 +262,7 @@ func _ready() -> void:
 		sitios_farol.append((nodo as Node3D).global_position + Vector3.UP * 1.2)
 	_ambiente.faroles_en(sitios_farol)
 
+	Musica.pedir(Musica.Capa.FONDO, "parque")
 	_posar_los_rincones()
 	_montar_objetivos()
 
@@ -471,7 +472,17 @@ func _despertar_al_guardian() -> void:
 			_barra.poner(a, m))
 
 	_jefe.derrotado.connect(_al_caer_el_guardian.bind(claro))
+
+	# SILENCIO MIENTRAS SE LEVANTA, Y ENTONCES SU TEMA.
+	#
+	# Dos segundos sin nada antes de que la piedra se mueva hacen más por ese
+	# momento que cualquier redoble: el tema entra cuando ya está de pie, y ahí
+	# es cuando significa algo.
+	Musica.callar()
 	_jefe.despertar()
+	await get_tree().create_timer(_jefe.despertar_dura * 0.75).timeout
+	Musica.destapar()
+	Musica.pedir(Musica.Capa.JEFE, "jefe")
 
 
 ## Luna, fuera del ruedo mientras dura la pelea.
@@ -506,6 +517,8 @@ func _devolver_a_luna() -> void:
 func _al_caer_el_guardian(claro: Arena) -> void:
 	# Con calma: la barrera se queda mientras se desploma. Que se abra en el
 	# mismo golpe en que cae le quita el final a la pelea.
+	Musica.soltar(Musica.Capa.JEFE)
+	Musica.pedir(Musica.Capa.FONDO, "portal")
 	if _barra != null:
 		_barra.quitar()
 		_barra = null

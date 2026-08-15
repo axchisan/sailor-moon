@@ -40,6 +40,7 @@ func _ready() -> void:
 	add_child(_fondo)
 	_montar()
 	_entrar()
+	Musica.pedir(Musica.Capa.FONDO, "menu")
 
 
 func _montar() -> void:

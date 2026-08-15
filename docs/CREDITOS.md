@@ -51,9 +51,18 @@
 Packs usados: *Impact Sounds*, *RPG Audio*, *Interface Sounds*, *Music Jingles*.
 CC0 no exige atribución; se cita igualmente porque el trabajo es suyo.
 
-**Música** — pendiente. La fuente prevista es
-[Incompetech / Kevin MacLeod](https://incompetech.com), licencia **CC-BY**, que
-sí obliga a citar autor y título de cada pieza. Al añadir la primera canción hay
-que anotarla aquí — esa atribución es la condición de uso, no una cortesía.
+**Música** — [Kevin MacLeod](https://incompetech.com), licencia **CC-BY 4.0**.
+La atribución es la condición de uso, no una cortesía:
+
+| Pieza | Dónde suena |
+|---|---|
+| *Hidden Wonders* | Menú |
+| *Enchanted Valley* | El parque |
+| *Mischief Maker* | Arenas de combate |
+| *Heart of the Beast* | El guardián |
+| *Magic Forest* | El claro del portal |
+| *Dewdrop Fantasy* | Encuentros |
+
+Todas de Kevin MacLeod (incompetech.com), bajo Creative Commons BY 4.0.
 
 El plan completo está en [`21-SONIDO-Y-MUSICA.md`](21-SONIDO-Y-MUSICA.md).

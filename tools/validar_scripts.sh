@@ -11,7 +11,7 @@
 set -u
 cd "$(dirname "$0")/.."
 GODOT="${GODOT:-/Applications/Godot.app/Contents/MacOS/Godot}"
-AUTOLOADS="EventBus|GameManager|AudioManager|SaveManager|SceneLoader|Settings|CombatFeel|CombatDirector|PartidasGuardadas"
+AUTOLOADS="EventBus|GameManager|AudioManager|SaveManager|SceneLoader|Settings|CombatFeel|CombatDirector|PartidasGuardadas|Musica"
 fallos=0
 for f in $(find src tools -name '*.gd' | sort); do
   salida=$("$GODOT" --headless --path . --check-only --script "$f" 2>&1 \

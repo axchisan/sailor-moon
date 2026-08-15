@@ -440,7 +440,9 @@ func _congelar_jugador(congelado: bool) -> void:
 ##
 ## Se para del todo y se le deja el ciclo de estar sentada, que es exactamente
 ## lo que haría un gato mientras dos personas hablan.
+## La música baja mientras se habla y vuelve al terminar. Ver `musica.gd`.
 func _congelar_companeros(congelado: bool) -> void:
+	Musica.agachar(congelado)
 	for gato in get_tree().current_scene.find_children("*", "Companero", true, false):
 		var companero := gato as CharacterBody3D
 		if companero == null:

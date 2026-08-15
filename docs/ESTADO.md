@@ -123,10 +123,11 @@ conversación por turnos, transiciones suaves y la transformación en tres tiemp
 | Ataque de área del jefe | La animación `golpe_suelo` está hecha y sin usar |
 | **Panel de objetivos** | Esperando a que haya interfaz — decisión del usuario |
 | Encuadre de la cinemática | `_presentar()` en `portal_salida.gd` |
-| Sonido | Efectos y ambiente ✅. Falta la música. Ver [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) |
+| Sonido y música | ✅ Ver [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) y [`24-BANDA-SONORA.md`](24-BANDA-SONORA.md). Faltan 3 piezas por generar con IA |
 | Sonido propio de la transformación | `SFX_TRANSFORMACION` en `combat_feel.gd`. Va prestado del especial |
 | Audio de Mercury (F5) | Depende del usuario: fish.audio, texto en `14-VOCES.md` |
-| Zonas vacías y salientes para trepar | [`23-MENUS.md`](23-MENUS.md) | Los menús: qué decide cada pantalla y por qué |
+| Zonas vacías y salientes para trepar | [`24-BANDA-SONORA.md`](24-BANDA-SONORA.md) | ⭐ Qué suena en cada sitio, y los prompts de las piezas que faltan por generar |
+| [`23-MENUS.md`](23-MENUS.md) | Los menús: qué decide cada pantalla y por qué |
 | [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) | ⭐ Qué suena hoy, qué está a medias y qué falta |
 | [`21-SONIDO-Y-MUSICA.md`](21-SONIDO-Y-MUSICA.md) | ⭐ El plan de sonido y música: de dónde sale, qué suena en cada momento y en qué orden |
 | [`20-JEFE-GUARDIAN.md`](20-JEFE-GUARDIAN.md) | El jefe del Acto 1: concepto, prompt de imagen y qué hace falta |
@@ -157,6 +158,7 @@ conversación por turnos, transiciones suaves y la transformación en tres tiemp
 | [`16-GUION.md`](16-GUION.md) | ⭐ **La historia completa**, escena por escena |
 | [`17-ANIMACIONES.md`](17-ANIMACIONES.md) | ⭐ **Qué archivo subir a Mixamo** y con qué ajustes. Bloquea la Fase E |
 | [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md) | ⭐ **Estado del Nivel 1:** cómo se monta, qué hay, qué falta, rendimiento |
+| [`24-BANDA-SONORA.md`](24-BANDA-SONORA.md) | ⭐ Qué suena en cada sitio, y los prompts de las piezas que faltan por generar |
 | [`23-MENUS.md`](23-MENUS.md) | Los menús: qué decide cada pantalla y por qué |
 | [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) | ⭐ Qué suena hoy, qué está a medias y qué falta |
 | [`21-SONIDO-Y-MUSICA.md`](21-SONIDO-Y-MUSICA.md) | ⭐ El plan de sonido y música: de dónde sale, qué suena en cada momento y en qué orden |
@@ -998,7 +1000,7 @@ decidió que iría «cuando haya interfaz»—. **Va antes que la música a prop
 la música de menú no se puede colocar ni probar sin menú, y la estructura de
 pistas depende de cuántas pantallas haya y de cómo se pase de una a otra.
 
-### 2. La banda sonora
+### ~~2. La banda sonora~~ ✅ hecha, salvo tres piezas generadas
 Ya se puede: los menús están. Mezcla de piezas libres y generadas con IA, con:
 
 - El esquema de qué suena en cada pantalla y en cada momento del nivel — la
