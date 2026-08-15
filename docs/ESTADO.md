@@ -122,7 +122,7 @@ lo de abajo, remates.
 | Qué | Dónde | Quién |
 |---|---|---|
 | ~~El sistema de vidas~~ | ✅ Corazones que sueltan los enemigos y puntos de guardado antes de cada arena. Ver [`25-VIDAS.md`](25-VIDAS.md) | — |
-| **Dar vida al parque** | [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md): zonas vacías, senderos, y **salientes de 1,2–2,2 m para trepar** — la mecánica está y no hay dónde usarla | yo |
+| ~~Dar vida al parque~~ | ✅ Nueve repechos trepables con premio arriba y senderillos. Queda poblar más las explanadas y los suelos de otra piedra | — |
 | **Fase H — la historia** | Guion escrito en el GDD, sin montar. Es lo que convierte el nivel en un acto | yo |
 | Sonido que falta | Portal al abrirse, rincones, acto terminado, interfaz. Ver [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md) | yo |
 | Encuadre de la cinemática del portal | `_presentar()` en `portal_salida.gd`. Funciona, no siempre centra la ruina | yo |

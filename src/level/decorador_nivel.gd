@@ -888,6 +888,22 @@ func _en_un_rincon(sitio: Vector3, margen: float) -> bool:
 	return false
 
 
+## Las mismas comprobaciones que usa el decorador para no plantar encima de
+## nada, abiertas para que otros sembradores —los repechos— no las repitan.
+##
+## Duplicarlas sería garantizar que un día se corrige una y la otra no.
+func pisa_el_recorrido_publico(sitio: Vector3) -> bool:
+	return _pisa_el_recorrido(sitio)
+
+
+func moja_publico(sitio: Vector3, factor: float, margen: float) -> bool:
+	return _moja(sitio, factor, margen)
+
+
+func estorbo_publico(sitio: Vector3, radio: float) -> bool:
+	return _dentro_de_un_estorbo(sitio, radio)
+
+
 func _moja(sitio: Vector3, factor: float, margen: float) -> bool:
 	if not _hay_estanque:
 		return false

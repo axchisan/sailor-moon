@@ -263,6 +263,7 @@ func _ready() -> void:
 		sitios_farol.append((nodo as Node3D).global_position + Vector3.UP * 1.2)
 	_ambiente.faroles_en(sitios_farol)
 
+	_sembrar_repechos(decorador)
 	_sembrar_puntos_de_guardado()
 
 	# LA FLECHA QUE SEÑALA. Empieza apagada: solo sale cuando se elige un
@@ -759,3 +760,46 @@ func _sembrar_puntos_de_guardado() -> void:
 		p.global_position = sitio
 		puestos += 1
 	print("[Nivel] %d puntos de guardado" % puestos)
+
+
+## LOS SITIOS ALTOS, Y LO QUE HAY ARRIBA.
+##
+## Trepar cornisas estaba hecho desde la Fase E y el parque no tenía un solo
+## sitio donde usarlo: la única plataforma queda a 0,7 m, por debajo del mínimo
+## agarrable. Una mecánica sin dónde usarse es una promesa que el escenario no
+## cumple.
+##
+## **Arriba siempre hay algo.** Trepar a un sitio vacío se hace una vez y no se
+## repite: la primera vez es curiosidad y la segunda ya se sabe que no hay nada.
+func _sembrar_repechos(decorador: DecoradorNivel) -> void:
+	if _constructor == null or decorador == null:
+		return
+	var r := Repechos.new()
+	r.name = "Repechos"
+	add_child(r)
+	var cimas := r.sembrar(_constructor, decorador,
+		_constructor.extension()["centro"])
+
+	# Una Estrella en uno de cada tres, un corazón en el resto. Estrella en todos
+	# desbarataría la cuenta del objetivo —son siete y están colocadas a mano— y
+	# un corazón siempre haría que trepar diera igual con la vida llena.
+	var i := 0
+	for cima: Vector3 in cimas:
+		i += 1
+		if i % 3 == 0 and escena_estrella != null:
+			var e := escena_estrella.instantiate() as Node3D
+			if e != null:
+				add_child(e)
+				e.global_position = cima + Vector3.UP * 1.0
+				if "secreta" in e:
+					e.set("secreta", true)
+				estrellas_del_nivel += 1
+			continue
+		var c := Corazon.new()
+		# La marca va ANTES de meterlo en el árbol. `add_child()` dispara
+		# `_ready()`, y ahí es donde el corazón decide si caduca: puesta después,
+		# el temporizador de catorce segundos ya estaba en marcha y las cimas se
+		# quedaban vacías al minuto de empezar la partida.
+		c.set_meta("permanente", true)
+		add_child(c)
+		c.global_position = cima + Vector3.UP * 0.9

@@ -73,6 +73,13 @@ func _ready() -> void:
 	_altura = global_position.y
 	set_process(true)
 
+	# Los de los repechos no caducan. El corazón que suelta un enemigo es del
+	# momento —o se coge o se pierde—, pero el que corona un sitio alto es el
+	# premio de haber subido: si desaparece a los catorce segundos, quien lo ve
+	# desde abajo y va a por él se encuentra la cima vacía.
+	if has_meta("permanente"):
+		return
+
 	# Se va solo, avisando antes: los últimos dos segundos parpadea.
 	var t := create_tween()
 	t.tween_interval(DURA - 2.0)

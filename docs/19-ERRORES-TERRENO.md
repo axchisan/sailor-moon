@@ -39,7 +39,7 @@ escalones invisibles no se ven, pero un rayo sí los mide.
 | Muros del cruce sin conectar con la arena | El alargue contra arenas solo estaba en `_pasillo`; ahora también en `_cruce`, que es quien desemboca en la Arena 2 |
 | Los setos se leían como cajas | Un **remate más estrecho** los corona (`muro_cresta`). Un prisma tiene la cara de arriba lisa y cuatro esquinas rectas; un seto recortado no. Va en la misma multimalla: cero llamadas de dibujado |
 
-## Para más adelante: las zonas vacías
+## Las zonas vacías — hecho (2026-08-14)
 
 Hay explanadas grandes, llanas y con casi nada — hierba y poco más. No es un
 fallo, es sitio desaprovechado: se cruzan corriendo y no invitan a pararse.
@@ -70,12 +70,41 @@ Lo que hace falta al poblar las zonas vacías:
 
 Es lo que convierte trepar de «una mecánica que está ahí» en algo que se usa.
 
-### Cuándo
+### Cómo se resolvió
 
-Hay que hacerlo **después** de cerrar lo que está en marcha: el usuario no
-quiere quedarse atascado en el terreno. Cuando toque, el sitio es
-`decorador_nivel.gd` — probablemente una siembra nueva parecida a los rincones,
-pero de relleno y sin composición fija.
+En [`repechos.gd`](../src/level/repechos.gd), una siembra aparte del decorador
+—necesita medir el terreno con rayos, y eso solo se puede hacer cuando el suelo
+ya existe—. Nueve sitios altos y unos cuantos senderillos.
+
+**El canto se mide contra el punto más alto del contorno, no contra el centro.**
+Con un hundido fijo, un repecho puesto donde el terreno sube por un lado quedaba
+con el canto a 0,85 m — por debajo del mínimo agarrable, o sea **imposible de
+trepar justo por el lado por el que uno se acerca**. Pasaba en tres de los
+nueve, y a ojo los nueve parecían iguales: solo se ve midiendo. Ahora se lanzan
+cuatro rayos, uno por esquina, y la caja se levanta desde el más alto. Los nueve
+quedan entre 1,19 y 2,00 m.
+
+**Son cajas con rocas encima, no rocas.** La cornisa se agarra por un canto
+horizontal, y una roca de silueta irregular no tiene canto: el rayo que busca el
+borde encuentra una pendiente y no se agarra nada. Debajo va una caja y encima
+rocas que le quitan la cara de cubo.
+
+Las rocas van **en la arista de arriba y en la base**, que es donde se delata un
+bloque: la línea recta contra el césped es lo que más grita «esto está puesto
+encima». Ninguna en el centro de la cima — ahí es donde se cae al trepar.
+
+**Arriba siempre hay algo**: una Estrella en uno de cada tres y un corazón en el
+resto. Los corazones de los repechos **no caducan**, al revés que los que sueltan
+los enemigos: el de un enemigo es del momento, este es el premio de haber subido
+y tiene que seguir ahí cuando se llegue.
+
+Y **senderillos** de losas medio hundidas y giradas al azar, que salen de un
+repecho hacia el campo. No llevan a ningún objetivo y no son un camino de verdad
+—alineadas y a ras se leerían como oficiales—, pero dan una dirección, y una
+dirección basta para desviarse a ver qué hay.
+
+Coste: 112 losas y nueve bloques, con el nivel a 60 fps y 92 llamadas de
+dibujado.
 
 ## Lo que queda pendiente
 
