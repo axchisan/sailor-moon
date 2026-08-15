@@ -21,6 +21,40 @@ class_name Enemy
 @export var attack: AttackData
 @export var sparkles_on_defeat: int = 3
 @export var knockback_friction: float = 8.0
+
+## LA VOZ DE LOS ENEMIGOS.
+##
+## Estaban mudos: sonaba el golpe al acertarles y nada más. Un bicho que aparece
+## en silencio, avisa en silencio y cae en silencio es un muñeco que se mueve —
+## el sonido es lo que lo convierte en algo que está ahí.
+##
+## `voz` al aparecer y al caer, `aviso` justo antes de atacar. Ese último es el
+## que más trabaja: llega **sin mirar**, y en una arena con cuatro enemigos
+## alrededor no se puede estar pendiente de todos a la vez.
+const SFX_VOZ := [
+	preload("res://assets/audio/sfx/enemigos/voz_1.wav"),
+	preload("res://assets/audio/sfx/enemigos/voz_2.wav"),
+	preload("res://assets/audio/sfx/enemigos/voz_3.wav"),
+]
+const SFX_AVISO := [
+	preload("res://assets/audio/sfx/enemigos/aviso_1.wav"),
+	preload("res://assets/audio/sfx/enemigos/aviso_2.wav"),
+]
+
+## El jefe tiene los suyos, de piedra: este chillido no le pega nada.
+@export var tiene_voz: bool = true
+
+
+func sonar_voz(volumen: float = -20.0) -> void:
+	if not tiene_voz:
+		return
+	AudioManager.play_sfx(SFX_VOZ[randi() % SFX_VOZ.size()], volumen, 0.16)
+
+
+func sonar_aviso() -> void:
+	if not tiene_voz:
+		return
+	AudioManager.play_sfx(SFX_AVISO[randi() % SFX_AVISO.size()], -17.0, 0.14)
 ## Cuánto se mueve de lado mientras espera turno, de 0 a 1.
 ##
 ## Los enemigos normales orbitan alrededor de la jugadora: se ve intenso y
@@ -111,6 +145,7 @@ func _ready() -> void:
 			set_color(base_color)
 
 	state_machine.setup(self)
+	sonar_voz(-24.0)
 
 
 func _physics_process(delta: float) -> void:
@@ -390,6 +425,7 @@ func defeat() -> void:
 	set_deferred("collision_mask", 1)
 
 	CombatFeel.defeat(global_position + Vector3.UP * 0.8)
+	sonar_voz(-16.0)
 
 	GameManager.collect_sparkle(sparkles_on_defeat)
 	GameManager.register_defeat(display_name)

@@ -45,6 +45,7 @@ attack = ExtResource("18_ataque")
 ataque_al_suelo = ExtResource("19_suelo")
 sparkles_on_defeat = 24
 knockback_friction = 26.0
+tiene_voz = false
 orbita = 0.12
 paso_de_espera = 0.95
 base_color = Color(0.58, 0.6, 0.63, 1)

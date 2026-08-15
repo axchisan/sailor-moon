@@ -26,6 +26,23 @@ medio pese, no — ahí hace falta grabación de verdad.
 **Ya sustituidos** por grabación real (agosto 2026). Los de Kenney quedan solo
 como despensa para menús y avisos, que es donde sí encajan.
 
+#### También los puedo bajar yo
+
+`tools/bajar_sonidos.py` busca en Freesound **con el filtro CC0 puesto** y baja
+los previews públicos, que no piden cuenta:
+
+```
+python3 tools/bajar_sonidos.py "stone impact heavy" audio_fuentes/freesound 3
+```
+
+Son mp3 de calidad reducida y para efectos cortos en un móvil dan de sobra. La
+URL del preview lleva un sufijo distinto por sonido y no se puede adivinar, así
+que el script la saca de la propia página.
+
+Sirve para lo genérico —silbidos, impactos, pasos—. Para lo que tiene que sonar
+de una manera concreta sigue siendo mejor que lo elijas tú escuchando: buscar a
+ciegas por palabras acierta la categoría, no el carácter.
+
 #### Dónde bajarlos tú
 
 **[freesound.org](https://freesound.org)** es la referencia para audio realista:

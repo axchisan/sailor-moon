@@ -64,6 +64,7 @@ func physics_update(delta: float) -> String:
 				_timer -= _attack.windup
 				_phase = Phase.ACTIVE
 				p.hitbox.enable(_attack)
+				CombatFeel.golpe_al_aire()
 				# El impulso hacia delante da sensación de peso y ayuda a
 				# alcanzar al enemigo aunque estés un poco lejos.
 				var forward := p.get_forward()

@@ -162,6 +162,10 @@ const SFX_CARRERA := [
 	preload("res://assets/audio/sfx/mundo/correr_2.wav"),
 	preload("res://assets/audio/sfx/mundo/correr_3.wav"),
 ]
+const SFX_ATERRIZAJE := [
+	preload("res://assets/audio/sfx/jugadora/aterrizar_1.wav"),
+	preload("res://assets/audio/sfx/jugadora/aterrizar_2.wav"),
+]
 const SFX_SALTO := [
 	preload("res://assets/audio/sfx/jugadora/salto_1.wav"),
 	preload("res://assets/audio/sfx/jugadora/salto_2.wav"),
@@ -191,15 +195,20 @@ func _sonar_los_pasos(delta: float) -> void:
 		return
 	_andado = 0.0
 	if plano >= VELOCIDAD_CARRERA:
-		AudioManager.play_sfx(SFX_CARRERA[randi() % SFX_CARRERA.size()], -12.0, 0.14)
+		AudioManager.play_sfx(SFX_CARRERA[randi() % SFX_CARRERA.size()], -18.0, 0.14)
 	else:
-		AudioManager.play_sfx(SFX_PASOS[randi() % SFX_PASOS.size()], -13.0, 0.14)
+		AudioManager.play_sfx(SFX_PASOS[randi() % SFX_PASOS.size()], -19.0, 0.14)
 
 
 ## Lo llama el estado de salto. Va aquí y no allí porque las tomas son de la
 ## jugadora, no del salto: si mañana hay otro personaje, cambia una lista.
 func sonar_salto() -> void:
-	AudioManager.play_sfx(SFX_SALTO[randi() % SFX_SALTO.size()], -14.0, 0.12)
+	AudioManager.play_sfx(SFX_SALTO[randi() % SFX_SALTO.size()], -13.0, 0.10)
+
+
+func sonar_aterrizaje() -> void:
+	AudioManager.play_sfx(
+		SFX_ATERRIZAJE[randi() % SFX_ATERRIZAJE.size()], -15.0, 0.10)
 
 
 func _physics_process(delta: float) -> void:

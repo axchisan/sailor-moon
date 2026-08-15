@@ -32,6 +32,8 @@ var _tiempo := 0.0
 
 
 func enter(_msg: Dictionary = {}) -> void:
+	if actor.has_method("sonar_aterrizaje"):
+		actor.call("sonar_aterrizaje")
 	var p := actor as Player
 	_tiempo = 0.0
 	p.velocity.x = 0.0

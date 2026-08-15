@@ -19,6 +19,22 @@ const SFX_HURT := preload("res://assets/audio/sfx/hurt.wav")
 const SFX_DEFEAT := preload("res://assets/audio/sfx/purify.wav")
 const SFX_BLOCK := preload("res://assets/audio/sfx/block.wav")
 const SFX_SPECIAL := preload("res://assets/audio/sfx/special.wav")
+## EL GOLPE QUE NO ACIERTA TAMBIÉN SUENA.
+##
+## Sin esto, fallar es silencio: el botón se pulsa, el brazo se mueve y no pasa
+## nada, que se lee como que el juego no ha registrado el toque. El silbido del
+## brazo al cortar el aire dice «te he oído, has fallado», que es información
+## distinta de «no te he oído».
+const SFX_AIRE := [
+	preload("res://assets/audio/sfx/combate/aire_1.wav"),
+	preload("res://assets/audio/sfx/combate/aire_2.wav"),
+	preload("res://assets/audio/sfx/combate/aire_3.wav"),
+]
+
+
+## Lo llama el estado de ataque al arrancar el golpe.
+func golpe_al_aire() -> void:
+	AudioManager.play_sfx(SFX_AIRE[randi() % SFX_AIRE.size()], -20.0, 0.14)
 ## La transformación va PRESTADA de momento: no hay sonido propio y hace falta.
 ##
 ## Es el momento más importante del juego y suena a ataque especial, que no es

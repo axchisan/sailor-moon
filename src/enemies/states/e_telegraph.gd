@@ -9,6 +9,8 @@ var _duration: float = 1.2
 
 
 func enter(_msg: Dictionary = {}) -> void:
+	if actor.has_method("sonar_aviso"):
+		actor.call("sonar_aviso")
 	var e := actor as Enemy
 	_timer = 0.0
 	_duration = e.attack.windup if e.attack != null else 1.2
