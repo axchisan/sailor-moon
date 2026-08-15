@@ -896,6 +896,30 @@ func pisa_el_recorrido_publico(sitio: Vector3) -> bool:
 	return _pisa_el_recorrido(sitio)
 
 
+## ¿Cabe algo de este radio sin pisar lo ya plantado?
+func sitio_libre_publico(sitio: Vector3, radio: float) -> bool:
+	return _sitio_libre(sitio, radio)
+
+
+## CUÁNTOS PROPS HAY ALREDEDOR, para saber si una zona está de verdad vacía.
+##
+## `_sitio_libre` responde «¿cabe aquí?», que no es lo mismo: entre dos árboles
+## siempre cabe algo, y eso no convierte el hueco en una explanada. Los repechos
+## necesitan la otra pregunta —«¿hay poco alrededor?»— porque están para dar
+## ambiente a lo vacío, no para meterse en lo que ya está poblado.
+func cuanto_hay_cerca(sitio: Vector3, radio: float) -> int:
+	var cuantos := 0
+	var celdas := int(ceil(radio / CELDA_HUECO)) + 1
+	var base := _celda(sitio.x, sitio.z)
+	for dj in range(-celdas, celdas + 1):
+		for di in range(-celdas, celdas + 1):
+			var lista: Array = _huecos.get(base + Vector2i(di, dj), [])
+			for apunte: Vector3 in lista:
+				if Vector2(sitio.x - apunte.x, sitio.z - apunte.y).length() <= radio:
+					cuantos += 1
+	return cuantos
+
+
 func moja_publico(sitio: Vector3, factor: float, margen: float) -> bool:
 	return _moja(sitio, factor, margen)
 

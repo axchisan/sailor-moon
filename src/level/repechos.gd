@@ -34,11 +34,20 @@ const ALTO_MAX := 2.1
 
 ## Cuántos se intentan colocar.
 const CUANTOS := 9
+## Cuánto se mira alrededor para decidir si una zona está vacía.
+const MIRADA := 11.0
+## Y cuántos props se toleran ahí dentro. Por encima de esto la zona **ya tiene
+## ambiente** y un peñasco encima solo estorba.
+##
+## Este número es todo el arreglo: antes se comprobaba únicamente que no hubiera
+## nada tocando el sitio exacto, y con eso un repecho cabía perfectamente en
+## mitad de un bosquete — no pisaba ningún árbol y estaba rodeado de ellos.
+const LLENO := 9
 ## A qué distancia del centro del parque se buscan sitios.
 const DESDE := 30.0
 const HASTA := 74.0
 ## Cuánto tienen que estar separados entre ellos y de todo lo demás.
-const AIRE := 11.0
+const AIRE := 13.0
 
 const ROCA := preload("res://assets/models/props/roca.glb")
 const LOSA := preload("res://assets/models/props/losa_sendero.glb")
@@ -123,7 +132,8 @@ func _senderillos(constructor: ConstructorNivel, decorador: DecoradorNivel,
 
 func _buscar_sitio(constructor: ConstructorNivel, decorador: DecoradorNivel,
 		centro: Vector3, dado: RandomNumberGenerator) -> Vector3:
-	for intento in 60:
+	# Muchos intentos: los sitios de verdad vacíos son pocos y hay que buscarlos.
+	for intento in 200:
 		var ang := dado.randf() * TAU
 		var d := dado.randf_range(DESDE, HASTA)
 		var p := centro + Vector3(cos(ang), 0.0, sin(ang)) * d
@@ -137,6 +147,12 @@ func _buscar_sitio(constructor: ConstructorNivel, decorador: DecoradorNivel,
 		if decorador.moja_publico(p, 1.4, 6.0):
 			continue
 		if decorador.estorbo_publico(p, 4.2):
+			continue
+		# Que quepa no basta: entre dos árboles siempre cabe algo. Estos van a
+		# zonas vacías, así que se exige que alrededor haya poco.
+		if not decorador.sitio_libre_publico(p, 5.0):
+			continue
+		if decorador.cuanto_hay_cerca(p, MIRADA) > LLENO:
 			continue
 		var cerca := false
 		for otro in puestos:

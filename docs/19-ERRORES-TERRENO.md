@@ -103,8 +103,19 @@ repecho hacia el campo. No llevan a ningún objetivo y no son un camino de verda
 —alineadas y a ras se leerían como oficiales—, pero dan una dirección, y una
 dirección basta para desviarse a ver qué hay.
 
-Coste: 112 losas y nueve bloques, con el nivel a 60 fps y 92 llamadas de
-dibujado.
+**Van solo donde de verdad está vacío**, y esa comprobación es todo el asunto.
+La primera versión miraba únicamente que no hubiera nada tocando el punto
+exacto, y con eso un repecho cabía perfectamente en mitad de un bosquete: no
+pisaba ningún árbol y estaba rodeado de ellos. Quedaron montados encima de zonas
+que ya tenían buena decoración.
+
+«¿Cabe aquí?» y «¿está vacío esto?» son preguntas distintas — entre dos árboles
+siempre cabe algo. Ahora se cuentan los props en once metros a la redonda y se
+descarta el sitio si hay más de nueve. De referencia, un punto cualquiera del
+campo tiene entre 6 y 21; los ocho repechos que sobreviven tienen entre 2 y 9.
+
+Coste: nueve bloques y un centenar de losas, con el nivel a 60 fps y 92 llamadas
+de dibujado.
 
 ## Lo que queda pendiente
 
