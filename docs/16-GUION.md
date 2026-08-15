@@ -73,6 +73,32 @@ Si en algún momento hay que recortar, se recorta por ahí y **no se nota**.
 
 ---
 
+## Cinemática de apertura — ✅ montada
+
+> Funciona en el juego y se ve al empezar una partida nueva. El texto está tal
+> cual aquí abajo, en [`apertura.gd`](../src/ui/apertura.gd); el montaje —los
+> tiempos, el movimiento de cámara, el fundido— en
+> [`cinematica.gd`](../src/ui/cinematica.gd).
+>
+> **Las ilustraciones están dibujadas por código de momento**
+> ([`dibujo_vineta.gd`](../src/ui/dibujo_vineta.gd)). No pretenden ser arte
+> final: pretenden que la cinemática exista hoy y se puedan probar los tiempos.
+> Los prompts para sustituirlas están al final de esta sección.
+
+### Cómo está montado
+
+- **Viñetas y no vídeo.** Un vídeo de minuto y medio son treinta megas y
+  cambiar una frase obliga a renderizarlo entero. Así, cada viñeta es su imagen
+  y su texto.
+- **El movimiento es lo que la hace cinemática.** Una lámina con texto debajo es
+  un libro; la misma lámina acercándose muy despacio mientras se lee es una
+  escena. Cada viñeta define de dónde a dónde va la cámara.
+- **El texto se escribe letra a letra**, con pausas más largas en las comas y
+  los puntos. No es adorno: marca el tiempo. Una frase que aparece entera se lee
+  en un segundo y deja seis de espera incómoda.
+- **Se salta cuando se quiera**, y solo se ve **una vez por partida**. A la
+  tercera muerte, minuto y medio de cuento es un peaje.
+
 ## Cinemática de apertura
 
 Cinco viñetas fijas con movimiento lento de cámara. Voz de narrador. Minuto y
@@ -141,6 +167,34 @@ soñaba más que nadie.
 La última línea es el chiste que baja el tono justo antes de empezar a jugar.
 Después de cuatro viñetas melancólicas hace falta, y además presenta a Serena
 como es: buena persona y un desastre.
+
+### Los prompts de las cinco ilustraciones
+
+Para sustituir los dibujos por arte de verdad. Igual que con el guardián, la
+mitad de cada prompt son **requisitos técnicos**: formato apaisado, sin texto y
+con aire alrededor, porque la cámara se mueve por dentro de la imagen y si el
+motivo llega al borde se sale del encuadre al acercarse.
+
+Comunes a las cinco:
+
+```
+Soft anime storybook illustration, gentle pastel palette of deep purple, navy
+and warm gold. Painterly but clean, no outlines. Night scene. Wide 16:9
+landscape, generous empty margin around the subject, nothing touching the edges.
+No text, no watermark, no borders, no characters looking at the camera.
+```
+
+| Viñeta | Prompt propio |
+|---|---|
+| 1 · El espejo entero | `An ornate oval mirror with a golden frame floating in a starry night sky above a sleeping city. Inside the glass, soft blurred reflections of people sleeping peacefully. Serene and warm.` |
+| 2 · La grieta | `The same ornate oval mirror, now with a single jagged crack across it. Warm golden light escaping through the crack into the night sky. Sad but beautiful, not violent.` |
+| 3 · La lluvia | `Aerial night view of a quiet Japanese city, rooftops and parks below. Hundreds of tiny golden star-lights drifting down over everything like slow snow.` |
+| 4 · La Dama | `Silhouette of an elegant woman seen from behind, standing before a large shattered mirror, reaching up to catch a single golden star. Cool purples and blues. Lonely, never menacing.` |
+| 5 · Serena y Luna | `A girl asleep in bed hugging her pillow, mouth open, blonde hair everywhere. A black cat sits on the windowsill silhouetted against a huge full moon, watching her. Warm and funny.` |
+
+Cuando estén, se dejan en `assets/imagenes/apertura/` y en `apertura.gd` se
+cambia el nombre del dibujo por la ruta del `.png`. El movimiento de cámara
+sigue funcionando igual.
 
 ---
 

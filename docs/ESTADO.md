@@ -49,7 +49,7 @@ El trabajo se organiza por el **plan maestro**
 | **E** | Movimiento y combate | ✅ **cerrada.** Salto en tres partes, doble salto, trepar cornisas y el Cofrecito rodeable |
 | **F** | Conversación viva | ✅ **cerrada** salvo F5 (audio de Mercury, depende de ti) |
 | **G** | Menú, guardado, vidas | ✅ **cerrada.** Menús, tres partidas guardadas, corazones y puntos de guardado |
-| **H** | Historia y cinemática | ⬜ guion escrito, sin montar |
+| **H** | Historia y cinemática | 🟡 **Apertura montada.** Faltan las escenas entre niveles y el final |
 
 ### Lo que funciona hoy
 
@@ -123,7 +123,7 @@ lo de abajo, remates.
 |---|---|---|
 | ~~El sistema de vidas~~ | ✅ Corazones que sueltan los enemigos y puntos de guardado antes de cada arena. Ver [`25-VIDAS.md`](25-VIDAS.md) | — |
 | ~~Dar vida al parque~~ | ✅ Nueve repechos trepables con premio arriba y senderillos. Queda poblar más las explanadas y los suelos de otra piedra | — |
-| **Fase H — la historia** | Guion escrito en el GDD, sin montar. Es lo que convierte el nivel en un acto | yo |
+| ~~Fase H — la apertura~~ | ✅ Cinco viñetas montadas y funcionando. Faltan las escenas entre niveles y el final | — |
 | Sonido que falta | Pasos de tierra (hace falta saber qué se pisa) y agarrarse a una cornisa. Lo demás ✅ | yo |
 | Encuadre de la cinemática del portal | `_presentar()` en `portal_salida.gd`. Funciona, no siempre centra la ruina | yo |
 | Dos rincones que no caben | `AltarGato` y `Vivero`. Avisan por consola en cada carga | yo |

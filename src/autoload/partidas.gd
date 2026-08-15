@@ -85,6 +85,7 @@ func cargar(cual: int) -> bool:
 	GameManager.unlocked_outfits = _lista(d.get("trajes", ["default"]))
 	GameManager.equipped_outfit = d.get("traje", "default")
 	GameManager.level_progress = d.get("progreso", {})
+	vista_apertura = bool(d.get("vista_apertura", false))
 	_jugado = float(d.get("jugado", 0.0))
 	_desde = Time.get_ticks_msec() / 1000.0
 	return true
@@ -107,6 +108,7 @@ func guardar() -> void:
 		"traje": GameManager.equipped_outfit,
 		"progreso": GameManager.level_progress,
 		"jugado": tiempo_jugado(),
+		"vista_apertura": vista_apertura,
 		# El resumen va DUPLICADO a propósito: es lo único que lee el menú, y
 		# leerlo suelto evita cargar el progreso entero de tres partidas solo
 		# para pintar tres tarjetas.
@@ -133,7 +135,17 @@ var _jugado: float = 0.0
 var _desde: float = 0.0
 
 
+## Si ya se ha visto la cinemática de apertura en esta partida.
+##
+## Va en el guardado y no en los ajustes: cada partida es una historia que
+## empieza, y quien abra la segunda ranura tiene derecho a verla otra vez. Pero
+## solo una vez por partida — a la tercera muerte, minuto y medio de cuento es
+## un peaje.
+var vista_apertura: bool = false
+
+
 func _empezar_de_cero() -> void:
+	vista_apertura = false
 	GameManager.current_sailor_id = "moon"
 	GameManager.unlocked_sailors = ["moon"]
 	GameManager.unlocked_outfits = ["default"]

@@ -272,6 +272,15 @@ func _ready() -> void:
 	_guia = GuiaObjetivo.new()
 	add_child(_guia)
 
+	# LA APERTURA, SOLO LA PRIMERA VEZ DE CADA PARTIDA.
+	#
+	# Va aquí y no antes de cargar el nivel para que al terminar el cuento el
+	# parque ya esté montado detrás: si se reproduce sobre una pantalla de carga,
+	# el corte al final es a negro y luego un tirón.
+	if not PartidasGuardadas.vista_apertura and level_id == "nivel_1":
+		PartidasGuardadas.vista_apertura = true
+		_contar_la_apertura.call_deferred()
+
 	Musica.pedir(Musica.Capa.FONDO, "parque")
 	_posar_los_rincones()
 	_montar_objetivos()
@@ -803,3 +812,13 @@ func _sembrar_repechos(decorador: DecoradorNivel) -> void:
 		c.set_meta("permanente", true)
 		add_child(c)
 		c.global_position = cima + Vector3.UP * 0.9
+
+
+## Cuenta la apertura y devuelve el control al acabar.
+func _contar_la_apertura() -> void:
+	if _jugador != null and _jugador.has_method("set_control_enabled"):
+		_jugador.call("set_control_enabled", false)
+	await Apertura.reproducir(self)
+	if _jugador != null and _jugador.has_method("set_control_enabled"):
+		_jugador.call("set_control_enabled", true)
+	PartidasGuardadas.guardar()
