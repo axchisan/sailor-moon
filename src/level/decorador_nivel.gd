@@ -1509,7 +1509,20 @@ func _poblar_rincones(centro: Vector3) -> void:
 		# exige TERRENO LLANO: la plaza de la fuente acabó en una ladera con los
 		# bancos desperdigados cuesta abajo y el empedrado colgando como
 		# escamas. Una plaza es una plaza porque está en un llano.
-		for intento in 60:
+		# LA BÚSQUEDA VA HACIA FUERA TAMBIÉN, NO SOLO HACIA DENTRO.
+		#
+		# Antes, cada vuelta completa acercaba el rincón nueve metros al centro —
+		# que es justo donde el parque está más lleno. Los dos últimos de la lista
+		# se pasaban las sesenta pruebas metiéndose en lo congestionado y no
+		# encontraban sitio nunca: `AltarGato` y `Vivero` avisaban por consola en
+		# cada carga, y de nueve rincones se colocaban siete.
+		#
+		# Midiendo por qué fallaban salió claro: de los diecinueve puntos que
+		# pasaban las demás comprobaciones, dieciséis los descartaba estar
+		# demasiado cerca de otro rincón ya colocado. No era que no cupieran: era
+		# que se buscaba donde ya no queda hueco.
+		var distancia_base := distancia
+		for intento in 120:
 			if not _pisa_el_recorrido(sitio) and not _moja(sitio, 1.4, radio) \
 					and not _dentro_de_un_estorbo(sitio, radio) \
 					and not _en_un_rincon(sitio, radio * 0.6) \
@@ -1518,7 +1531,13 @@ func _poblar_rincones(centro: Vector3) -> void:
 				break
 			rumbo += deg_to_rad(13.0)
 			if intento % 28 == 27:
-				distancia = maxf(distancia - 9.0, 24.0)
+				# Una vuelta más cerca, la siguiente más lejos, alternando. El
+				# campo de fuera está vacío y ahí sí caben.
+				var vuelta := intento / 28
+				if vuelta % 2 == 0:
+					distancia = maxf(distancia_base - 9.0 * float(vuelta / 2 + 1), 24.0)
+				else:
+					distancia = minf(distancia_base + 9.0 * float(vuelta / 2 + 1), 78.0)
 			sitio = centro + Vector3(cos(rumbo), 0.0, sin(rumbo)) * distancia
 		if not encontrado:
 			push_warning("DecoradorNivel: no cabe el rincón '%s'" % rincon["nombre"])

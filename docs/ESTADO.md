@@ -125,9 +125,9 @@ lo de abajo, remates.
 | ~~Dar vida al parque~~ | ✅ Nueve repechos trepables con premio arriba y senderillos. Queda poblar más las explanadas y los suelos de otra piedra | — |
 | ~~Fase H — la apertura~~ | ✅ Cinco viñetas montadas y funcionando. Faltan las escenas entre niveles y el final | — |
 | Sonido que falta | Pasos de tierra (hace falta saber qué se pisa) y agarrarse a una cornisa. Lo demás ✅ | yo |
-| Encuadre de la cinemática del portal | `_presentar()` en `portal_salida.gd`. Funciona, no siempre centra la ruina | yo |
-| Dos rincones que no caben | `AltarGato` y `Vivero`. Avisan por consola en cada carga | yo |
-| El APK pesa 141 MB | Sin diagnosticar. No molesta, pero no se sabe por qué | yo |
+| ~~Encuadre de la cinemática~~ | ✅ Se calcula del tamaño real de la ruina: ocupa el 75% del plano | — |
+| ~~Dos rincones que no caben~~ | ✅ Los nueve entran. La búsqueda solo iba hacia el centro, donde está todo lleno | — |
+| ~~El APK pesa 141 MB~~ | ✅ **91 MB.** Eran 16 copias idénticas de la textura de Serena, una por cada `.fbx` de Mixamo | — |
 | Mapa de escenarios (C bis) | Cómo se encadenan los niveles | yo |
 | **Regrabar la victoria** | La grabación salió muda. Prompt en [`24-BANDA-SONORA.md`](24-BANDA-SONORA.md) | tú |
 | **Tema del título** | El único de los cuatro prompts sin generar | tú |
@@ -1006,6 +1006,17 @@ ninguna tienda.** Instalación por sideload en el dispositivo de la prima.
    `playing = false`. Pasaba solo donde hay dos cambios seguidos —callar la
    música del guardián y pedir la suya— así que parecía cosa del jefe. Ahora el
    fundido en marcha se guarda y se mata antes de empezar otro.
+
+102. **Cada `.fbx` de Mixamo trae su copia de la textura del personaje.** Dieciséis
+   animaciones son dieciséis PNG idénticos de tres megas, y Godot los importa
+   todos: 50 MB del APK eran el mismo dibujo de Serena repetido. El
+   `exclude_filter` del preset ya se saltaba los `.fbx` pero **no sus `.png`**, y
+   la exportación no avisa de nada. Al excluir algo de la exportación, excluir
+   también lo que arrastra.
+103. **Una búsqueda que solo va en una dirección se atasca donde está lleno.** Los
+   rincones se recolocaban acercándose al centro cuando no cabían — y el centro
+   es justo donde ya está todo. Los dos últimos de la lista no entraban nunca.
+   Alternando hacia dentro y hacia fuera entran los nueve.
 
 ---
 

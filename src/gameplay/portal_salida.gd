@@ -120,11 +120,34 @@ func _presentar(jugador: Node3D) -> void:
 	camara_escena.global_transform = camara.global_transform
 	camara_escena.make_current()
 
-	# De donde está la cámara a un plano bajo mirando hacia arriba: el ángulo
-	# contrapicado es lo que hace que algo se lea como importante.
-	var cerca := global_position + Vector3.UP * 1.2 \
-		+ (jugador.global_position - global_position).normalized() * 5.0
-	var mirar := global_position + Vector3.UP * 2.6
+	# EL ENCUADRE SALE DEL TAMAÑO DE LA RUINA, NO DE NÚMEROS A OJO.
+	#
+	# Estaba a cinco metros fijos mirando a una altura fija, y con eso la ruina
+	# unas veces cabía y otras se salía por arriba o quedaba descentrada. Midiendo
+	# lo que ocupa de verdad y despejando la distancia del campo de visión, el
+	# plano encuadra igual de bien mida lo que mida — y el día que cambie el
+	# modelo, sigue encuadrando.
+	var caja := _tamano_de_la_ruina()
+	var alto: float = maxf(caja.size.y, 2.0)
+	var centro_ruina := global_position + Vector3.UP * (caja.position.y + alto * 0.5)
+
+	# La distancia a la que un objeto de este alto llena tres cuartos del plano.
+	# El cuarto que sobra es el aire que hace que se lea como un plano compuesto
+	# y no como una foto de carné.
+	var mitad := deg_to_rad(camara.fov) * 0.5
+	var lejos := (alto * 0.5) / maxf(tan(mitad) * 0.75, 0.05)
+
+	var hacia := (jugador.global_position - global_position)
+	hacia.y = 0.0
+	if hacia.length_squared() < 0.01:
+		hacia = Vector3.BACK
+	hacia = hacia.normalized()
+
+	# Baja, para mirar hacia arriba: el contrapicado es lo que hace que algo se
+	# lea como importante. Pero no a ras de suelo — desde ahí solo se ve el
+	# dintel y se pierde el cristal, que es lo que hay que mirar.
+	var cerca := global_position + hacia * lejos + Vector3.UP * (alto * 0.22)
+	var mirar := centro_ruina
 
 	var desde := camara.global_position
 	var t := create_tween()
@@ -186,6 +209,30 @@ func _abrir_la_lista() -> void:
 		"LA PUERTA ANTIGUA DUERME",
 		"Estaba aquí antes que el parque. Despertará cuando todo esté hecho.",
 		objetivos.resumen())
+
+
+## Lo que ocupa la ruina de verdad, juntando las cajas de todas sus mallas.
+##
+## Se mide en vez de escribirse porque el modelo puede cambiar —ya cambió una
+## vez, del aro de luz a la ruina de piedra— y un encuadre con números a mano se
+## queda mal el día que eso pase, sin que nadie lo note hasta verlo.
+func _tamano_de_la_ruina() -> AABB:
+	var caja := AABB()
+	var primera := true
+	for nodo in find_children("*", "MeshInstance3D", true, false):
+		var m := nodo as MeshInstance3D
+		if m == null or m.mesh == null:
+			continue
+		var suya := m.get_aabb()
+		suya.position += m.global_position - global_position
+		if primera:
+			caja = suya
+			primera = false
+		else:
+			caja = caja.merge(suya)
+	if primera:
+		return AABB(Vector3(-1.5, 0.0, -1.5), Vector3(3.0, 4.0, 3.0))
+	return caja
 
 
 func _process(delta: float) -> void:
