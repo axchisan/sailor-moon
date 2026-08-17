@@ -81,6 +81,7 @@ const PRUEBAS: Array[String] = [
 	# culpa del shader, y lo que quede es fill rate puro.
 	"terreno sin triplanar",
 	"terreno sin luz",
+	"terreno liso pero iluminado",
 	"sin sol",
 	# El `Environment` toma la luz ambiente Y los reflejos del CIELO, y eso es
 	# una muestra del cubemap de radiancia por píxel iluminado, cada una. Son
@@ -208,6 +209,12 @@ func _guardar_estado() -> void:
 		# era que el sustituto costaba más que el sustituido. Para medir «cuánto
 		# cuesta iluminar» el sustituto tiene que costar cero.
 		_LISO.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	if _LISO_ILUMINADO == null:
+		_LISO_ILUMINADO = StandardMaterial3D.new()
+		_LISO_ILUMINADO.albedo_color = Color(0.45, 0.6, 0.38)
+		_LISO_ILUMINADO.diffuse_mode = BaseMaterial3D.DIFFUSE_LAMBERT
+		_LISO_ILUMINADO.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		_LISO_ILUMINADO.roughness = 1.0
 	# El material propio de cada malla del terreno, para poder devolvérselo.
 	var originales := {}
 	for malla in _mallas_de_terreno():
@@ -308,6 +315,11 @@ func _contorno(si: bool) -> void:
 ## se creara por prueba, cada una estrenaría material y pagaría su compilación
 ## dentro de la ventana de medida.
 static var _LISO: StandardMaterial3D = null
+## El mismo, pero recibiendo luz con exactamente el mismo modelo que el shader
+## del terreno (`diffuse_lambert, specular_disabled`). Si se dejara el difuso
+## Burley y el especular GGX que trae `StandardMaterial3D` de fábrica, saldría
+## MÁS caro que el original y la prueba mediría lo contrario de lo que busca.
+static var _LISO_ILUMINADO: StandardMaterial3D = null
 
 ## Las mallas que llevan el shader del terreno con su material propio. Son la
 ## superficie grande y las piezas que la acompañan.
@@ -348,6 +360,17 @@ func _aplicar(prueba: String) -> void:
 			pass
 		"media resolución":
 			vp.scaling_3d_scale = _lupa * 0.5
+		"terreno liso pero iluminado":
+			# LA PRUEBA QUE PARTE EL PELO. «Terreno sin luz» quita a la vez la
+			# iluminación Y toda la matemática del shader, así que su +108 % no
+			# dice cuál de las dos era. Este material está ILUMINADO igual que el
+			# terreno —mismo difuso lambert, mismo sin-especular— pero no hace
+			# absolutamente nada más: ni patrón, ni máscara, ni lejanía.
+			#
+			# Si sale parecido a la referencia, lo caro es iluminar y el shader
+			# es inocente. Si sale parecido a «terreno sin luz», es al revés.
+			for malla in _mallas_de_terreno():
+				malla.material_override = _LISO_ILUMINADO
 		"terreno sin luz":
 			# El terreno con los mismos píxeles y CERO iluminación. Lo que suba
 			# aquí es lo que cuesta iluminar el suelo.
@@ -511,4 +534,8 @@ func _informe() -> void:
 	lineas.append("Cada prueba se compara con la referencia medida JUSTO ANTES Y DESPUÉS de ella.")
 	lineas.append("Lo que más suba es lo que más costaba. La lupa multiplica el coste por PÍXEL,")
 	lineas.append("no el de CPU ni el de llamadas de dibujado: leer la tabla sabiéndolo.")
-	print("\n".join(lineas))
+	# UNA LLAMADA POR LÍNEA, no un `print` con saltos dentro. `adb logcat`
+	# corta los mensajes largos por la mitad y la tabla llegaba mocha: se
+	# perdían justo las últimas filas, que son las que más se miran.
+	for linea in lineas:
+		print(linea)

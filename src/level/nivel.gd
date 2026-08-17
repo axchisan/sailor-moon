@@ -203,6 +203,23 @@ func _ready() -> void:
 		_jugador.global_position = _constructor.punto_inicio
 		_ultimo_suelo = _constructor.punto_inicio
 
+	# LA LUZ AMBIENTE, ANTES QUE NADA.
+	#
+	# El shader de las superficies lleva `ambient_light_disabled`: se lo calcula
+	# él, y así se ahorra las dos muestras de cubemap que el motor hacía por
+	# píxel para el ambiente y el reflejo del cielo. En el móvil eso es la
+	# diferencia entre ir a 26 fps o ir a 60 — ver la cabecera de
+	# `terreno.gdshader`, que lleva la tabla medida.
+	#
+	# Pero entonces el número tiene que venir de aquí, y va antes de construir
+	# nada: los materiales se cachean al crearse, y uno creado antes de esta
+	# línea nacería con el ambiente por defecto.
+	var entorno_luz := get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if entorno_luz != null and entorno_luz.environment != null:
+		PaletaTerreno.fijar_ambiente(
+			entorno_luz.environment.ambient_light_color,
+			entorno_luz.environment.ambient_light_energy)
+
 	# El terreno va PRIMERO de todo lo que se genera: los props se posan con un
 	# rayo sobre el suelo, así que el suelo tiene que existir ya.
 	#

@@ -164,7 +164,32 @@ static func _crear(receta: Dictionary, base: Color, mancha: Color,
 	material.set_shader_parameter("grano", receta.get("grano", 0.18))
 	material.set_shader_parameter("vetas", receta.get("vetas", 0.0))
 	material.set_shader_parameter("aspereza", receta.get("aspereza", 0.95))
+	material.set_shader_parameter("ambiente_color", ambiente_color)
+	material.set_shader_parameter("ambiente_energia", ambiente_energia)
 	return material
+
+
+## La luz ambiente que el shader tiene que ponerse él solo.
+##
+## El shader del terreno lleva `ambient_light_disabled` —es de lejos el mayor
+## ahorro que se ha encontrado en el móvil, ver su cabecera— así que el motor ya
+## no le da ambiente y se lo tiene que calcular. Estos dos valores son los del
+## `Environment` de la escena, y los pone `nivel.gd` al montar: aquí solo viven
+## para que cualquier material que se cree DESPUÉS nazca ya con ellos.
+##
+## Si no cuadran con los del `Environment`, el suelo se ve de un tono y los
+## personajes de otro, que es un fallo difícil de ver y muy fácil de notar.
+static var ambiente_color := Color(0.62, 0.70, 0.86)
+static var ambiente_energia := 0.35
+
+
+## Pone la luz ambiente en todos los materiales, los de ahora y los de después.
+static func fijar_ambiente(color: Color, energia: float) -> void:
+	ambiente_color = color
+	ambiente_energia = energia
+	for material in _cache.values():
+		(material as ShaderMaterial).set_shader_parameter("ambiente_color", color)
+		(material as ShaderMaterial).set_shader_parameter("ambiente_energia", energia)
 
 
 ## Una variante teñida de una superficie que ya existe, sin tocar la original.

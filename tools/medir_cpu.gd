@@ -153,4 +153,8 @@ func _informe(resultados: Array[Dictionary]) -> void:
 	lineas.append("---------------------------------------------------------------------")
 	lineas.append("Milisegundos por fotograma. 16,6 = 60 fps · 33,3 = 30 fps.")
 	lineas.append("Lo que baje el p99 quita TIRONES; lo que baje el p50 sube la media.")
-	print("\n".join(lineas))
+	# UNA LLAMADA POR LÍNEA, no un `print` con saltos dentro. `adb logcat`
+	# corta los mensajes largos por la mitad y la tabla llegaba mocha: se
+	# perdían justo las últimas filas, que son las que más se miran.
+	for linea in lineas:
+		print(linea)

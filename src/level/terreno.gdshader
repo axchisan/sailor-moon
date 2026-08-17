@@ -1,5 +1,41 @@
 shader_type spatial;
-render_mode diffuse_lambert, specular_disabled, cull_back;
+render_mode diffuse_lambert, specular_disabled, cull_back, ambient_light_disabled;
+
+// POR QUÉ `ambient_light_disabled`, Y POR QUÉ ES EL CAMBIO MÁS IMPORTANTE DE ESTE
+// ARCHIVO
+//
+// Medido en el móvil (Adreno 619), con la vista congelada y la referencia
+// intercalada entre pruebas para descontar la deriva térmica:
+//
+//     media resolución     +112 %   (topa con el vsync, o sea ≥)
+//     SIN TERRENO          +112 %   (topa)
+//     terreno sin luz      +112 %   (topa)
+//     sin nada en 3D       +113 %   (topa)
+//     terreno sin triplanar  +4 %
+//
+// Léase la segunda fila otra vez: **quitar el terreno rinde lo mismo que quitar
+// el mundo entero.** El terreno ES el fotograma. Y la tercera dice que no es su
+// geometría ni sus píxeles: dejándolo donde está, con los mismos triángulos y
+// tapando los mismos píxeles, pero SIN ILUMINAR, el juego se planta en el techo
+// de los 60. Lo caro es iluminarlo.
+//
+// Ahora bien, apagar cosas de la iluminación una a una daba poco: el reflejo del
+// cielo un 14 %, el ambiente un 8 %, las sombras un 9 %, el sol un 17 %. Nada de
+// eso suma 112. Lo que pasa es que en una GPU de móvil el número de muestras de
+// textura y de registros que gasta un shader decide cuántas ondas caben a la vez
+// en la unidad; por debajo de cierto umbral entran el doble y la latencia se
+// esconde sola. No es una suma, es un escalón.
+//
+// El ambiente y el reflejo tomados del cielo son **dos muestras de cubemap por
+// píxel**, y son las más caras de la lista. `ambient_light_disabled` las quita
+// las dos, y lo que aportaban se devuelve gratis: la luz ambiente es
+// exactamente el color por la energía, sumado sin depender de nada, así que se
+// calcula aquí abajo con una multiplicación.
+//
+// Y lo que NO se pierde: el sol sigue iluminando y el terreno sigue RECIBIENDO
+// SOMBRAS. La sombra de Serena sobre el camino y las de los cerezos sobre la
+// hierba siguen ahí, que es justo lo que se habría perdido dejando el terreno
+// sin iluminar del todo.
 
 // Superficies del escenario con aspecto dibujado: hierba, tierra, piedra,
 // madera, agua. Un solo shader para todas.
@@ -61,6 +97,12 @@ uniform float grano : hint_range(0.0, 1.0) = 0.18;
 // Rayado en una dirección, para vetas de madera o surcos de tierra.
 uniform float vetas : hint_range(0.0, 1.0) = 0.0;
 uniform float aspereza : hint_range(0.0, 1.0) = 0.95;
+
+// La luz ambiente, a mano. Sustituye a la que el motor sacaba del cielo (ver la
+// cabecera). Tienen que valer lo mismo que el `Environment` de la escena, o el
+// suelo se ve de otro tono que los personajes: lo sincroniza `nivel.gd`.
+uniform vec3 ambiente_color : source_color = vec3(0.62, 0.70, 0.86);
+uniform float ambiente_energia : hint_range(0.0, 2.0) = 0.35;
 
 // Perspectiva aérea: lo lejano se destiñe hacia el color del aire y tira a azul.
 //
@@ -233,6 +275,12 @@ void fragment() {
 	}
 
 	ALBEDO = color;
+	// El ambiente que el motor ya no aporta. Es la misma cuenta que hacía él
+	// —color de la superficie por color del ambiente por su energía— solo que
+	// sin ir a buscar el cubemap del cielo. Va por `EMISSION` porque tiene que
+	// sumarse SIN depender de la luz: eso es lo que significa «ambiente», y es
+	// lo que hace que la cara en sombra no se vaya a negro.
+	EMISSION = color * ambiente_color * ambiente_energia;
 	ROUGHNESS = aspereza;
 	METALLIC = 0.0;
 }

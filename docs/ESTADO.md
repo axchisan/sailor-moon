@@ -1068,6 +1068,82 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
    medio y tres segundos y medio de hilo principal parado. **Antes de repartir un
    trabajo entre fotogramas, medir de qué está hecho: puede que sobre la mitad.**
 
+119. **El terreno ES el fotograma, y lo caro es que esté iluminado.** Medido en el
+   teléfono con la vista congelada: quitar el terreno rinde exactamente lo mismo
+   que quitar el mundo entero (+108 %, los dos topando con el vsync). Y la fila
+   que lo explica: un material que **no hace nada** pero está ILUMINADO cuesta
+   +22 %, y el mismo material **sin iluminar** cuesta +108 %. O sea que de todo
+   lo que costaba el terreno, su shader era como mucho un quinto y el resto era
+   pasar por la iluminación. Quitarle el triplanar —tres muestras de textura por
+   píxel en media pantalla— da un 4 %. **Antes de optimizar un shader, comprobar
+   si el problema es el shader.**
+120. **En una GPU de móvil no es una suma, es un escalón.** Apagar la luz del sol
+   daba 21 %, las sombras 10 %, el ambiente 8 %, el reflejo del cielo 14 %. Nada
+   de eso suma el 108 % que daba apagarlo todo. El número de muestras de textura
+   y de registros que gasta un shader decide cuántas ondas caben a la vez en la
+   unidad de cálculo; cruzar el umbral entra el doble de trabajo y la latencia se
+   esconde sola. **Recortar poco a poco no llega: hay que cruzar el umbral.**
+121. **En Android el vsync NO se puede quitar.** Se pide y el driver contesta «The
+   requested V-Sync mode Disabled is not available». El techo son 60 fps, así que
+   media tabla de medición sale «59,9» y no dice nada — y peor: dos mejoras
+   distintas dan el MISMO número porque las dos han topado con la pared. Quitar
+   el terreno y quitar el decorado dieron los dos «+47 %». Para medir hay que
+   SUBIR la resolución de render (una «lupa») hasta dejar la referencia sobre 30
+   fps, y así caben mejoras de hasta el doble.
+122. **Un teléfono no rinde igual dos minutos seguidos.** En el mismo sitio y sin
+   tocar nada: 35, 47 y 60 fps. Es el gobernador de frecuencia y el calor, y esa
+   deriva del ±40 % es más grande que casi todo lo que se quiere medir. Se cura
+   **volviendo a medir la referencia entre prueba y prueba** y comparando cada
+   una con la de antes y la de después: la deriva pasó del 39 % al 1 %.
+123. **Lo que se mueve durante la medición no se ve en los fps, se ve en los draw
+   calls.** Una tanda entera salió inservible porque la jugadora se había
+   desplazado once metros a mitad —basta un roce en la pantalla, que está boca
+   arriba sobre la mesa— y cada prueba miraba a otro sitio. Los fps parecían
+   normales; los draw calls saltaban de 52 a 156. **Si los draw calls no salen
+   iguales en todas las filas, la tabla no vale.**
+124. **Un banco de pruebas que muere a mitad envenena al siguiente.** Si se corta
+   la conexión con la última prueba puesta, la escena se queda con el cielo
+   apagado y el terreno con el material de mentira — y la tanda siguiente se
+   apunta ESE estado como el original al arrancar. Salió una captura con el
+   terreno gris y se persiguió como si fuera un cambio nuestro. Todo lo que
+   modifique la escena para medir tiene que deshacerlo en `_exit_tree()`.
+125. **Los recursos de una escena se comparten entre recargas.** El `Environment`
+   es un `SubResource` cacheado: lo que se le toque desde el juego SIGUE TOCADO
+   después de recargar el nivel. Por eso `_avivar_el_cielo()` es peligroso —lee
+   el color actual y le vuelve a aplicar el ajuste— y a la sexta recarga el cielo
+   iba camino de blanco.
+126. **`INV_VIEW_MATRIX` no existe dentro de una función propia del shader.** Los
+   nombres del motor solo están declarados en `vertex()`, `fragment()` y
+   `light()`. Al sacar el triplanar a una función, el shader dejó de compilar y
+   el terreno cayó al material gris por defecto: media hora midiendo con el
+   terreno apagado sin saberlo. El aviso está, perdido entre los del arranque.
+   Es la trampa 38 otra vez: **cuando algo se vea gris o blanco liso, buscar
+   SHADER ERROR antes que un problema de luz.**
+127. **Bajar la resolución de render NO afecta a la interfaz.** La trampa 63 decía
+   que el texto se volvía ilegible, y es falso: `scaling_3d_scale` escala solo el
+   búfer 3D y el 2D se dibuja después a resolución nativa. Comprobado a 0,6 en el
+   teléfono, el HUD sale idéntico. Lo que sí se emborrona es el 3D, y esa —la
+   decisión de aspecto— es la razón buena para no usarlo. **Un «no se puede»
+   apuntado sin comprobar acaba tapando la palanca más fuerte que hay.**
+128. **El MCP de Godot solo habla con el proceso que ha lanzado él**, así que
+   contra el juego del teléfono contesta «No active Godot process». El juego lleva
+   su propio servidor en el 9090 y `adb forward` lo trae hasta aquí; lo que
+   faltaba era un cliente que hablara ese protocolo sin preguntar quién arrancó
+   el juego (`tools/hablar_con_el_juego.py`). **Y un Godot local y el puente no
+   caben a la vez**: los dos quieren el 9090, y si el local no consigue escuchar,
+   las órdenes siguen funcionando pero van al TELÉFONO. La pista fue que la
+   captura salía a 1610x720.
+129. **`adb logcat` corta los mensajes largos.** Una tabla impresa con un solo
+   `print()` de veinte líneas llegaba mocha, y lo que se perdía eran justo las
+   últimas filas. Una llamada por línea.
+130. **«Esperar a la física» eran cinco segundos, y no era física.** El
+   `await get_tree().physics_frame` del montaje espera un fotograma COMPLETO, y
+   ese fotograma es el primero que dibuja el nivel recién creado con la caché de
+   shaders vacía: 5.077 ms la primera vez tras instalar, 111 ms la segunda. El
+   arranque del juego es 18,6 s en frío y 1,9 s en caliente — o sea que **casi
+   todo lo que se percibe como lentitud al arrancar es coste de ESTRENAR**, no
+   trabajo del juego.
+
 ## 7. Decisiones tomadas y por qué
 
 | Decisión | Motivo |
@@ -1178,13 +1254,18 @@ porque toca el nivel entero: hacerlo con cinco escenarios es hacerlo cinco veces
 - **El fondo lavado**: había dos velos atmosféricos superpuestos, y el tonemap
   era el de una cámara de fotos
 - **El móvil se veía peor a propósito** por un recorte mal calibrado
-- **Se puede medir en el teléfono desde el Mac**: `tools/probar_en_movil.sh`
-- **Se estaba probando la compilación de depuración.** Ahora hay preset final
-- **Se sabe en qué se van los 322 ms del arranque**: 90 % en dos sitios
+- **Se mide EN EL TELÉFONO desde el Mac**: `tools/probar_en_movil.sh` abre el
+  puente y `tools/hablar_con_el_juego.py` manda órdenes al juego que corre allí
+- **El diagnóstico, con números**: el terreno es prácticamente el fotograma
+  entero, y lo caro es que esté iluminado — no su shader, no su geometría
+- **+25 % ganado**: el sitio de arranque pasó de 35-44 fps a **57,7 jugando**,
+  quitándole al shader las dos muestras de cubemap que hacía por píxel
+- **El arranque, entendido**: 18,6 s en frío y 1,9 s en caliente. Casi todo es
+  coste de estrenar (recursos y shaders), no trabajo del juego
 
-**Lo siguiente, y necesita el teléfono conectado:** medir final contra
-depuración, pasar los dos bancos en el móvil, y decidir con esos números si el
-cuello son los píxeles o la CPU.
+**Lo siguiente:** sacar el terreno del camino iluminado, que vale otro +108 %
+medido. Hay que resolver antes las sombras — la idea es hornear las de los
+árboles en la máscara del terreno, que ya existe y ya se lee.
 
 ### 2. El mapa de escenarios
 Cómo se encadenan los niveles, qué se lleva la jugadora de uno a otro y dónde se
