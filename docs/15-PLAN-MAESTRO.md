@@ -1,9 +1,10 @@
 # Plan maestro — de prototipo a juego
 
-> El Nivel 1 se recorre entero y tiene lore, coleccionables y conversación. Lo
-> que falta ya no es «más nivel»: es que el mundo **se comporte como un mundo**
-> y que el juego **empiece contando algo**. Este documento ordena todo lo que
-> queda para no ir dando bandazos.
+> **Las ocho fases están cerradas salvo dos rabos: la tercera pasada de
+> rendimiento (D) y el resto de la historia (H).** El Nivel 1 se juega de cabo a
+> rabo, con menú, guardado, vidas, jefe, sonido y música. Este documento sigue
+> valiendo como registro de por qué se hizo cada cosa en ese orden — y el orden
+> se repite tal cual para el segundo escenario.
 >
 > Estado y trampas técnicas: [`ESTADO.md`](ESTADO.md).
 > Historia y personajes: [`16-GUION.md`](16-GUION.md).
@@ -20,18 +21,20 @@ por lo que desbloquea a lo demás.
 | **B** | Texturas reciclables | ✅ | Todo lo que se construya después las usará. Hacerlo tarde obliga a repintar |
 | **C** | Mundo abierto, límites naturales | ✅ | Necesita las texturas de B para que los taludes y las rocas se lean |
 | **C bis** | Objetivos, portal y rincones | ✅ | El nivel necesitaba un cierre y sitios a los que ir |
-| **C ter** | Que el nivel EXPLIQUE lo que pide | ⬜ | El nivel tiene objetivos pero no los dice en ninguna parte |
-| **D** | Rendimiento | ✅ dos pasadas | Se mide cuando el escenario ya tiene su carga real, no antes |
+| **C ter** | Que el nivel EXPLIQUE lo que pide | ✅ | Avisos, cinemática del portal, panel de objetivos y el jefe guardián |
+| **D** | Rendimiento | 🟡 dos pasadas, falta la tercera | Se mide cuando el escenario ya tiene su carga real, no antes |
 | **E** | Movimiento y combate | ✅ | Salto, doble salto, trepar cornisas y el Cofrecito rodeable |
-| **F** | Conversación viva | ⬜ | Depende de E (librería de animaciones montada) |
-| **G** | Marco: menú, guardado, vidas | ⬜ | Necesita que el juego ya sea agradable de jugar |
-| **H** | Historia y cinemática | ⬜ | Lo último que se monta, lo primero que se ve |
+| **F** | Conversación viva | ✅ | Retratos en vivo, turnos y la transformación en tres tiempos |
+| **G** | Marco: menú, guardado, vidas | ✅ | Menús, tres partidas, corazones y puntos de guardado |
+| **H** | Historia y cinemática | 🟡 apertura montada | Lo último que se monta, lo primero que se ve |
 
-> **Dónde estamos:** el escenario y el movimiento están hechos. Lo siguiente es
-> la **Fase F** —que la conversación deje de ser texto y gestos sueltos— y la
-> **C ter**, que el nivel explique lo que pide.
+> **Dónde estamos:** el Nivel 1 está terminado. Quedan dos cosas de este plan —
+> la **tercera pasada de rendimiento** ([`26-OPTIMIZACION.md`](26-OPTIMIZACION.md),
+> encargada a otro agente) y **el resto de la Fase H**: las escenas entre niveles
+> y el final.
 >
-> Nada bloquea: las 25 animaciones están en la librería compartida.
+> Y una que no estaba en el plan y ahora es lo que bloquea: **el mapa de
+> escenarios**. El portal se abre pero no lleva a ninguna parte.
 
 **Lo que puede ir en paralelo, y depende de ti:** el arte de la cinemática (H).
 No me bloquea a mí y te bloquea a ti si se deja para el final.

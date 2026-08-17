@@ -600,9 +600,23 @@ func _on_hit_landed(_hurtbox: Hurtbox) -> void:
 
 ## Reaparición sin castigo: misma arena, salud llena. Nunca se pierde progreso.
 func respawn() -> void:
-	var point := GameManager.last_checkpoint
-	if point != Vector3.ZERO:
-		global_position = point
+	# DÓNDE SE REAPARECE LO DECIDE EL NIVEL, NO ESTO.
+	#
+	# Aquí se iba derecho al último punto de guardado, y ese está FUERA de las
+	# arenas. Marearse peleando con el guardián dejaba la partida sin salida: se
+	# reaparecía fuera, con la barrera puesta y sin forma de volver a entrar.
+	#
+	# El nivel sabe si hay un combate en marcha y devuelve dentro de él; esto
+	# solo sabe de checkpoints. Se arregló una vez en `Nivel.rescatar()` y siguió
+	# fallando porque **este camino no pasaba por ahí**: caerse por un borde y
+	# marearse en una pelea acababan en sitios distintos por dos rutas distintas.
+	var nivel := get_tree().current_scene
+	if nivel != null and nivel.has_method("donde_reaparecer"):
+		global_position = nivel.call("donde_reaparecer")
+	else:
+		var point := GameManager.last_checkpoint
+		if point != Vector3.ZERO:
+			global_position = point
 	velocity = Vector3.ZERO
 	invuln_timer = invulnerability_time
 	GameManager.reset_health()

@@ -218,13 +218,29 @@ terreno y el cálculo de por dónde cruza el puente.
 | 28 evaluaciones de ruido por píxel de terreno | Patrón horneado a una textura de 3 canales (`tools/generar_textura_ruido.gd`) |
 | No había forma de saber qué costaba | Banco de pruebas: **F8**, o un toque en la esquina superior **derecha** en el móvil |
 
-### En curso
+### Hecho en los bloques de cierre
+
+| Qué | Cómo quedó |
+|---|---|
+| El jefe guardián | Modelo, esqueleto de 19 huesos, once animaciones, cinco ataques, tres fases y aguante. Sale del portal al **volver al claro** con todo hecho |
+| Sonido | Efectos de grabación real, voz propia por bicho y ambiente con posición en el mundo |
+| Música | Banda sonora completa con director de capas por prioridad |
+| Menús y guardado | Menú, tres partidas, ajustes, créditos, pausa y pantalla de carga |
+| Vidas | Corazones que sueltan los enemigos y puntos de guardado antes de cada arena |
+| Trepar | Ocho repechos con premio arriba, **solo donde de verdad hay hueco** |
+| Objetivos | Seleccionables: tocar uno pone una flecha que lo señala |
+| La apertura | Cinco viñetas dibujadas por código, saltables, una vez por partida |
+| Los cuatro fallos de móvil | Pausa detrás del panel, reaparecer en la arena equivocada, cargar sin pantalla y el jefe saliendo donde no tocaba |
+| Golpear a través de la barrera | `Hitbox` tira un rayo contra el escenario: al jefe ya no se le remata desde fuera del anillo |
+
+### Lo que queda
+
 | Qué | Por qué |
 |---|---|
-| **Medir el rendimiento en el móvil** | Es lo único que falta para cerrar esto. Con F8 se recorren las ocho pruebas sin exportar otro APK |
+| **Rendimiento, tercera pasada** | Encargado a otro agente. Todo en [`26-OPTIMIZACION.md`](26-OPTIMIZACION.md) |
+| **Mapa de escenarios** | El portal abre, pero no lleva a ninguna parte todavía |
 | **Rematar los cantos de los setos** | Los muros siguen siendo cajas con las esquinas y los extremos a la vista |
-| **El estanque y el puente, tapados** | Al agrandar la pradera de arranque se movió el centro del parque, y el estanque se sitúa por rumbo y distancia desde ese centro |
-| **Mapa de escenarios** | El portal ya abre, pero no lleva a ninguna parte todavía |
+| Pasos de tierra y agarrarse a una cornisa | Los dos sonidos que faltan |
 
 ### Del plan maestro
 | Fase | Estado |
@@ -233,33 +249,11 @@ terreno y el cálculo de por dónde cruza el puente.
 | B — Texturas reciclables | ✅ |
 | C — Mundo abierto | ✅ |
 | C bis — Objetivos y portal | ✅ (falta el mapa de escenarios) |
-| D — Rendimiento | ⬜ los tirones de partículas ya están |
-| E — Salto, doble salto, trepar | ⬜ **esperando animaciones de Mixamo** |
-| E — Cofrecito | ⬜ |
-| F — Conversación viva | ⬜ |
-| G — Menú, guardado, vidas | ⬜ |
-| H — Historia y cinemática | ⬜ guion escrito, sin montar |
+| C ter — Que el nivel explique lo que pide | ✅ |
+| D — Rendimiento | 🟡 dos pasadas; falta la tercera |
+| E — Salto, doble salto, trepar, Cofrecito | ✅ |
+| F — Conversación viva | ✅ salvo la voz de Mercury |
+| G — Menú, guardado, vidas | ✅ |
+| H — Historia y cinemática | 🟡 apertura montada; faltan las escenas entre niveles y el final |
 
-### Bloqueado por ti
-- **Animaciones de Mixamo** ([`17-ANIMACIONES.md`](17-ANIMACIONES.md)): subir
-  `Models/rigged_originales/serena_rigged.fbx`, sin riguear. Desbloquea la Fase E
-- **Arte de la cinemática** ([`16-GUION.md`](16-GUION.md)): cinco viñetas
-
-## Cómo probarlo
-
-```bash
-# Validar que todo compila
-./tools/validar_scripts.sh
-
-# Exportar (se hace al cerrar cada bloque)
-/Applications/Godot.app/Contents/MacOS/Godot --headless --path . \
-  --export-debug "Android" export/sailor_moon.apk
-
-# Instalar
-/opt/homebrew/share/android-commandlinetools/platform-tools/adb \
-  install -r export/sailor_moon.apk
-```
-
-Al cargar, la consola dice si el terreno invade la zona jugable, cuántos props
-se sembraron y en cuántas draw calls. Si algo de eso cambia de golpe, algo se ha
-roto.
+**El Nivel 1 está terminado y jugable de cabo a rabo.**

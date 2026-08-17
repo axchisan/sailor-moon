@@ -4,8 +4,11 @@
 > retoma tras un tiempo, lee esto primero y luego el documento específico que
 > necesites.
 >
-> **Última actualización:** 2026-08-14 · Menús, banda sonora y objetivos
-> seleccionables. Antes: el jefe guardián entero y toda la capa de sonido
+> **Última actualización:** 2026-08-17 · **Nivel 1 terminado.** El vertical
+> slice está jugable de principio a fin: apertura, exploración, tres arenas,
+> jefe y portal. Lo siguiente son dos cosas en paralelo — **rendimiento**
+> ([`26-OPTIMIZACION.md`](26-OPTIMIZACION.md), encargado a otro agente) y
+> **seguir la historia** con el segundo escenario.
 
 ---
 
@@ -28,14 +31,24 @@ DTO, signals ≈ event bus).
 
 ## 2. En qué punto estamos
 
+**El Nivel 1 está terminado y es jugable de cabo a rabo.** Se empieza en el menú,
+se elige partida, se ve la apertura, se explora el parque, se pelean tres arenas,
+se encuentra al guardián, se le gana y se abre el portal. Todo con música,
+sonido, guardado y vidas.
+
+Eso significa que **el vertical slice ha cumplido su función**: ya no hay dudas
+de si el juego se puede hacer. Lo que queda es cantidad —más escenarios, más
+personajes, más historia— y una tanda de rendimiento.
+
 | Fase | Estado |
 |---|---|
 | **Fase 0 — Cimientos** | ✅ Cerrada. APK corriendo en el móvil real |
 | **Fase 1 — Combate** | ✅ Cerrada. Peluchín, Cofrecito y Hadita terminados |
-| **Fase 2 — Vertical slice (Nivel 1)** | 🟡 **En curso.** Escenario, combate, jefe, menús, sonido y música ✅. Faltan el sistema de vidas, dar vida al parque y montar la historia |
-| Fases 3–5 | ⬜ Sin empezar |
+| **Fase 2 — Vertical slice (Nivel 1)** | ✅ **Cerrada.** Jugable entero |
+| **Fase 3 — Los demás escenarios** | ⬜ **Lo siguiente.** Solo existe uno de los cinco |
+| Fases 4–5 | ⬜ Sin empezar |
 
-El trabajo se organiza por el **plan maestro**
+El detalle va por el **plan maestro**
 ([`15-PLAN-MAESTRO.md`](15-PLAN-MAESTRO.md)), en fases A–H:
 
 | Fase | Qué | Estado |
@@ -44,108 +57,111 @@ El trabajo se organiza por el **plan maestro**
 | **B** | Texturas reciclables | ✅ |
 | **C** | Mundo abierto, límites naturales | ✅ |
 | **C bis** | Objetivos, portal y rincones | ✅ (falta el mapa de escenarios) |
-| **C ter** | Que el nivel EXPLIQUE lo que pide | ✅ **cerrada.** Avisos, cinemática, panel de objetivos y jefe guardián |
-| **D** | Rendimiento | ✅ dos pasadas. 60 fps en el móvil |
-| **E** | Movimiento y combate | ✅ **cerrada.** Salto en tres partes, doble salto, trepar cornisas y el Cofrecito rodeable |
-| **F** | Conversación viva | ✅ **cerrada** salvo F5 (audio de Mercury, depende de ti) |
-| **G** | Menú, guardado, vidas | ✅ **cerrada.** Menús, tres partidas guardadas, corazones y puntos de guardado |
+| **C ter** | Que el nivel EXPLIQUE lo que pide | ✅ |
+| **D** | Rendimiento | 🟡 dos pasadas hechas, **hace falta una tercera** |
+| **E** | Movimiento y combate | ✅ |
+| **F** | Conversación viva | ✅ salvo F5 (voz de Mercury, depende de ti) |
+| **G** | Menú, guardado, vidas | ✅ |
 | **H** | Historia y cinemática | 🟡 **Apertura montada.** Faltan las escenas entre niveles y el final |
 
 ### Lo que funciona hoy
 
-**Combate** (prototipo en `scenes/prototypes/test_combat.tscn`):
+**Menús y partidas** ([`23-MENUS.md`](23-MENUS.md))
+
+- Menú principal con fondo animado dibujado por código, tres partidas guardadas
+  con resumen, ajustes que hacen algo, créditos y pausa
+- Pantalla de carga con barra que no miente, que se quita cuando el nivel
+  **termina de montarse**, no cuando el archivo acaba de cargar
+
+**Combate** (prototipo en `scenes/prototypes/test_combat.tscn`)
 
 - Movimiento 3D con cámara orbital, *coyote time* y *jump buffer*
+- Salto en tres partes, doble salto y trepar cornisas
 - Combo de 3 golpes encadenable, auto-orientación al enemigo más cercano
 - Especial con barra de carga, zoom, invulnerabilidad y área amplia
 - `CombatFeel`: hit stop, screen shake, partículas, flash y SFX
 - Tres enemigos con FSM propia; el Cofrecito con escudo frontal de 130°
 - **Máximo 4 enemigos atacando a la vez** (fichas de `CombatDirector`)
-- HUD por EventBus y controles táctiles
+- Los golpes **no atraviesan paredes** (rayo de línea de visión en `Hitbox`)
 
-**Nivel 1 — el Parque de los Cerezos** (`scenes/levels/nivel_1_parque.tscn`,
-detalle en [`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md)):
+**El jefe guardián** ([`20-JEFE-GUARDIAN.md`](20-JEFE-GUARDIAN.md))
 
-- Recorrido completo generado por código: placita de arranque → pasillo →
-  arena → cruce de dos ramas → arena → cuesta → guardián → paseo de vuelta →
-  claro del portal
+- Modelo propio, esqueleto de 19 huesos y once animaciones
+- Cinco ataques con respuesta distinta, tres fases, aguante contra el
+  encadenado y barra de vida propia
+- Sale del portal cuando la jugadora **vuelve al claro** con todo hecho
+
+**Nivel 1 — el Parque de los Cerezos**
+([`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md))
+
+- Recorrido completo generado por código: placita → pasillo → arena → cruce →
+  arena → cuesta → guardián → paseo de vuelta → claro del portal
 - **Terreno por ruido** con llano, lomas y cordillera, y perspectiva aérea
-- **Estanque con agua animada**, vaso cavado en el terreno y pasarela de 14 m
-- **Nueve rincones compuestos**: kiosco de dulces, zona de juegos, plaza de la
-  fuente, merendero, altar del gato, vivero y tres rincones de paso. Con suelo
-  empedrado y senderos de losas que los unen al camino
-- ~2.000 props en multimalla, con reparto de sitio: nada se planta encima de
-  otra cosa ni dentro de un muro
-- 6 objetivos que abren el portal, 7 Estrellas, 3 faroles, 4 rincones baliza
-- Luna acompaña, con animación y cola por física. Mariposas y pajarillos
-- Plano aéreo de apertura, saltable
+- **Estanque con agua animada** y pasarela de 14 m
+- **Nueve rincones compuestos** + **ocho repechos trepables** con premio arriba
+- ~1.860 props en multimalla, con reparto de sitio
+- 6 objetivos que abren el portal, 7 Estrellas, 6 faroles, 4 rincones baliza
+- Objetivos **seleccionables**: tocar uno pone una flecha que lo señala
+- Luna acompaña, con animación y cola por física
+
+**Vidas** ([`25-VIDAS.md`](25-VIDAS.md)) — corazones que sueltan los enemigos y
+puntos de guardado antes de cada arena. Sin game over.
+
+**Sonido y música** ([`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md),
+[`24-BANDA-SONORA.md`](24-BANDA-SONORA.md)) — efectos de grabación real, voz
+propia por bicho, ambiente con posición en el mundo y banda sonora completa con
+director de capas por prioridad.
+
+**Historia** ([`16-GUION.md`](16-GUION.md)) — apertura de cinco viñetas
+dibujadas por código, saltable, una vez por partida.
 
 ### Lo siguiente, en orden
 
-1. **C ter 4 — el jefe guardián del portal.** Con la lista completa el portal no
-   se abre sin más: aparece un jefe y se abre al ganarle. Es lo más gordo que
-   queda del nivel y lo que le da cierre
-2. **Pulir el encuadre de la cinemática del portal** — funciona, pero el plano
-   no siempre deja la ruina centrada (`_presentar()` en `portal_salida.gd`)
-3. **Salientes para trepar** — la mecánica está, pero el parque tiene una sola
-   plataforma y queda baja. Trepar abre el diseño de nivel solo si hay a dónde
-   subir y algo arriba que lo merezca
-4. **Fase G** — menú, guardado, corazones de vida escondidos
-5. **Fase H** — cinemática de historieta y narrador
-6. **Mapa de escenarios** — el portal ya se abre pero no lleva a ninguna parte
+**1. Rendimiento** — encargado a otro agente. Todo el encargo está en
+[`26-OPTIMIZACION.md`](26-OPTIMIZACION.md): lo que ya se hizo, cómo se mide, por
+dónde seguir y lo que no se puede tocar. **Va primero** porque toca el nivel
+entero, y hacerlo después de tener cinco escenarios es hacerlo cinco veces.
 
-### Lo que se hizo en la sesión del 10-11 de agosto
+**2. El mapa de escenarios (C bis)** — el portal ya se abre pero no lleva a
+ninguna parte. Antes de construir el segundo nivel hay que decidir cómo se
+encadenan, qué se lleva la jugadora de uno a otro y dónde se guarda.
 
-**Rendimiento** — se descubrió que el cuello no era la geometría sino el coste
-por píxel. El cielo hacía 32 `sin()` por píxel (la trampa 52 sin corregir ahí) y
-el terreno 28 evaluaciones de ruido. Con eso arreglado, el móvil pasó de 25-41
-fps a 60. Los recortes van **solo en Android** y limitan en vez de eliminar.
+**3. El segundo escenario** — con la historia
+([`16-GUION.md`](16-GUION.md)) y el reparto ([`12-REPARTO.md`](12-REPARTO.md))
+ya escritos y once personajes procesados. Lo que hay hecho del Nivel 1 es
+reutilizable casi entero: el generador de terreno, el decorador, las arenas, los
+objetivos y el portal son genéricos.
 
-**Geometría** — el blockout dejó de dibujarse: el terreno sube hasta la cara de
-arriba de las losas y el camino se pinta con una máscara. Después hubo una tanda
-larga de arreglos de todo lo que se apoyaba en el blockout (muros flotando,
-props en el aire, colisiones invisibles), con `tools/auditar_nivel.gd` como red.
+**4. Fase H — el resto de la historia** — las escenas entre niveles y el final.
+El sistema de viñetas ya está montado y probado; falta escribir las escenas.
 
-**Fase E entera** — salto en tres partes con aterrizaje, doble salto, trepar
-cornisas y el Cofrecito rodeable.
-
-**Fase F casi entera** — retratos en vivo que siguen al que habla, bucle de
-conversación por turnos, transiciones suaves y la transformación en tres tiempos.
-
-**C ter empezada** — las puertas dicen qué falta y el portal se presenta.
-
-### Lo que falta, a 14 de agosto de 2026
-
-Ordenado por lo que más cambia el juego. Lo de arriba es lo que se nota jugando;
-lo de abajo, remates.
+### Lo que falta, a 17 de agosto de 2026
 
 | Qué | Dónde | Quién |
 |---|---|---|
-| ~~El sistema de vidas~~ | ✅ Corazones que sueltan los enemigos y puntos de guardado antes de cada arena. Ver [`25-VIDAS.md`](25-VIDAS.md) | — |
-| ~~Dar vida al parque~~ | ✅ Nueve repechos trepables con premio arriba y senderillos. Queda poblar más las explanadas y los suelos de otra piedra | — |
-| ~~Fase H — la apertura~~ | ✅ Cinco viñetas montadas y funcionando. Faltan las escenas entre niveles y el final | — |
-| Sonido que falta | Pasos de tierra (hace falta saber qué se pisa) y agarrarse a una cornisa. Lo demás ✅ | yo |
-| ~~Encuadre de la cinemática~~ | ✅ Se calcula del tamaño real de la ruina: ocupa el 75% del plano | — |
-| ~~Dos rincones que no caben~~ | ✅ Los nueve entran. La búsqueda solo iba hacia el centro, donde está todo lleno | — |
-| ~~El APK pesa 141 MB~~ | ✅ **91 MB.** Eran 16 copias idénticas de la textura de Serena, una por cada `.fbx` de Mixamo | — |
-| Mapa de escenarios (C bis) | Cómo se encadenan los niveles | yo |
+| **Rendimiento** | [`26-OPTIMIZACION.md`](26-OPTIMIZACION.md) | otro agente |
+| **Mapa de escenarios** | Cómo se encadenan los niveles | yo |
+| **El segundo escenario** | [`16-GUION.md`](16-GUION.md), [`07-ESCENARIOS.md`](07-ESCENARIOS.md) | yo |
+| Sonido que falta | Pasos de tierra y agarrarse a una cornisa | yo |
 | **Regrabar la victoria** | La grabación salió muda. Prompt en [`24-BANDA-SONORA.md`](24-BANDA-SONORA.md) | tú |
 | **Tema del título** | El único de los cuatro prompts sin generar | tú |
-| **Voz de Mercury (F5)** | fish.audio; los textos están en [`14-VOCES.md`](14-VOCES.md) | tú |
+| **Voz de Mercury (F5)** | fish.audio; textos en [`14-VOCES.md`](14-VOCES.md) | tú |
+| Las cinco ilustraciones de la apertura | Ahora están dibujadas por código; se pueden sustituir por imágenes | tú |
 
 ### Lo que se cerró en agosto de 2026
 
-Todo esto estaba en la lista de pendientes y ya está hecho y probado:
-
-- **El jefe guardián**: modelo, esqueleto, once animaciones, cinco ataques con
-  respuesta distinta cada uno, tres fases, aguante y barra de vida.
-- **Los menús enteros**: principal con fondo animado, tres partidas guardadas,
-  ajustes que hacen algo, créditos y pausa.
-- **El panel de objetivos**, y encima seleccionables: tocar uno pone una flecha
-  que lo señala.
-- **Sonido**: efectos de grabación real, voz propia por bicho, ambiente con
-  posición en el mundo, y **banda sonora completa** con director de capas.
-- **La transformación** con pieza propia, ya no prestada del ataque especial.
+- **El jefe guardián**: modelo, esqueleto, once animaciones, cinco ataques,
+  tres fases, aguante y barra de vida
+- **Los menús enteros** y las tres partidas guardadas
+- **El sistema de vidas**: corazones y puntos de guardado
+- **Sonido y banda sonora completos**, con director de capas
+- **El panel de objetivos**, seleccionables con flecha guía
+- **Ocho repechos trepables** y las explanadas pobladas
+- **La apertura**: cinco viñetas dibujadas por código
+- **APK de 141 a 91 MB** — eran dieciséis copias del mismo dibujo
+- **Cuatro fallos de móvil**: pausa detrás del panel, reaparecer en la arena
+  equivocada, cargar sin pantalla y el jefe apareciendo donde no tocaba
+- **Golpear a través de la barrera** — el jefe se remataba desde fuera
 
 ## 3. Índice de documentación
 
@@ -177,13 +193,14 @@ Todo esto estaba en la lista de pendientes y ya está hecho y probado:
 | [`21-SONIDO-Y-MUSICA.md`](21-SONIDO-Y-MUSICA.md) | ⭐ El plan de sonido y música: de dónde sale, qué suena en cada momento y en qué orden |
 | [`20-JEFE-GUARDIAN.md`](20-JEFE-GUARDIAN.md) | El jefe del Acto 1: concepto, prompt de imagen y qué hace falta |
 | [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md) | ⭐ Fallos de montaje del escenario, cómo se arreglaron, y **las zonas vacías y los salientes que faltan** |
+| [`26-OPTIMIZACION.md`](26-OPTIMIZACION.md) | ⭐ **El encargo de rendimiento:** qué se hizo, cómo se mide, por dónde seguir y qué no tocar |
 | [`CREDITOS.md`](CREDITOS.md) | Atribuciones de assets |
 
 ---
 
 ## 4. Mapa del código
 
-65 scripts, 17 escenas. Lo que hay que conocer:
+73 scripts, 19 escenas. Lo que hay que conocer:
 
 ```
 src/autoload/          Los "servicios". Orden en project.godot IMPORTA
@@ -195,6 +212,9 @@ src/autoload/          Los "servicios". Orden en project.godot IMPORTA
   settings.gd            Volúmenes, idioma, assisted_mode
   combat_feel.gd         ⭐ TODO el jugo del combate en un solo sitio
   combat_director.gd     ⭐ Fichas de ataque (máx. 4 atacando)
+  partidas.gd            Las tres ranuras de guardado (autoload PartidasGuardadas)
+  musica.gd              ⭐ Pila de capas por prioridad: quién manda ahora mismo
+  dialogos.gd            Las conversaciones, y quién las ha visto ya
 
 src/core/
   state.gd, state_machine.gd   FSM genérica (jugador y enemigos)
@@ -215,6 +235,9 @@ src/level/             ⭐ TODO el escenario se genera por código
   agua.gdshader          Ondas, espuma de orilla y destellos
   camara_apertura.gd     El plano aéreo del arranque
   arena.gd               Oleadas y barrera mágica
+  repechos.gd            Los ocho salientes trepables y su premio
+
+src/enemies/guardian_portal.gd   ⭐ El jefe: repertorio de 5 ataques, 3 fases
 
 src/gameplay/          Lo que se hace en el nivel
   objetivos_nivel.gd     Los 6 objetivos que abren el portal
@@ -222,8 +245,18 @@ src/gameplay/          Lo que se hace en el nivel
   encuentro.gd           Personajes con los que se habla
   companero.gd           Luna, que sigue a Serena
   bichos.gd              Mariposas y pajarillos en multimalla
+  corazon.gd             Vida que sueltan los enemigos
+  punto_guardado.gd      Cristal que cura y guarda antes de cada arena
+  guia_objetivo.gd       La flecha que señala el objetivo elegido
 
-src/ui/                hud.gd, touch_controls.gd, debug_overlay.gd
+src/ui/                La interfaz entera
+  estilo.gd              ⭐ El sistema de diseño: colores, tipos y cajas. Empieza aquí
+  menu_principal.gd, pantalla_partidas.gd, pantalla_ajustes.gd
+  pantalla_creditos.gd, pantalla_pausa.gd, pantalla_carga.gd
+  fondo_menu.gd          El fondo del menú, dibujado por código
+  apertura.gd, cinematica.gd, dibujo_vineta.gd   Las viñetas de la historia
+  hud.gd, barra_jefe.gd, panel_requisitos.gd
+  touch_controls.gd, debug_overlay.gd
 src/core/modo_desarrollador.gd  ⭐ Panel de F1 con fps, draws y triángulos
 src/data/attack_data.gd
 
@@ -236,6 +269,8 @@ tools/auditar_nivel.gd             ⭐ Recorre el mapa buscando fallos de montaj
                                      con coordenadas. Pasarla al tocar el
                                      recorrido o el terreno
 tools/generar_textura_ruido.gd     Hornea el patrón de las superficies
+tools/bajar_sonidos.py             Baja efectos CC0 de Freesound
+tools/procesar_audio.sh            Recorta, normaliza y convierte a .ogg
 ```
 
 ### Cómo se monta un nivel
@@ -890,96 +925,6 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
    minutos probar se prueba poco y tarde, que es como se quedan los fallos
    dentro. `F10` (o abajo a la derecha en el móvil, con el panel abierto).
 
-## 7. Decisiones tomadas y por qué
-
-| Decisión | Motivo |
-|---|---|
-| Beat 'em up en vez de aventura | Elección del usuario. Se mitigó el coste compartiendo esqueleto y animaciones entre las 5 Sailors |
-| Renderizador Mobile | Dispositivo objetivo Android 2019+. `Forward+` está descartado en móvil |
-| Fichas de ataque (máx. 3) | Sin esto, 8 enemigos atacan a la vez y el juego se vuelve injusto |
-| Auto-orientación por puntuación, no por cono | Apuntar en 3D con joystick virtual es la barrera nº 1 para una niña de 8 años |
-| Ventana de combo de 0,8 s | Deliberadamente enorme: machacar debe funcionar SIEMPRE |
-| El especial no se recarga a sí mismo | Devolvía el 41% por uso y era encadenable siendo invulnerable |
-| ~~Purificar en vez de matar~~ → **eliminación real** | Lo pidió la jugadora al probarlo. El aviso rojo antes de cada golpe se mantiene |
-| Joystick flotante | Aparece donde pone el dedo; a los 8 años es mejor que uno fijo |
-| Enemigos con animación procedural | Son bolas y cofres: Mixamo no puede riguearlos y no hace falta |
-| `Models/` fuera de git | 231 MB de originales regenerables desde hi3d.ai |
-
----
-
-## 8. Presupuestos de rendimiento
-
-Objetivo 60 fps, aceptable 30.
-
-| Recurso | Presupuesto |
-|---|---|
-| Triángulos por fotograma | < 150.000 **contando pantalla Y sombra** |
-| Personaje principal | 15–25k tris · textura 2048 |
-| Enemigo | 3–5k tris · textura 1024 |
-| Enemigos simultáneos | 8 activos |
-| Draw calls | < 150 |
-| Luces dinámicas | 1 direccional + 2–3 puntuales |
-
-Modelos actuales: los 11 personajes a 25.000 tris · Peluchín, Cofrecito y Hadita
-a 5.000 · props de escenario (coral 4.700, bonsái 9.750). ✅
-
-### Cómo se mide
-
-**Panel del modo desarrollador: F1**, o **tres toques en la esquina superior
-izquierda** en el móvil. **Tocando el panel se copian todos sus datos al
-portapapeles** (o `F9`): el informe completo más la posición exacta como
-`Vector3(…)`, hacia dónde mira y qué pisa. Va también por consola, para
-pescarlo con `adb logcat` cuando el portapapeles del móvil no ayuda. Muestra fps, draw calls y triángulos, y **separa
-pantalla de sombra** — que es la cifra que importa: el pase de sombra llegó a
-costar el triple que la imagen y sumados no se veía (trampa 50).
-
-Medir SIEMPRE en el móvil. En el Mac todo va a 60 fps y el problema no aparece,
-y además la pantalla del teléfono es mucho más ancha que un 16:9: ve bastante
-más mundo de golpe y sube los draw calls.
-
-### Estado del Nivel 1, medido
-
-| | 1ª pasada (geometría) | 2ª pasada (píxeles) |
-|---|---|---|
-| Triángulos de pantalla | ~82.000 | ~75.000 |
-| Triángulos de sombra | ~62.000 | ~63.000 |
-| **Total por fotograma** | **~144.000** | **~139.000** |
-| Draw calls | ~106–156 | **74** |
-| fps en el móvil | 25–41 | **por medir** |
-
-La segunda pasada apenas toca las cifras de geometría **y ese es justamente el
-resultado**: la primera pasada ya había dejado los triángulos en su sitio y los
-fps seguían en 25–41, porque el cuello no estaba ahí (trampa 66). Lo que se
-atacó esta vez es el **coste por píxel**:
-
-1. **El cielo hacía 32 `sin()` por píxel** — la trampa 52 sin corregir en
-   `cielo_anime.gdshader`. Es el shader que más pantalla pinta del juego
-2. **El terreno hacía 28 evaluaciones de ruido por píxel** — ahora el patrón va
-   horneado en una textura y son tres lecturas
-3. **74 draw calls en vez de 106–156** — el suelo del blockout dejó de dibujarse
-4. **Sombras sin el zigzag** — filtro suave en vez de duro, y sin coste de
-   geometría
-
-Las cifras de arriba son del Mac (que va a 60 siempre). **La medición que vale
-es la del móvil, con F8**, y está sin hacer.
-
-Las seis técnicas que lo bajaron están en
-[`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md) §Rendimiento.
-
-**Lo que NO se puede usar:** bajar la resolución de render
-(`scaling_3d/scale`). Es la palanca más fuerte que hay en móvil, pero con cel
-shading emborrona los contornos duros y se ve peor que en un juego fotográfico
-— ver trampa 63.
-
----
-
-## 9. Nota legal
-
-Sailor Moon es propiedad de Naoko Takeuchi / Kodansha / Toei Animation. Regalo
-personal, no distribuido ni monetizado. **No publicar en Google Play, itch.io ni
-ninguna tienda.** Instalación por sideload en el dispositivo de la prima.
-
-
 99. **Un estado que devuelve su propio nombre cuelga el juego entero.** Sin
    error, sin pantalla: se congela y hay que matar el proceso. El guardián lo
    hizo — cuando a cierta distancia no le encajaba ningún ataque devolvía
@@ -1045,31 +990,138 @@ ninguna tienda.** Instalación por sideload en el dispositivo de la prima.
 
 ---
 
+108. **Los golpes no saben lo que hay en medio.** Las cajas de golpe se tocan por
+   solapamiento, y eso no mira paredes: la barrera de la arena paraba al guardián
+   pero no a los puñetazos, así que desde fuera del anillo se le remataba sin que
+   pudiera acercarse ni responder. Ahora `Hitbox` tira un rayo de cuerpo a cuerpo
+   contra el escenario y solo el escenario — taparse detrás de un compañero sigue
+   valiendo, pegar a través de un muro no. **Toda barrera que sea infranqueable
+   para los pies tiene que serlo también para los golpes.**
+109. **Arreglar el camino equivocado no arregla nada.** El respawn dentro de la
+   arena se corrigió en `Nivel.rescatar()`… y seguía apareciendo en la arena de
+   al lado, porque marearse llama a `Player.respawn()`, que iba directo al
+   checkpoint sin pasar por el nivel. Dos caminos para lo mismo: se arregla uno y
+   el otro sigue roto, y como el síntoma es idéntico parece que el arreglo no
+   funcionó. Ahora los dos preguntan a `Nivel.donde_reaparecer()`. **Antes de
+   volver a tocar un arreglo que “no funcionó”, buscar quién más hace lo mismo.**
+
+## 7. Decisiones tomadas y por qué
+
+| Decisión | Motivo |
+|---|---|
+| Beat 'em up en vez de aventura | Elección del usuario. Se mitigó el coste compartiendo esqueleto y animaciones entre las 5 Sailors |
+| Renderizador Mobile | Dispositivo objetivo Android 2019+. `Forward+` está descartado en móvil |
+| Fichas de ataque (máx. 3) | Sin esto, 8 enemigos atacan a la vez y el juego se vuelve injusto |
+| Auto-orientación por puntuación, no por cono | Apuntar en 3D con joystick virtual es la barrera nº 1 para una niña de 8 años |
+| Ventana de combo de 0,8 s | Deliberadamente enorme: machacar debe funcionar SIEMPRE |
+| El especial no se recarga a sí mismo | Devolvía el 41% por uso y era encadenable siendo invulnerable |
+| ~~Purificar en vez de matar~~ → **eliminación real** | Lo pidió la jugadora al probarlo. El aviso rojo antes de cada golpe se mantiene |
+| Joystick flotante | Aparece donde pone el dedo; a los 8 años es mejor que uno fijo |
+| Enemigos con animación procedural | Son bolas y cofres: Mixamo no puede riguearlos y no hace falta |
+| `Models/` fuera de git | 231 MB de originales regenerables desde hi3d.ai |
+
+---
+
+## 8. Presupuestos de rendimiento
+
+> **El encargo entero está en [`26-OPTIMIZACION.md`](26-OPTIMIZACION.md)**: lo
+> que ya se hizo, cómo se mide, por dónde seguir y lo que no se puede tocar.
+> Esta sección son solo los números de referencia.
+
+Objetivo 60 fps, aceptable 30.
+
+| Recurso | Presupuesto |
+|---|---|
+| Triángulos por fotograma | < 150.000 **contando pantalla Y sombra** |
+| Personaje principal | 15–25k tris · textura 2048 |
+| Enemigo | 3–5k tris · textura 1024 |
+| Enemigos simultáneos | 8 activos |
+| Draw calls | < 150 |
+| Luces dinámicas | 1 direccional + 2–3 puntuales |
+
+Modelos actuales: los 11 personajes a 25.000 tris · Peluchín, Cofrecito y Hadita
+a 5.000 · props de escenario (coral 4.700, bonsái 9.750). ✅
+
+### Cómo se mide
+
+**Panel del modo desarrollador: F1**, o **tres toques en la esquina superior
+izquierda** en el móvil. **Tocando el panel se copian todos sus datos al
+portapapeles** (o `F9`): el informe completo más la posición exacta como
+`Vector3(…)`, hacia dónde mira y qué pisa. Va también por consola, para
+pescarlo con `adb logcat` cuando el portapapeles del móvil no ayuda. Muestra fps, draw calls y triángulos, y **separa
+pantalla de sombra** — que es la cifra que importa: el pase de sombra llegó a
+costar el triple que la imagen y sumados no se veía (trampa 50).
+
+Medir SIEMPRE en el móvil. En el Mac todo va a 60 fps y el problema no aparece,
+y además la pantalla del teléfono es mucho más ancha que un 16:9: ve bastante
+más mundo de golpe y sube los draw calls.
+
+### Estado del Nivel 1, medido
+
+| | 1ª pasada (geometría) | 2ª pasada (píxeles) |
+|---|---|---|
+| Triángulos de pantalla | ~82.000 | ~75.000 |
+| Triángulos de sombra | ~62.000 | ~63.000 |
+| **Total por fotograma** | **~144.000** | **~139.000** |
+| Draw calls | ~106–156 | **74** |
+| fps en el móvil | 25–41 | **60 en la mayoría de sitios** |
+
+La segunda pasada apenas toca las cifras de geometría **y ese es justamente el
+resultado**: la primera pasada ya había dejado los triángulos en su sitio y los
+fps seguían en 25–41, porque el cuello no estaba ahí (trampa 66). Lo que se
+atacó esta vez es el **coste por píxel**:
+
+1. **El cielo hacía 32 `sin()` por píxel** — la trampa 52 sin corregir en
+   `cielo_anime.gdshader`. Es el shader que más pantalla pinta del juego
+2. **El terreno hacía 28 evaluaciones de ruido por píxel** — ahora el patrón va
+   horneado en una textura y son tres lecturas
+3. **74 draw calls en vez de 106–156** — el suelo del blockout dejó de dibujarse
+4. **Sombras sin el zigzag** — filtro suave en vez de duro, y sin coste de
+   geometría
+
+Las cifras de geometría son del Mac (que va a 60 siempre). **La medición que
+vale es la del móvil, con F8.** Tras la segunda pasada el móvil se puso a 60 en
+la mayoría de sitios, pero **jugando la versión completa vuelve a haber tirones**
+— con el jefe, las barreras de arena y los repechos ya montados hay bastante más
+en pantalla que cuando se midió. De ahí la tercera pasada.
+
+Las seis técnicas que lo bajaron están en
+[`18-ESTADO-NIVEL-1.md`](18-ESTADO-NIVEL-1.md) §Rendimiento.
+
+**Lo que NO se puede usar:** bajar la resolución de render
+(`scaling_3d/scale`). Es la palanca más fuerte que hay en móvil, pero con cel
+shading emborrona los contornos duros y se ve peor que en un juego fotográfico
+— ver trampa 63.
+
+---
+
 ## Orden de las próximas sesiones
 
-Una cosa por sesión, cerrada y probada antes de pasar a la siguiente. El motivo
-de escribirlo es que cada tema de abajo depende del anterior, y hacerlos a la
-vez obliga a rehacer trabajo.
+Una cosa por sesión, cerrada y probada antes de pasar a la siguiente. Se escribe
+porque cada tema depende del anterior, y hacerlos a la vez obliga a rehacer.
 
-### ~~1. El sistema de menús~~ ✅ hecho
-Título, pausa, ajustes y el panel de objetivos —que lleva esperando desde que se
-decidió que iría «cuando haya interfaz»—. **Va antes que la música a propósito**:
-la música de menú no se puede colocar ni probar sin menú, y la estructura de
-pistas depende de cuántas pantallas haya y de cómo se pase de una a otra.
+Lo hecho hasta aquí: ~~menús~~ ✅ · ~~banda sonora~~ ✅ · ~~sonido~~ ✅ ·
+~~dar vida al parque~~ ✅ · ~~la apertura~~ ✅ · ~~remates y fallos de móvil~~ ✅
 
-### ~~2. La banda sonora~~ ✅ hecha, salvo tres piezas generadas
-Ya se puede: los menús están. Mezcla de piezas libres y generadas con IA, con:
+### 1. Rendimiento — otro agente
+[`26-OPTIMIZACION.md`](26-OPTIMIZACION.md). Va antes que el segundo escenario
+porque toca el nivel entero: hacerlo con cinco escenarios es hacerlo cinco veces.
 
-- El esquema de qué suena en cada pantalla y en cada momento del nivel — la
-  primera versión está en [`21-SONIDO-Y-MUSICA.md`](21-SONIDO-Y-MUSICA.md) §3.
-- Una **serie de prompts** para las generadas, uno por pieza, con el
-  instrumento, el ritmo, la duración y el punto de bucle. Igual que se hizo con
-  el prompt del guardián: la mitad del prompt son requisitos técnicos, no gustos.
-- Qué se busca en bancos libres y qué se genera.
+### 2. El mapa de escenarios
+Cómo se encadenan los niveles, qué se lleva la jugadora de uno a otro y dónde se
+guarda. Es lo que le falta a C bis y lo que bloquea el segundo nivel.
 
-### 2. Rematar el sonido que falta
-La lista de ⬜ en [`22-ESTADO-AUDIO.md`](22-ESTADO-AUDIO.md).
+### 3. El segundo escenario
+Con la historia y el reparto ya escritos. El generador de terreno, el decorador,
+las arenas, los objetivos y el portal son genéricos y se reutilizan.
 
-### 3. Dar vida al parque
-Las zonas vacías y los salientes para trepar de
-[`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md).
+### 4. El resto de la historia
+Las escenas entre niveles y el final. El sistema de viñetas está montado.
+
+---
+
+## 9. Nota legal
+
+Sailor Moon es propiedad de Naoko Takeuchi / Kodansha / Toei Animation. Regalo
+personal, no distribuido ni monetizado. **No publicar en Google Play, itch.io ni
+ninguna tienda.** Instalación por sideload en el dispositivo de la prima.

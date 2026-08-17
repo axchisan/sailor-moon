@@ -71,23 +71,33 @@ Instalación en el dispositivo (con depuración USB activada):
 
 Este es el punto de no retorno del proyecto. Todo lo demás es contenido; esto es el juego.
 
-## Fase 2 — Vertical slice: Nivel 1 completo
+## Fase 2 — CERRADA (2026-08-17). Vertical slice: Nivel 1 completo
 
-- [ ] Modelo real de Serena en VRoid (civil + Sailor) con las 15 animaciones de Mixamo
-- [ ] Toon shader + outline (MToon en personajes, shader propio en escenario)
-- [ ] **Secuencia de transformación completa** — el hito emocional
-- [ ] Nivel 1 · Parque Juuban: 3 arenas + tramos de exploración + guardián
-- [ ] Coleccionables: chispas y Estrellas de Sueño con feedback
-- [ ] HUD: corazones, barra de especial, contadores, botón de guía
-- [ ] Checkpoints y guardado/carga funcionando
-- [ ] Música y SFX del nivel
-- [ ] VFX del especial de Sailor Moon (Tiara Lunar)
+- [x] Modelo real de Serena (civil + Sailor) con las animaciones de Mixamo
+- [x] Toon shader + outline (MToon en personajes, shader propio en escenario)
+- [x] **Secuencia de transformación completa** — el hito emocional
+- [x] Nivel 1 · Parque de los Cerezos: 3 arenas + exploración + jefe guardián
+- [x] Coleccionables: Estrellas de Sueño, faroles y rincones, con aviso
+- [x] HUD: corazones, barra de especial, contadores y panel de objetivos
+- [x] Guardado en tres ranuras + puntos de guardado en el nivel
+- [x] Música y SFX del nivel
+- [x] VFX del especial de Sailor Moon (Tiara Lunar)
 
-**Criterio de salida (el único que importa): tu prima juega el Nivel 1 en el móvil, sola, y quiere seguir.**
+**Criterio de salida: tu prima juega el Nivel 1 en el móvil, sola, y quiere seguir.**
+Jugable entero. Queda **la tercera pasada de rendimiento**
+([`26-OPTIMIZACION.md`](26-OPTIMIZACION.md)) antes de dárselo.
 
-## Fase 3 — Producción de contenido
+## Fase 3 — Producción de contenido · **AQUÍ ESTAMOS**
 
-Con el molde validado, cada nivel sale más rápido que el anterior.
+Con el molde validado, cada nivel sale más rápido que el anterior. Del Nivel 1 se
+reutiliza casi todo: el generador de terreno, el decorador, las arenas, los
+objetivos, el portal, los menús, el guardado, las vidas y el director de música
+son genéricos. Lo que cambia por nivel es la lista `RECORRIDO`, la paleta de
+terreno, los props y el guion.
+
+Lo primero que hace falta es el **mapa de escenarios**: cómo se encadenan los
+niveles y qué se lleva la jugadora de uno a otro. Sin eso el portal no lleva a
+ninguna parte.
 
 - [ ] Nivel 2 · Templo Hikawa + Sailor Mars (fuego, área)
 - [ ] Nivel 3 · Escuela y biblioteca + Sailor Mercury (agua, ralentiza)
@@ -96,8 +106,8 @@ Con el molde validado, cada nivel sale más rápido que el anterior.
 - [ ] Variantes cosméticas de enemigos por nivel (mismo esqueleto, distinto color)
 - [ ] Peligros ambientales del nivel 5
 - [ ] Selección de Sailor al inicio de nivel
-- [ ] Menú principal, selección de nivel, armario de vestuario
-- [ ] Sistema de diálogos con retratos
+- [x] ~~Menú principal~~ ✅ · selección de nivel y armario de vestuario ⬜
+- [x] ~~Sistema de diálogos con retratos~~ ✅
 
 ## Fase 4 — Clímax y cierre
 

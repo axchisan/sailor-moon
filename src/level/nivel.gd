@@ -421,35 +421,34 @@ func _fuera_del_mundo() -> bool:
 	return distancia > _terreno.radio_colinas + margen_limite
 
 
-func rescatar() -> void:
-	# El checkpoint lo pone cada arena al empezar; hasta la primera, el último
-	# sitio donde se pisó suelo firme.
+## DÓNDE SE VUELVE AL MAREARSE O AL CAERSE. Un solo cálculo para los dos.
+##
+## Había dos caminos —`Player.respawn()` iba al checkpoint y esto hacía lo suyo—
+## y arreglar uno dejaba el otro roto. Ahora los dos preguntan aquí.
+func donde_reaparecer() -> Vector3:
 	var destino := _ultimo_suelo + Vector3.UP * 0.6
 	if GameManager.last_checkpoint != Vector3.ZERO:
 		destino = GameManager.last_checkpoint + Vector3.UP * 0.6
 
-	# MAREARSE DENTRO DE UNA PELEA REAPARECE DENTRO DE LA PELEA.
-	#
-	# El punto de guardado está fuera de la arena, y la arena se cierra con una
-	# barrera al empezar: quien se mareaba peleando con el guardián reaparecía
-	# fuera, con la barrera puesta y sin forma de volver a entrar. La partida se
-	# quedaba sin salida — no se podía terminar el nivel ni empezar la pelea otra
-	# vez, solo cerrar el juego.
-	#
-	# Si hay un combate en marcha, se vuelve al borde de esa arena. La pelea se
-	# reintenta, que es la promesa de todo el juego.
+	# Marearse dentro de una pelea reaparece DENTRO de la pelea: el punto de
+	# guardado está fuera y la arena se cierra con una barrera, así que volver
+	# ahí deja la partida sin salida. La pelea se reintenta, que es la promesa
+	# de todo el juego.
 	var encerrada := _arena_en_marcha()
 	if encerrada != null:
 		var hacia := destino - encerrada.global_position
 		hacia.y = 0.0
 		if hacia.length_squared() < 1.0:
 			hacia = Vector3.BACK
-		# Dentro del anillo, en el lado por el que se estaba, y con margen para
-		# no nacer pegada a la propia barrera.
 		destino = encerrada.global_position \
 			+ hacia.normalized() * (encerrada.barrier_radius - 2.5)
 		if _constructor != null:
 			destino = _constructor.posar_en_el_terreno(destino, 0.6)
+	return destino
+
+
+func rescatar() -> void:
+	var destino := donde_reaparecer()
 	_jugador.global_position = destino
 	if _jugador is CharacterBody3D:
 		(_jugador as CharacterBody3D).velocity = Vector3.ZERO
