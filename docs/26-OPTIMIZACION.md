@@ -159,11 +159,40 @@ Con el sobrecalentamiento como pista extra: un móvil que se calienta está
 trabajando de verdad y sostenidamente, y además **se autolimita** — de ahí que
 haya zonas donde los tirones aparecen a los minutos y no al entrar.
 
-1. **El montaje del nivel bloquea el hilo principal.** El `_ready()` genera
-   terreno, siembra 1.999 props, trocea 158 multimallas y construye el blockout
-   de una vez. Ya hay pantalla de carga que lo tapa, pero **repartirlo entre
-   fotogramas** quitaría el tirón de verdad — y es también la respuesta a «por
-   qué tarda tanto en arrancar desde el menú».
+1. **El montaje del nivel bloquea el hilo principal — y ya está medido.**
+   `nivel.gd` lleva un cronómetro por fase que imprime el reparto al terminar
+   (sale también por `adb logcat`). En el Mac, M5, compilación de depuración:
+
+   ```
+   [Nivel] montaje: 322 ms en total
+     preparar el terreno          0.0 ms
+     malla del terreno          162.5 ms   ← 50 %
+     esperar a la física         16.0 ms   (una espera, no trabajo)
+     sembrar el decorado        127.5 ms   ← 40 %
+     Estrellas                    0.4 ms
+     faroles                      0.5 ms
+     bichos y ambiente            2.4 ms
+     repechos y guardado         11.9 ms
+     rincones y objetivos         1.1 ms
+   ```
+
+   **El 90 % está en dos sitios**, y los dos son GDScript puro:
+
+   - **La malla del terreno.** 82×82 celdas, y por cada vértice se consultan las
+     53 zonas elevadas: unas 356.000 comprobaciones. Se arregla metiendo las
+     zonas en una rejilla y mirando solo las de al lado, igual que ya hace el
+     decorador con los huecos.
+   - **La siembra del decorado.** 1.999 props colocados con rayo al suelo, más
+     541 que se colocan y se descartan por caer encima de otra cosa.
+
+   Un teléfono tiene la CPU entre cinco y diez veces más lenta, así que esos
+   322 ms son **entre segundo y medio y tres segundos y medio** de hilo
+   principal parado. Ahí está la respuesta a «por qué tarda tanto en arrancar
+   desde el menú»: no es cargar el archivo, es generar el parque.
+
+   Dos caminos, y no son excluyentes: **hacerlo más rápido** (lo de arriba) y
+   **repartirlo entre fotogramas**, para que la barra de carga avance de verdad
+   en vez de quedarse clavada.
 2. **El contorno de los personajes cuesta el doble de geometría.** El *inverted
    hull* dibuja cada malla otra vez. El guardián son 25.000 triángulos que pasan
    a 50.000, y en una arena hay varios personajes a la vez. Medir si conviene
@@ -177,6 +206,14 @@ haya zonas donde los tirones aparecen a los minutos y no al entrar.
 6. **1.999 props sembrados, y 541 descartados por caer encima de otra cosa.**
    Merece una mirada aparte: sembrar y tirar es trabajo de carga, y 1.999 props
    en 180 llamadas de dibujado es mucho reparto.
+7. **Compilación de shaders la primera vez.** La caché de shaders y la de
+   pipelines vienen activadas, pero **la primera partida en un móvil recién
+   instalado las tiene vacías**: cada material nuevo que aparece en pantalla se
+   compila en ese momento, y eso es un tirón justo al llegar a una zona nueva.
+   Encaja con el síntoma de «hay zonas con muchos tirones». **Se comprueba
+   fácil: medir la primera partida tras instalar y luego la segunda.** Si la
+   segunda va fina, es esto, y la solución es tocar todos los materiales una vez
+   durante la pantalla de carga, no optimizar la zona.
 
 ### 3. Lo que ya se ganó de camino, sin tocar rendimiento
 

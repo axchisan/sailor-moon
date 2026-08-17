@@ -170,7 +170,32 @@ func _terreno_visual_material() -> ShaderMaterial:
 const MOVIL_SOMBRA_ALCANCE := 18.0
 
 
+## CRONÓMETRO DEL MONTAJE
+##
+## «El juego tarda mucho en arrancar desde el menú» no se arregla sin saber en
+## qué se va ese tiempo, y a ojo no se distingue: se ve una pantalla de carga y
+## ya. El nivel entero se genera aquí dentro —terreno, blockout, dos mil props—
+## y cada trozo puede costar cualquier cosa.
+##
+## Estas dos variables y `_hito()` cuestan una resta por fase y dejan por consola
+## el reparto exacto. En el móvil se pesca con `adb logcat`, y ahí es donde
+## importa: la CPU de un teléfono va entre cinco y diez veces más lenta, así que
+## lo que aquí son 300 ms allí son dos segundos y medio.
+var _reloj: int = 0
+var _hitos: Array[String] = []
+
+
+## Anota lo que ha costado la fase que acaba de terminar.
+func _hito(que: String) -> void:
+	var ahora := Time.get_ticks_usec()
+	_hitos.append("%-24s %7.1f ms" % [que, (ahora - _reloj) / 1000.0])
+	_reloj = ahora
+
+
 func _ready() -> void:
+	_reloj = Time.get_ticks_usec()
+	var arranque := _reloj
+
 	_constructor = get_node_or_null("Blockout") as ConstructorNivel
 	_jugador = get_tree().get_first_node_in_group("player") as Node3D
 
@@ -215,13 +240,18 @@ func _ready() -> void:
 		# hecha y cavar sobre ella dejaría la colisión desincronizada.
 		if decorador != null and _constructor != null and decorador.radio_estanque > 0.0:
 			_terreno.hondonadas.append(decorador.hondonada_estanque(_constructor))
+		_hito("preparar el terreno")
 		_terreno.construir()
+		_hito("malla del terreno")
 		if _constructor != null:
 			_constructor.radio_limite = _terreno.radio_colinas
 		# La física necesita un ciclo para enterarse del cuerpo nuevo. Sin esta
 		# espera, los rayos que posan los props salen al vacío y todo el parque
 		# vuelve a quedarse flotando.
+		# Ojo al leer el cronómetro: esto es una ESPERA, no trabajo. Cuenta como
+		# un fotograma entero aunque no se esté haciendo nada.
 		await get_tree().physics_frame
+		_hito("esperar a la física")
 		# Y ahora que hay terreno, se vuelve a posar sobre él lo que se colocó
 		# cuando todavía no existía.
 		if _constructor != null:
@@ -237,10 +267,12 @@ func _ready() -> void:
 	# decorador corriera primero, no tendría tramos que consultar.
 	if decorador != null and _constructor != null:
 		decorador.decorar(_constructor)
+	_hito("sembrar el decorado")
 
 	if _constructor != null and escena_estrella != null:
 		var puestas := _constructor.sembrar_estrellas(escena_estrella, self)
 		print("[Nivel] %d Estrellas de Sueño sembradas" % puestas)
+	_hito("Estrellas")
 
 	if _constructor != null and escena_farol != null:
 		_faroles_totales = _constructor.sembrar_faroles(escena_farol, self)
@@ -248,6 +280,7 @@ func _ready() -> void:
 			(nodo as Farol).encendido.connect(_al_encender_farol)
 		_actualizar_pista_de_la_puerta()
 		print("[Nivel] %d faroles colocados" % _faroles_totales)
+	_hito("faroles")
 
 	var bichos := get_node_or_null("Bichos") as Bichos
 	if bichos != null and _constructor != null and _terreno != null:
@@ -275,9 +308,12 @@ func _ready() -> void:
 		sitios_farol.append((nodo as Node3D).global_position + Vector3.UP * 1.2)
 	_ambiente.faroles_en(sitios_farol)
 
+	_hito("bichos y ambiente")
+
 	_vigilar_la_vuelta_al_claro()
 	_sembrar_repechos(decorador)
 	_sembrar_puntos_de_guardado()
+	_hito("repechos y guardado")
 
 	# LA FLECHA QUE SEÑALA. Empieza apagada: solo sale cuando se elige un
 	# objetivo en la lista, porque una flecha permanente convierte el juego en ir
@@ -297,6 +333,10 @@ func _ready() -> void:
 	Musica.pedir(Musica.Capa.FONDO, "parque")
 	_posar_los_rincones()
 	_montar_objetivos()
+	_hito("rincones y objetivos")
+
+	print("[Nivel] montaje: %.0f ms en total\n  %s" % [
+		(Time.get_ticks_usec() - arranque) / 1000.0, "\n  ".join(_hitos)])
 
 	EventBus.arena_cleared.connect(_al_limpiar_arena)
 	EventBus.star_collected.connect(_al_coger_estrella)

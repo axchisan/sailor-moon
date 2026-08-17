@@ -1059,6 +1059,15 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
    vez —al excluir algo, excluir lo que arrastra— pero al revés: aquí lo que
    sobraba nunca se llegó a excluir.
 
+118. **«Tarda en arrancar» no era cargar, era generar.** El cronómetro de
+   `nivel.gd` reparte los 322 ms del montaje: **162 ms la malla del terreno y
+   127 ms sembrar el decorado**, o sea el 90 % en dos sitios, y los dos GDScript
+   puro. La malla consulta las 53 zonas elevadas por cada uno de sus 6.724
+   vértices — 356.000 comprobaciones que una rejilla dejaría en nada. En un
+   móvil, con la CPU entre cinco y diez veces más lenta, eso son entre segundo y
+   medio y tres segundos y medio de hilo principal parado. **Antes de repartir un
+   trabajo entre fotogramas, medir de qué está hecho: puede que sobre la mitad.**
+
 ## 7. Decisiones tomadas y por qué
 
 | Decisión | Motivo |
@@ -1157,9 +1166,25 @@ porque cada tema depende del anterior, y hacerlos a la vez obliga a rehacer.
 Lo hecho hasta aquí: ~~menús~~ ✅ · ~~banda sonora~~ ✅ · ~~sonido~~ ✅ ·
 ~~dar vida al parque~~ ✅ · ~~la apertura~~ ✅ · ~~remates y fallos de móvil~~ ✅
 
-### 1. Rendimiento — otro agente
-[`26-OPTIMIZACION.md`](26-OPTIMIZACION.md). Va antes que el segundo escenario
+### 1. Rendimiento y calidad de imagen — EN MARCHA
+[`26-OPTIMIZACION.md`](26-OPTIMIZACION.md) y
+[`27-CALIDAD-VISUAL.md`](27-CALIDAD-VISUAL.md). Va antes que el segundo escenario
 porque toca el nivel entero: hacerlo con cinco escenarios es hacerlo cinco veces.
+
+**Hecho** (rama `rendimiento-y-color`):
+
+- **El aura blanca de los personajes**, que era el rim de MToon yéndose a la
+  emisión. Y con ella, el sombreado plano y el contorno invisible
+- **El fondo lavado**: había dos velos atmosféricos superpuestos, y el tonemap
+  era el de una cámara de fotos
+- **El móvil se veía peor a propósito** por un recorte mal calibrado
+- **Se puede medir en el teléfono desde el Mac**: `tools/probar_en_movil.sh`
+- **Se estaba probando la compilación de depuración.** Ahora hay preset final
+- **Se sabe en qué se van los 322 ms del arranque**: 90 % en dos sitios
+
+**Lo siguiente, y necesita el teléfono conectado:** medir final contra
+depuración, pasar los dos bancos en el móvil, y decidir con esos números si el
+cuello son los píxeles o la CPU.
 
 ### 2. El mapa de escenarios
 Cómo se encadenan los niveles, qué se lleva la jugadora de uno a otro y dónde se
