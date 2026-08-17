@@ -258,38 +258,17 @@ medir la primera partida tras instalar y luego la segunda.** Si la segunda va
 fina, la solución es tocar todos los materiales una vez durante la pantalla de
 carga, no optimizar la zona.
 
-### 3. El arranque: 18,6 s la primera vez, 1,9 s la segunda
+### 3. El arranque — el desglose está en el §5
 
-Medido en el teléfono, del menú al nivel jugable:
+Se midió primero en el Mac y **la respuesta salió al revés**: allí el montaje son
+322 ms, de los cuales el 90 % es generar el terreno y sembrar el decorado, así
+que parecía que había que optimizar esas dos funciones. En el teléfono esas dos
+suman **1,1 s de 15**. Lo que manda es cargar recursos y estrenar el nivel, y en
+el Mac los dos son invisibles porque el disco es rápido y la GPU compila los
+shaders en un suspiro.
 
-| | Primera vez tras instalar | Segunda |
-|---|---|---|
-| Total | **18,6 s** | **1,9 s** |
-| …de eso, montar el nivel | 7,25 s | 1,48 s |
-
-Y el montaje por dentro, la primera vez frente a la segunda:
-
-```
-  malla del terreno         1325 ms  →   739 ms
-  esperar a la física       5077 ms  →   111 ms   ← ¡45 veces!
-  sembrar el decorado        743 ms  →   530 ms
-```
-
-**Los 11 segundos que no son montaje son cargar recursos en frío** —modelos,
-animaciones, texturas— y desaparecen enteros la segunda vez. Y los 5 segundos de
-«esperar a la física» tampoco eran física: `await get_tree().physics_frame` espera
-un fotograma COMPLETO, y ese fotograma es el primero que dibuja el nivel recién
-creado, con la caché de shaders vacía. Es el punto 2 otra vez, disfrazado.
-
-O sea que de los 18,6 s, **unos 16 son coste de estrenar** y solo ~2,5 son trabajo
-de verdad. Lo que hay que atacar:
-
-- **Precalentar durante la pantalla de carga.** Es donde de verdad se gana.
-- **La malla del terreno** (739 ms en caliente): consulta las 53 zonas elevadas
-  por cada uno de sus 6.724 vértices, unas 356.000 comprobaciones. Con una
-  rejilla, como ya hace el decorador con los huecos, se queda en nada.
-- **La siembra** (530 ms): 1.996 props con rayo al suelo, más 541 que se colocan
-  y se tiran por caer encima de otra cosa.
+Es la lección de la trampa 118: un perfil sacado en la máquina equivocada no es
+impreciso, **ordena mal las prioridades**.
 
 ### 4. La compilación final NO era el problema — comprobado
 

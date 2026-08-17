@@ -1059,14 +1059,15 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
    vez —al excluir algo, excluir lo que arrastra— pero al revés: aquí lo que
    sobraba nunca se llegó a excluir.
 
-118. **«Tarda en arrancar» no era cargar, era generar.** El cronómetro de
-   `nivel.gd` reparte los 322 ms del montaje: **162 ms la malla del terreno y
-   127 ms sembrar el decorado**, o sea el 90 % en dos sitios, y los dos GDScript
-   puro. La malla consulta las 53 zonas elevadas por cada uno de sus 6.724
-   vértices — 356.000 comprobaciones que una rejilla dejaría en nada. En un
-   móvil, con la CPU entre cinco y diez veces más lenta, eso son entre segundo y
-   medio y tres segundos y medio de hilo principal parado. **Antes de repartir un
-   trabajo entre fotogramas, medir de qué está hecho: puede que sobre la mitad.**
+118. **Medir el arranque en el Mac dio la respuesta EQUIVOCADA.** El cronómetro
+   de `nivel.gd` repartía los 322 ms del montaje en el Mac: 162 la malla del
+   terreno y 127 sembrar el decorado, o sea «el 90 % es generar el parque». De
+   ahí salió la conclusión de que había que optimizar esas dos funciones. En el
+   teléfono, donde el arranque son 15 segundos, esas dos suman **1,1 s de 15**.
+   Lo que manda son 9,5 s de cargar recursos y 4,8 s de estrenar el nivel, y en
+   el Mac los dos son invisibles porque el disco es rápido y la GPU compila los
+   shaders en un suspiro. **Un perfil sacado en la máquina equivocada no es que
+   sea impreciso: ordena mal las prioridades.**
 
 119. **El terreno ES el fotograma, y lo caro es que esté iluminado.** Medido en el
    teléfono con la vista congelada: quitar el terreno rinde exactamente lo mismo
