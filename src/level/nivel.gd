@@ -66,23 +66,24 @@ func _ajustar_para_el_movil() -> void:
 	get_viewport().screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
 
 	var entorno := get_node_or_null("WorldEnvironment") as WorldEnvironment
-	if entorno != null and entorno.environment != null:
-		# 2. La niebla, cambiada por otra cosa que ya se estaba calculando.
-		#
-		#    La del Environment se evalúa en CADA píxel de CADA material, y se
-		#    notaba en todo el mapa. Pero el terreno ya tiene su propia
-		#    perspectiva aérea metida en el shader —el `lejania` que destiñe lo
-		#    lejano a morado—, y eso sale gratis porque ya se calcula.
-		#
-		#    Así que en el móvil se apaga la niebla y se acerca el punto donde
-		#    el terreno empieza a desteñirse, que es donde de verdad se veía el
-		#    efecto: el fondo del valle. Lo que se pierde es la neblina sobre
-		#    los props lejanos, que además ya se apagan solos por distancia.
-		entorno.environment.fog_enabled = false
-		if _terreno_visual_material() != null:
-			var mat := _terreno_visual_material()
-			mat.set_shader_parameter("desde",
-				_terreno.radio_colinas * MOVIL_NIEBLA_DESDE)
+
+	# 2. La niebla ya no se toca aquí: está apagada EN LA ESCENA, para las dos
+	#    plataformas.
+	#
+	#    Antes se apagaba solo en el móvil y además se acercaba el punto donde el
+	#    terreno empieza a desteñirse, a 0,55 del radio de las colinas — 47 m. La
+	#    idea era compensar la niebla perdida, pero el efecto real era el
+	#    contrario de lo que se buscaba: en el móvil el fondo se lavaba TREINTA
+	#    METROS ANTES que en el Mac. De ahí salía en buena parte que «en el móvil
+	#    la calidad parece reducida»; no era el móvil, era este ajuste.
+	#
+	#    Y en el Mac tampoco estaba bien: la niebla del `Environment` (78→148 m) y
+	#    la perspectiva aérea del terreno (65→110 m) hacían lo mismo, con el mismo
+	#    color, en el mismo tramo. Dos velos superpuestos sobre el fondo entero.
+	#
+	#    Ahora hace el trabajo una sola cosa, la del terreno, con los mismos
+	#    números en las dos plataformas. Se ve igual en el Mac que en el móvil,
+	#    que además es lo único que permite juzgar el aspecto sin exportar un APK.
 
 	# 3. La sombra, con menos alcance. No se quita: se acorta de 24 a 18 m, que
 	#    sigue cubriendo de sobra lo que se ve de cerca —que es donde una sombra
@@ -102,6 +103,16 @@ func _ajustar_para_el_movil() -> void:
 	#    La cuenta es la misma, solo cambia cuándo se hace: `PaletaTerreno.vivo()`
 	#    la aplica a los colores de las recetas al cargar, una vez. Aquí se hace
 	#    lo propio con los del cielo, que no pasan por la paleta.
+	#
+	#    OJO — ESTO TODAVÍA NO CUBRE A LOS PERSONAJES.
+	#
+	#    `vivo()` retoca COLORES de material. A un personaje su color le viene de
+	#    una TEXTURA, y el `_Color` de MToon que sí se podría avivar es blanco:
+	#    multiplicarlo por nada no hace nada. O sea que en el móvil el parque sale
+	#    avivado y Serena no, y la diferencia se lee como que el personaje está
+	#    descolorido respecto al fondo. Está anotado en `26-OPTIMIZACION.md`: la
+	#    solución no es esta función, es meter el avivado en el propio shader
+	#    MToon, que ya se está ejecutando y donde cuesta cuatro operaciones.
 	if entorno != null and entorno.environment != null:
 		entorno.environment.adjustment_enabled = false
 		_avivar_el_cielo(entorno.environment)
@@ -127,7 +138,7 @@ func _avivar_el_cielo(env: Environment) -> void:
 		mat_terreno.set_shader_parameter("color_lejania",
 			PaletaTerreno.vivo(_terreno.color_lejania))
 
-	print("[Nivel] perfil de móvil: sin FXAA, sin niebla, sombra a %.0f m"
+	print("[Nivel] perfil de móvil: sin FXAA, ajuste de color horneado, sombra a %.0f m"
 		% MOVIL_SOMBRA_ALCANCE)
 
 
@@ -157,7 +168,6 @@ func _terreno_visual_material() -> ShaderMaterial:
 ## no de suponer. La primera vez que se supuso —«el FXAA cuesta una fracción»—
 ## se falló justo en el que más costaba.
 const MOVIL_SOMBRA_ALCANCE := 18.0
-const MOVIL_NIEBLA_DESDE := 0.55
 
 
 func _ready() -> void:

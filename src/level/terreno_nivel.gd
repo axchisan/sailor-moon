@@ -118,9 +118,37 @@ class_name TerrenoNivel
 
 @export_group("Aspecto")
 @export var superficie: String = "hierba_lejos"
-## A qué color tira lo lejano. El morado azulado no es capricho: es el color del
-## aire acumulado, y es lo que hace que una montaña se lea como lejana.
-@export var color_lejania: Color = Color(0.63, 0.62, 0.80)
+## A qué color tira lo lejano. El azul no es capricho: es el color del aire
+## acumulado, y es lo que hace que una montaña se lea como lejana.
+##
+## Tiraba a morado grisáceo (0.63, 0.62, 0.80), que es un color sin croma: al
+## teñir con él, lo lejano no se alejaba, se **descoloría**. El aire real tiñe de
+## AZUL, y un azul con algo de saturación deja que el verde de la ladera siga
+## leyéndose por debajo. Es la diferencia entre una colina lejana y una mancha
+## pálida.
+@export var color_lejania: Color = Color(0.58, 0.66, 0.86)
+
+## LA PERSPECTIVA AÉREA, Y POR QUÉ ESTOS TRES NÚMEROS
+##
+## Estaba al 0,92 empezando a 0,75 del radio de las colinas: o sea que a 65 m
+## ya se desteñía y a 110 m quedaba un 92 % de tinte plano. Todo lo que hubiera
+## de ahí en adelante —las colinas, la cordillera, la mitad de arriba de la
+## pantalla— era un lavado morado uniforme, sin forma y sin valor. Eso, sumado a
+## la niebla del `Environment` que hacía LO MISMO en el mismo tramo, es de donde
+## salía que el juego se viera «pálido y tosco»: no era la paleta, era que había
+## dos velos superpuestos tapando los dos tercios del fondo.
+##
+## Ahora la niebla del entorno está apagada (una sola cosa hace el trabajo) y el
+## tinte se queda en 0,72 empezando más lejos y acabando mucho más allá. Las
+## colinas conservan su verde y su relieve, y aun así se leen a distancia porque
+## lo que da la sensación de lejos es el GRADIENTE, no cuánto tinte hay al final.
+const LEJANIA_FUERZA := 0.72
+## Dónde empieza a desteñirse, en múltiplos del radio de las colinas.
+const LEJANIA_DESDE := 0.91
+## Dónde acabaría de desteñirse, en múltiplos del semiancho del terreno. Por
+## encima de 1.0 a propósito: así el borde del mapa todavía no ha llegado al
+## tinte completo y nunca se ve una franja plana al fondo.
+const LEJANIA_HASTA := 1.38
 
 ## Marca de «aquí no hay nada que apoyar». Va muy abajo para que nunca gane al
 ## comparar con la altura del terreno.
@@ -586,10 +614,10 @@ func _montar_malla() -> void:
 	# Material propio, no el compartido de la paleta: este necesita la
 	# perspectiva aérea encendida y el resto de superficies del parque no.
 	var material := PaletaTerreno.obtener(superficie).duplicate() as ShaderMaterial
-	material.set_shader_parameter("lejania", 0.92)
+	material.set_shader_parameter("lejania", LEJANIA_FUERZA)
 	material.set_shader_parameter("centro_mundo", global_position)
-	material.set_shader_parameter("desde", radio_colinas * 0.75)
-	material.set_shader_parameter("hasta", alcance * 0.85)
+	material.set_shader_parameter("desde", radio_colinas * LEJANIA_DESDE)
+	material.set_shader_parameter("hasta", alcance * LEJANIA_HASTA)
 	material.set_shader_parameter("color_lejania", color_lejania)
 	_pintar_el_camino(material)
 	visual.material_override = material

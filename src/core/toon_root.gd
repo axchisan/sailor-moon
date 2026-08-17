@@ -9,10 +9,15 @@ extends Node3D
 ## Cerca de 1 = transición dura entre luz y sombra. Bajarlo la suaviza.
 @export_range(0.0, 1.0) var toony: float = 0.9
 ## Grosor del contorno en metros. 0 lo desactiva.
-@export var outline_width: float = 0.006
+@export var outline_width: float = 0.02
 @export var outline_color: Color = Color(0.18, 0.09, 0.15)
-@export var rim_color: Color = Color(1.0, 0.95, 1.0)
-@export var rim_mix: float = 0.12
+## Luz de borde. NEGRO = apagada, y así va por defecto: en MToon el rim se suma
+## a la EMISIÓN, así que un rim claro es un halo de luz propia pegado a la
+## silueta que no se apaga con nada. Ver `ToonMaterial.RIM_APAGADO`.
+@export var rim_color: Color = Color(0.0, 0.0, 0.0)
+## 1.0 = el rim se ilumina con la escena. 0.0 = brilla solo. Si se enciende un
+## `rim_color`, esto tiene que quedarse en 1.0.
+@export var rim_mix: float = 1.0
 
 
 func _ready() -> void:

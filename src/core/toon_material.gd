@@ -26,18 +26,54 @@ const MTOON_OUTLINE := preload("res://addons/Godot-MToon-Shader/mtoon_outline.gd
 const OUTLINE_MODE_WORLD := 1
 
 
+## La luz de borde va APAGADA por defecto, y esa es una decisión, no un olvido.
+##
+## En MToon el rim NO es un reflejo: mira `mtoon_common.gdshaderinc`, línea 277.
+##
+##     emission += rim * (1.0 - _RimLightingMix)
+##
+## O sea que con `_RimLightingMix` bajo, casi todo el rim se va a **EMISSION**,
+## que es luz propia: no le afecta el sol, ni la sombra, ni la hora del día. Y
+## `rim` vale `pow(1 - dot(N,V), potencia) * color`, que en la silueta —donde la
+## normal es perpendicular a la vista— vale exactamente 1.
+##
+## Con los valores que había (`_RimColor` blanco y `_RimLightingMix` 0,12), cada
+## personaje llevaba **un +0,88 de blanco puro sumado a todo su contorno**, sin
+## nada que lo apagara. Eso es el «aura blanca» y el «delineado raro» que se
+## veía alrededor de Serena, de Luna y de los enemigos: no era el contorno negro
+## fallando, era un halo de luz propia por delante de él.
+##
+## Si algún día se quiere un rim de verdad, la forma correcta es dejar el color
+## y subir `rim_mix` a 1.0: entonces el borde se ilumina **con la escena** en vez
+## de brillar solo, y de noche o a contraluz se apaga como tiene que apagarse.
+const RIM_APAGADO := Color(0.0, 0.0, 0.0)
+
+## Cuánto se dobla la normal hacia arriba antes de iluminar (`mix_normal`, línea
+## 280 del include). Es el mando que decide si el personaje tiene sombreado o es
+## una calcomanía.
+##
+## Estaba en 0.5: media normal apuntando al cielo, así que la cara iluminada y la
+## de sombra recibían casi la misma luz y el escalón del cel shading no llegaba a
+## verse. El personaje salía plano y pálido pasara lo que pasara con el resto de
+## la iluminación. 0.1 es el valor propio de MToon: suaviza lo justo para que la
+## sombra no sea un corte a cuchillo, sin borrarla.
+const LUZ_DE_ARRIBA := 0.1
+
+
 ## Aplica cel shading a todas las MeshInstance3D bajo `root`.
 ## Devuelve cuántas superficies convirtió.
-## `outline_width` va en METROS. 0.006 es un contorno fino y limpio en un
-## personaje de 1,55 m. Valores como 0.15 (15 cm) inflan la malla entera.
+## `outline_width` va en METROS. 0.02 es un contorno que se lee en un móvil sin
+## engordar la silueta; 0.006 —lo que había— desaparece por completo en cuanto
+## el personaje se aleja tres metros, y sin contorno el cel shading no se lee.
+## Valores como 0.15 (15 cm) inflan la malla entera.
 static func apply(
 		root: Node,
 		shade_color: Color = Color(0.62, 0.58, 0.75),
 		toony: float = 0.9,
-		outline_width: float = 0.006,
+		outline_width: float = 0.02,
 		outline_color: Color = Color(0.18, 0.09, 0.15),
-		rim_color: Color = Color(1.0, 0.95, 1.0),
-		rim_mix: float = 0.12
+		rim_color: Color = RIM_APAGADO,
+		rim_mix: float = 1.0
 	) -> int:
 
 	var converted := 0
@@ -90,11 +126,15 @@ static func _build(source: BaseMaterial3D, shade_color: Color, toony: float,
 	material.set_shader_parameter("_ShadingGradeRate", 1.0)
 	material.set_shader_parameter("_ReceiveShadowRate", 1.0)
 	material.set_shader_parameter("_LightColorAttenuation", 0.0)
-	material.set_shader_parameter("_IndirectLightIntensity", 0.5)
+	material.set_shader_parameter("_IndirectLightIntensity", LUZ_DE_ARRIBA)
 
-	# Luz de borde: el brillo suave del contorno, muy característico del anime.
+	# Luz de borde. Apagada por defecto: ver `RIM_APAGADO` arriba.
+	#
+	# `_RimFresnelPower` sube de 3 a 5 para que, cuando se encienda, sea una
+	# línea fina en el canto y no medio personaje bañado: con 3 el degradado
+	# empieza a los 45° de la silueta y cubre casi toda la figura.
 	material.set_shader_parameter("_RimColor", rim_color)
-	material.set_shader_parameter("_RimFresnelPower", 3.0)
+	material.set_shader_parameter("_RimFresnelPower", 5.0)
 	material.set_shader_parameter("_RimLift", 0.0)
 	material.set_shader_parameter("_RimLightingMix", rim_mix)
 
