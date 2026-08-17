@@ -140,104 +140,19 @@ conviene conocerlas antes de escribir cualquier medición nueva.
    clava una cámara propia y congela el árbol, y si los draw calls no salen
    iguales en todas las filas, el número no vale.
 
-### Y ojo: hasta ahora se estaba probando la compilación de DEPURACIÓN
-
-El APK se exportaba con `--export-debug`. Esa compilación lleva el depurador
-dentro, las comprobaciones de GDScript activadas y el servidor MCP corriendo. Es
-**más lenta que la de release**, y en un juego donde el escenario entero se genera
-desde GDScript esa diferencia no es pequeña.
-
-Ahora hay dos presets:
+### Las dos compilaciones
 
 | Preset | APK | Para qué |
 |---|---|---|
 | `Android (depuracion)` | `export/sailor_moon_debug.apk` | medir, inspeccionar, logcat. Lleva permiso de red para el puente |
-| `Android (final)` | `export/sailor_moon.apk` | lo que se le instala a la niña. Release, firmado, sin red |
+| `Android (final)` | `export/sailor_moon.apk` | lo que se le instala a la niña. Release, sin red, sin servidor |
 
-**Antes de perseguir un fallo de rendimiento, comprobar cuánto de él era el
-andamio.** Es la primera medición que hay que hacer en cuanto haya teléfono.
+Van **firmadas con la misma llave**, así que se instalan una encima de otra sin
+desinstalar y sin perder las partidas guardadas. Antes había que desinstalar para
+cambiar de una a otra, que es una forma tonta de borrarle el progreso a la niña.
 
-## La tabla, medida
-
-Sitio canónico —el arranque del nivel, mirando camino adelante, jugadora en
-`(0, 0.6, −8.5)`— con la vista congelada y la referencia intercalada. Lupa 2.00
-(cuatro veces los píxeles nativos), referencia **28,8 fps**, deriva del 1 %.
-
-Todo lo que marque **+108 %** ha topado con el vsync: son «≥», no «=».
-
-| Prueba | Contra la referencia | Qué significa |
-|---|---|---|
-| media resolución | **+108 %** | El cuello es el coste **por píxel**. No es CPU ni geometría |
-| **sin terreno** | **+107 %** | El terreno es prácticamente el fotograma entero |
-| **terreno sin luz** | **+108 %** | …y de él, lo caro es **iluminarlo** |
-| **sin nada en 3D** | **+107 %** | El suelo: quitar el mundo entero no gana más que quitar el terreno |
-| terreno liso pero iluminado | +22 % | **La prueba que parte el pelo** (ver abajo) |
-| sin sol | +21 % | La luz direccional, sombras incluidas |
-| sin decorado | +11 % | 1.996 props, y solo un 11 % |
-| sin sombras | +10 % | |
-| terreno sin triplanar | +4 % | Las tres muestras de textura del patrón: irrelevantes |
-| sin personajes | +2 % | |
-| sin cielo | +2 % | |
-| sin contorno | +1 % | El *inverted hull* de MToon **no** era un problema |
-| sin FXAA · sin niebla · sin ajuste de color | 0 % | Ya estaban apagados. Sirven de control: marcan el ruido |
-
-### La fila que lo explica todo
-
-`terreno liso pero iluminado` pone en el terreno un material que **no hace
-absolutamente nada** —un color plano, sin patrón, sin máscara, sin lejanía— pero
-iluminado con el mismo modelo que el shader real (`diffuse_lambert`,
-`specular_disabled`). Da **+22 %**. El mismo material **sin iluminar** da
-**+108 %**.
-
-O sea: de todo lo que cuesta el terreno, la matemática de su shader es como mucho
-un 22 % y **el resto es pasar por la iluminación**. Eso descarta de un plumazo
-casi toda la lista de sospechosos habituales —texturas, ruido, triplanar,
-posterizado, perspectiva aérea— y deja una sola pregunta encima de la mesa: cómo
-iluminar media pantalla más barato.
-
-### Por qué apagar cosas de la luz una a una daba tan poco
-
-Sol 21 %, sombras 10 %, ambiente 8 %, reflejo del cielo 14 %. Nada de eso suma
-108. **No es una suma, es un escalón.** En una GPU de móvil, el número de
-muestras de textura y de registros que gasta un shader decide cuántas ondas caben
-a la vez en la unidad de cálculo; por debajo de cierto umbral entran el doble y la
-latencia se esconde sola. Quitar una muestra da un 10 %; quitar las suficientes
-para cruzar el umbral duplica.
-
-Por eso la estrategia correcta aquí no es ir recortando: es **sacar el terreno del
-camino iluminado**.
-
-## Lo que se ganó, y cómo
-
-**`ambient_light_disabled` en el shader de las superficies: +25 %.**
-
-El `Environment` tomaba la luz ambiente Y los reflejos del cielo, y eso son **dos
-muestras de cubemap por píxel iluminado**. Ahora el shader se calcula el ambiente
-él solo —color × energía, una multiplicación— y el `Environment` va con ambiente
-de color plano y sin reflejos.
-
-Lo que **no** se pierde: el sol sigue iluminando y el terreno sigue **recibiendo
-sombras**. La de Serena sobre el camino y las de los cerezos sobre la hierba
-siguen ahí.
-
-Medido en el mismo sitio y con la misma lupa (1.82), antes y después:
-
-| | Antes | Después |
-|---|---|---|
-| Con lupa 1.82 | 26,7 fps | **33,3 fps** |
-| Resolución nativa, vista congelada | 35-44 fps | **59,9 fps** |
-| Resolución nativa, **jugando** | 35-44 fps | **57,7 fps** |
-
-Quedan tirones sueltos: un 4,6 % de fotogramas por encima de 20 ms y alguno de
-71 ms. Esos son otro problema, y están más abajo.
-
-En el teléfono, mismo sitio, antes y después. Además de ir casi al doble, el
-suelo tiene más cuerpo: al calcularse el ambiente a mano se pudo elegir su color
-en vez de heredar el promedio pálido del cielo.
-
-| Antes | Después |
-|---|---|
-| ![antes](img/render/11_movil_antes.png) | ![después](img/render/14_movil_despues.png) |
+La diferencia de rendimiento entre las dos está medida y es pequeña: ver §4 de
+«por dónde seguir».
 
 ## El aparato de medida ya existe: úsalo
 
@@ -376,11 +291,68 @@ de verdad. Lo que hay que atacar:
 - **La siembra** (530 ms): 1.996 props con rayo al suelo, más 541 que se colocan
   y se tiran por caer encima de otra cosa.
 
-### 4. Comprobar la compilación final contra la de depuración
+### 4. La compilación final NO era el problema — comprobado
 
-Sigue sin hacerse, y sigue mereciendo la pena: todo lo medido hasta aquí es con
-la de depuración, que lleva el depurador, las comprobaciones de GDScript y el
-servidor dentro. `./tools/probar_en_movil.sh --final`.
+Se midió, y el resultado es un no rotundo. Montaje del nivel en frío, mismo
+teléfono, mismo sitio:
+
+| | Depuración | Final (release) |
+|---|---|---|
+| Montaje total | 7.254 ms | **6.818 ms** (−6 %) |
+| malla del terreno | 1.325 ms | 1.174 ms (−11 %) |
+| sembrar el decorado | 743 ms | 622 ms (−16 %) |
+| **esperar a la física** | 5.077 ms | **4.929 ms** (igual) |
+
+O sea: la de release corre el GDScript entre un 11 y un 16 % más rápido, y **el
+trozo que domina no se mueve nada** porque no es GDScript. Es una diferencia
+real pero pequeña, y la conclusión que importa es la otra: **todo lo medido con
+la compilación de depuración es representativo.** No hay que rehacer nada.
+
+Las dos compilaciones van ahora **firmadas con la misma llave**, así que se
+instalan una encima de otra sin desinstalar y **sin perder las partidas
+guardadas**. Antes había que desinstalar para cambiar de una a otra, que es una
+forma tonta de borrarle el progreso a la niña.
+
+### 5. Los 15 segundos de arranque, desmenuzados
+
+Es lo que de verdad se nota al jugar, y ya está medido del todo. Compilación
+final, del toque en JUGAR a nivel montado, **segundo arranque** (o sea con la
+caché de shaders ya escrita en disco):
+
+```
+  15,4 s  del toque a nivel jugable
+   ├─  9,5 s  cargar recursos            ← modelos, animaciones, texturas, audio
+   └─  5,9 s  montar el nivel
+        ├─ 4,8 s  «esperar a la física»  ← ver abajo, no es física
+        ├─ 0,6 s  malla del terreno
+        └─ 0,5 s  sembrar el decorado
+```
+
+**Dos cosas se llevan el 93 %, y ninguna es lógica del juego.**
+
+**Los 9,5 s de recursos se pagan en CADA arranque.** Dentro de una misma sesión,
+volver a cargar el nivel cuesta 0,4 s —los recursos ya están en memoria— pero al
+abrir la aplicación se cargan enteros otra vez. La escena del nivel arrastra a la
+jugadora con su librería de 56 animaciones, tres enemigos, el guardián, Luna,
+Mercury, la interfaz y los diálogos, y **todo eso se carga antes de empezar a
+montar nada**. La idea evidente: cargarlo **mientras se ve el menú**, que está
+ahí parado sin hacer nada, en vez de después de pulsar JUGAR.
+
+**Los 4,8 s de «esperar a la física» no son física.** `await
+get_tree().physics_frame` espera un fotograma COMPLETO, y ese es el primero que
+dibuja el nivel recién creado. Dentro de una misma sesión ese mismo `await`
+cuesta **111 ms**; entre arranques distintos vuelve a costar 4,8 s aunque la
+caché de shaders esté escrita en disco. O sea que se paga **una vez por proceso**,
+no una vez por instalación.
+
+Eso apunta a la caché de *pipelines* de Vulkan, que Godot guarda al cerrar
+limpiamente — y `am force-stop` mata el proceso sin dejarle guardar nada. **La
+comprobación pendiente es salir del juego por las buenas y volver a entrar.** Si
+entonces baja, la solución es asegurarse de que la caché se escribe; si no baja,
+hay que precalentar los materiales durante la pantalla de carga.
+
+Y hasta que eso se resuelva, la pantalla de carga **puede al menos no mentir**:
+ahora la barra se queda clavada casi cinco segundos en el mismo sitio.
 
 ### 5. Lo que ha quedado descartado por medición
 

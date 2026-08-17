@@ -1150,6 +1150,24 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
    optimizaciones que se van a intentar. Es también la explicación de «hay zonas
    con muchos tirones»: no son zonas, es el rato que llevas jugando.
    `./tools/probar_en_movil.sh --temperatura` antes de cada tanda de referencia.
+132. **La compilación de release NO era el problema, y eso también es un
+   resultado.** Se sospechaba que buena parte de la lentitud fuera el andamio de
+   depuración. Medido: el montaje del nivel pasa de 7.254 a 6.818 ms, un 6 %. El
+   GDScript sí corre un 11-16 % más rápido, pero el trozo que domina no se mueve
+   porque no es GDScript. Conclusión útil: **todo lo medido con la de depuración
+   es representativo**, no hay que rehacer nada. Y las dos van ya firmadas con la
+   misma llave, para poder cambiar de una a otra sin desinstalar — desinstalar
+   borra las partidas guardadas.
+133. **Los 15 segundos de arranque son 9,5 de cargar recursos y 4,8 de estrenar
+   el nivel.** Y ninguno de los dos es lógica del juego. Los recursos —la
+   jugadora con sus 56 animaciones, tres enemigos, el guardián, Luna, Mercury, la
+   interfaz— se cargan enteros **en cada arranque de la aplicación**, y se cargan
+   DESPUÉS de pulsar JUGAR, teniendo el menú ahí parado sin hacer nada. Y los
+   4,8 s del `await physics_frame` se pagan **una vez por proceso**: dentro de la
+   misma sesión ese mismo `await` cuesta 111 ms, pero entre arranques vuelve a
+   costar 4,8 s aunque la caché de shaders esté en disco. Apunta a la caché de
+   pipelines de Vulkan, que Godot guarda al cerrar limpiamente y `am force-stop`
+   no le deja guardar.
 
 ## 7. Decisiones tomadas y por qué
 
