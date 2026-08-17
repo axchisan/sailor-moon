@@ -1143,6 +1143,13 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
    arranque del juego es 18,6 s en frío y 1,9 s en caliente — o sea que **casi
    todo lo que se percibe como lentitud al arrancar es coste de ESTRENAR**, no
    trabajo del juego.
+131. **El teléfono se estrangula solo, y eso invalida la comparación.** Tras una
+   hora de pruebas seguidas, `dumpsys thermalservice` da `Thermal Status: 1` con
+   las CPU entre 53 y 61 °C — y en ese estado el mismo sitio que daba 57,7 fps en
+   frío da 45. Un −22 %, que es más de lo que valen la mayoría de las
+   optimizaciones que se van a intentar. Es también la explicación de «hay zonas
+   con muchos tirones»: no son zonas, es el rato que llevas jugando.
+   `./tools/probar_en_movil.sh --temperatura` antes de cada tanda de referencia.
 
 ## 7. Decisiones tomadas y por qué
 

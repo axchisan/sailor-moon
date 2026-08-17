@@ -36,6 +36,18 @@
 #   ./tools/probar_en_movil.sh --final      lo mismo con la compilación final
 #   ./tools/probar_en_movil.sh --sin-compilar   solo instala lo que ya hay
 #   ./tools/probar_en_movil.sh --registro   además, engancha el logcat
+#   ./tools/probar_en_movil.sh --temperatura  solo dice cómo está de caliente
+#
+# EL CALOR NO ES UN DETALLE, ES PARTE DE LA MEDIDA
+#
+# Este teléfono, tras una hora de pruebas seguidas, entra en estrangulamiento
+# térmico ligero: las CPU a 55-61 grados y `Thermal Status: 1`. Y ahí el MISMO
+# sitio del mapa que daba 57,7 fps en frío da 45. O sea que una medición sin
+# saber cómo estaba el aparato no se puede comparar con ninguna otra.
+#
+# Regla: mirar la temperatura ANTES de una tanda que vaya a servir de referencia,
+# y si está estrangulado, dejarlo descansar. Es también la explicación de por qué
+# «hay zonas con tirones» aparece a los minutos y no al entrar.
 set -euo pipefail
 
 GODOT="/Applications/Godot.app/Contents/MacOS/Godot"
@@ -49,6 +61,7 @@ APK="export/sailor_moon_debug.apk"
 MODO="--export-debug"
 COMPILAR=1
 REGISTRO=0
+TEMPERATURA=0
 
 for arg in "$@"; do
 	case "$arg" in
@@ -59,11 +72,31 @@ for arg in "$@"; do
 			;;
 		--sin-compilar) COMPILAR=0 ;;
 		--registro) REGISTRO=1 ;;
+		--temperatura) TEMPERATURA=1 ;;
 		*) echo "Opción desconocida: $arg"; exit 1 ;;
 	esac
 done
 
 cd "$PROYECTO"
+
+# Cómo está de caliente. Un aparato estrangulado da números que no valen.
+temperatura() {
+	local estado
+	estado="$("$ADB" shell dumpsys thermalservice 2>/dev/null | grep -m1 'Thermal Status:' | tr -d '\r')"
+	echo "${estado:-Thermal Status: (no disponible)}"
+	# El rango, no la lista: `dumpsys` saca las temperaturas dos veces —las de
+	# ahora y las cacheadas— y con ocho núcleos son dieciséis líneas que no dicen
+	# nada más que el mínimo y el máximo.
+	"$ADB" shell dumpsys thermalservice 2>/dev/null \
+		| grep -oE 'mValue=[0-9.]+, mType=0, mName=CPU' \
+		| sed -E 's/mValue=([0-9.]+).*/\1/' | sort -n | tr -d '\r' \
+		| awk 'NR==1{min=$1} {max=$1} END{if(NR)printf "CPU: %.1f – %.1f °C\n", min, max}'
+	case "$estado" in
+		*"Status: 0"*) echo "→ frío. Los números de ahora sirven de referencia." ;;
+		*"Status: 1"*) echo "→ estrangulado LIGERO. Los fps van a salir por debajo de lo que da en frío." ;;
+		*"Status: "[2-9]*) echo "→ estrangulado FUERTE. Dejarlo descansar antes de medir nada." ;;
+	esac
+}
 
 # 1. ¿Hay teléfono? Sin esto los errores de más abajo no dicen nada útil.
 if ! "$ADB" get-state >/dev/null 2>&1; then
@@ -80,6 +113,11 @@ AYUDA
 	exit 1
 fi
 echo "Teléfono: $("$ADB" shell getprop ro.product.model | tr -d '\r') · Android $("$ADB" shell getprop ro.build.version.release | tr -d '\r')"
+temperatura
+
+if [ "$TEMPERATURA" -eq 1 ]; then
+	exit 0
+fi
 
 # 2. Compilar. El editor de Godot borra las rutas de Android al cerrarse
 #    (trampa 20 de ESTADO.md), así que se reponen antes de cada exportación.

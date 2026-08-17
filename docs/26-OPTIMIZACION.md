@@ -95,6 +95,25 @@ un banco de medición ya no cuesta una reexportación por iteración.
 > órdenes siguen funcionando —van al TELÉFONO— así que se está mirando el aparato
 > equivocado sin enterarse. Pasó, y la pista fue que la captura salía a 1610×720.
 
+### El calor no es un detalle, es parte de la medida
+
+El teléfono **se estrangula solo**, y eso no es una metáfora: tras una hora de
+pruebas seguidas, `dumpsys thermalservice` da `Thermal Status: 1` con las CPU
+entre 53 y 61 °C. Y en ese estado el mismo sitio del mapa que daba **57,7 fps en
+frío da 45**.
+
+Es exactamente el síntoma que se describía como «hay zonas con muchos tirones» y
+«el teléfono se recalienta»: no son zonas, es el rato que llevas jugando.
+
+```bash
+./tools/probar_en_movil.sh --temperatura
+```
+
+**Mirarlo antes de cualquier tanda que vaya a servir de referencia.** Dos
+mediciones tomadas con el aparato a distinta temperatura no se pueden comparar, y
+la diferencia (−22 %) es mayor que la mayoría de las optimizaciones que se van a
+intentar.
+
 ### Las tres trampas de medir en un teléfono
 
 Ninguna es obvia y las tres invalidan la tabla entera en silencio. Están
