@@ -6,6 +6,7 @@ extends Node
 ## muerta. Aquí se carga en un hilo aparte y se informa del progreso.
 
 var _loading_path: String = ""
+var _carga: PantallaCarga = null
 var _progress: Array = []
 
 
@@ -22,6 +23,19 @@ func change_scene(scene_path: String) -> void:
 	if not ResourceLoader.exists(scene_path):
 		push_error("La escena no existe: %s" % scene_path)
 		return
+
+	# LA PANTALLA DE CARGA SE PONE ANTES DE EMPEZAR, Y LA QUITA EL NIVEL.
+	#
+	# El cargador ya traía la escena en un hilo, pero nadie enseñaba nada: se
+	# tocaba JUGAR y el juego se quedaba clavado con la última imagen congelada.
+	# Eso no se lee como «cargando», se lee como que se ha roto.
+	#
+	# No se quita al terminar la carga sino cuando el nivel avisa de que ha
+	# acabado de montarse — el tirón de verdad es el `_ready()` del nivel, no
+	# traer el archivo.
+	if _carga == null:
+		_carga = PantallaCarga.new()
+		get_tree().get_root().add_child(_carga)
 
 	_loading_path = scene_path
 	_progress = []
@@ -59,3 +73,17 @@ func _process(_delta: float) -> void:
 
 func is_loading() -> bool:
 	return _loading_path != ""
+
+
+## Lo llama la escena nueva cuando ha terminado de montarse. Sin esto, la
+## pantalla de carga se quedaría puesta para siempre.
+func escena_lista() -> void:
+	if _carga == null:
+		return
+	var c := _carga
+	_carga = null
+	c.listo()
+
+
+func hay_pantalla_de_carga() -> bool:
+	return _carga != null

@@ -41,6 +41,7 @@ func _ready() -> void:
 	_montar()
 	_entrar()
 	Musica.pedir(Musica.Capa.FONDO, "menu")
+	SceneLoader.escena_lista.call_deferred()
 
 
 func _montar() -> void:

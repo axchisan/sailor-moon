@@ -40,6 +40,8 @@ var _jefe: GuardianPortal = null
 var _barra: BarraJefe = null
 var _ambiente: AmbienteNivel = null
 var _guia: GuiaObjetivo = null
+## La lista está completa y el guardián sale en cuanto se vuelva al claro.
+var _guardian_pendiente: bool = false
 var _limpias: int = 0
 var _ultimo_suelo: Vector3 = Vector3.ZERO
 var _camara_plano: Camera3D = null
@@ -263,6 +265,7 @@ func _ready() -> void:
 		sitios_farol.append((nodo as Node3D).global_position + Vector3.UP * 1.2)
 	_ambiente.faroles_en(sitios_farol)
 
+	_vigilar_la_vuelta_al_claro()
 	_sembrar_repechos(decorador)
 	_sembrar_puntos_de_guardado()
 
@@ -292,6 +295,9 @@ func _ready() -> void:
 
 	# El plano de apertura, al final de todo: la escena ya está montada y la
 	# cámara puede tomar como destino la posición definitiva de la jugadora.
+	# Ya está todo montado: se puede quitar la pantalla de carga.
+	SceneLoader.escena_lista.call_deferred()
+
 	var apertura := get_node_or_null("CamaraApertura") as CamaraApertura
 	if apertura != null and _constructor != null:
 		apertura.arrancar(_constructor.extension()["centro"])
@@ -359,7 +365,16 @@ func _montar_objetivos() -> void:
 		# Que el portal se encendiera solo al marcar la última casilla dejaba el
 		# acto acabando en una lista de recados: se recoge todo, se enciende una
 		# luz y ya. Faltaba que alguien dijera que no.
-		_objetivos.todos_cumplidos.connect(_despertar_al_guardian)
+		#
+		# Pero el guardián NO sale al cumplir la lista, sino al **volver al
+		# claro**. Salía en el acto, y como el último objetivo se cumple en
+		# cualquier rincón del parque, la pelea empezaba al otro lado del mapa:
+		# aparecía de la nada, lejos del portal, sin que la escena significara
+		# nada. Se anota que está listo y se espera a que se llegue.
+		_objetivos.todos_cumplidos.connect(func() -> void:
+			_guardian_pendiente = true
+			EventBus.show_message.emit(
+				"Ya está todo. La puerta antigua espera al final del parque.", 4.0))
 		_portal.usado.connect(_al_usar_portal)
 		# El portal va en el claro del final, no en el arranque: una puerta al
 		# siguiente mundo a dos pasos de donde apareces no tiene ningún peso.
@@ -412,6 +427,29 @@ func rescatar() -> void:
 	var destino := _ultimo_suelo + Vector3.UP * 0.6
 	if GameManager.last_checkpoint != Vector3.ZERO:
 		destino = GameManager.last_checkpoint + Vector3.UP * 0.6
+
+	# MAREARSE DENTRO DE UNA PELEA REAPARECE DENTRO DE LA PELEA.
+	#
+	# El punto de guardado está fuera de la arena, y la arena se cierra con una
+	# barrera al empezar: quien se mareaba peleando con el guardián reaparecía
+	# fuera, con la barrera puesta y sin forma de volver a entrar. La partida se
+	# quedaba sin salida — no se podía terminar el nivel ni empezar la pelea otra
+	# vez, solo cerrar el juego.
+	#
+	# Si hay un combate en marcha, se vuelve al borde de esa arena. La pelea se
+	# reintenta, que es la promesa de todo el juego.
+	var encerrada := _arena_en_marcha()
+	if encerrada != null:
+		var hacia := destino - encerrada.global_position
+		hacia.y = 0.0
+		if hacia.length_squared() < 1.0:
+			hacia = Vector3.BACK
+		# Dentro del anillo, en el lado por el que se estaba, y con margen para
+		# no nacer pegada a la propia barrera.
+		destino = encerrada.global_position \
+			+ hacia.normalized() * (encerrada.barrier_radius - 2.5)
+		if _constructor != null:
+			destino = _constructor.posar_en_el_terreno(destino, 0.6)
 	_jugador.global_position = destino
 	if _jugador is CharacterBody3D:
 		(_jugador as CharacterBody3D).velocity = Vector3.ZERO
@@ -822,3 +860,61 @@ func _contar_la_apertura() -> void:
 	if _jugador != null and _jugador.has_method("set_control_enabled"):
 		_jugador.call("set_control_enabled", true)
 	PartidasGuardadas.guardar()
+
+
+## La arena DENTRO DE LA CUAL está la jugadora, si tiene la barrera puesta.
+##
+## Se mira por la barrera y no por `started`: una arena limpiada sigue marcada
+## como empezada, y lo que importa aquí es si hay un anillo cerrado alrededor.
+##
+## Y **tiene que ser aquella en la que se está**, no la primera con barrera. Hay
+## dos cerradas a la vez —la del guardián empieza bloqueada y el claro se cierra
+## para la pelea final—, así que coger la primera devolvía la del guardián
+## estuviera donde estuviera la jugadora, y el rescate seguía dejándola fuera.
+func _arena_en_marcha() -> Arena:
+	if _jugador == null:
+		return null
+	var yo := _jugador.global_position
+	for nodo in get_tree().get_nodes_in_group("arenas"):
+		var a := nodo as Arena
+		if a == null or a.cleared:
+			continue
+		var barrera := a.get_node_or_null("Barrier") as Node3D
+		if barrera == null or not barrera.visible:
+			continue
+		var d := Vector2(yo.x - a.global_position.x, yo.z - a.global_position.z)
+		if d.length() <= a.barrier_radius + 1.5:
+			return a
+	return null
+
+
+## Espera a que se vuelva al claro con la lista hecha, y entonces sí sale.
+##
+## Sale **al llegar**, no al cumplir el último objetivo: el último se cumple en
+## cualquier rincón del parque, y el guardián aparecía allí mismo, al otro lado
+## del mapa y lejos de la puerta que guarda. Una escena que ocurre donde no toca
+## no cuenta nada.
+func _vigilar_la_vuelta_al_claro() -> void:
+	var claro := _arena_del_claro()
+	if claro == null:
+		return
+	var zona := Area3D.new()
+	zona.name = "EsperaDelGuardian"
+	zona.collision_layer = 0
+	zona.collision_mask = 2
+	var forma := CollisionShape3D.new()
+	var cil := CylinderShape3D.new()
+	cil.radius = claro.barrier_radius + 2.0
+	cil.height = 8.0
+	forma.shape = cil
+	forma.position.y = 2.0
+	zona.add_child(forma)
+	add_child(zona)
+	zona.global_position = claro.global_position
+	zona.body_entered.connect(func(cuerpo: Node3D) -> void:
+		if not _guardian_pendiente or _jefe != null:
+			return
+		if not cuerpo.is_in_group("player"):
+			return
+		_guardian_pendiente = false
+		_despertar_al_guardian())

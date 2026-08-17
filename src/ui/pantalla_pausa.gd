@@ -73,9 +73,19 @@ func _objetivos() -> void:
 	var o := get_tree().get_first_node_in_group("objetivos") as ObjetivosNivel
 	if o == null:
 		return
+	# EL MENÚ DE PAUSA SE ESCONDE MIENTRAS SE MIRA LA LISTA.
+	#
+	# La lista se abre encima y el menú se quedaba detrás, con sus cuatro botones
+	# asomando por los lados: dos cosas pidiendo atención a la vez, y la de
+	# debajo todavía pulsable.
+	_velo.visible = false
+
 	var panel := PanelRequisitos.new()
 	panel.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(panel)
+	panel.cerrado.connect(func() -> void:
+		if is_instance_valid(_velo):
+			_velo.visible = true)
 	# Elegir un objetivo desde la pausa cierra la pausa entera: se ha elegido a
 	# dónde ir, así que lo que toca es ir, no volver al menú de pausa.
 	var nivel := get_tree().current_scene

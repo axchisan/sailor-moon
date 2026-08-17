@@ -1018,6 +1018,31 @@ ninguna tienda.** Instalación por sideload en el dispositivo de la prima.
    es justo donde ya está todo. Los dos últimos de la lista no entraban nunca.
    Alternando hacia dentro y hacia fuera entran los nueve.
 
+104. **Un punto de reaparición fuera de una arena cerrada deja la partida sin
+   salida.** Al marearse peleando con el guardián se reaparecía en el punto de
+   guardado —que está fuera— con la barrera puesta y sin forma de volver a
+   entrar: ni se podía terminar el nivel ni reintentar la pelea, solo cerrar el
+   juego. Ahora, si hay un combate en marcha, se vuelve **dentro** de esa arena.
+   Regla general: **cualquier sitio que encierre tiene que tener su propio punto
+   de vuelta**.
+105. **Con dos arenas cerradas a la vez, «la primera con barrera» es la
+   equivocada.** La del guardián empieza bloqueada y el claro se cierra para la
+   pelea final, así que buscar la primera con la barrera puesta devolvía siempre
+   la del guardián — estuviera donde estuviera la jugadora. Hay que preguntar en
+   cuál **está dentro**, no cuál está cerrada.
+106. **Una escena que ocurre donde no toca no cuenta nada.** El guardián salía al
+   marcar el último objetivo, y el último se cumple en cualquier rincón del
+   parque: aparecía al otro lado del mapa, lejos de la puerta que guarda. Ahora
+   se anota que está listo y sale **al volver al claro**. Los disparadores de una
+   escena son *cuándo* y *dónde*, y el sitio suele importar más.
+107. **Sin pantalla de carga, cargar se lee como que el juego se ha roto.** El
+   cargador ya traía la escena en un hilo y emitía progreso, pero **nadie lo
+   escuchaba**: se tocaba JUGAR y quedaba la última imagen congelada varios
+   segundos. Y el tirón de verdad no es traer el archivo — es el `_ready()` del
+   nivel, que genera terreno y siembra mil ochocientos props de golpe. Por eso la
+   pantalla la quita **el nivel** cuando termina de montarse, no el cargador
+   cuando acaba de cargar.
+
 ---
 
 ## Orden de las próximas sesiones
