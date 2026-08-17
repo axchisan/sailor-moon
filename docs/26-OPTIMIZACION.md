@@ -4,6 +4,72 @@
 > juego se vea igual o mejor y vaya fluido en el móvil. Aquí está todo lo que ya
 > se hizo, cómo se midió y por dónde seguir.
 
+## ⚠️ Lo primero: EL MAC NO PUEDE MEDIR ESTO. Está comprobado
+
+No es que en el Mac «se note menos». Es que **el Mac no llega a enterarse de que
+hay un problema**, y cualquier número sacado aquí es ruido. Medido con
+[`tools/medir_rendimiento.gd`](../tools/medir_rendimiento.gd) y
+[`tools/medir_cpu.gd`](../tools/medir_cpu.gd) sobre el Nivel 1, a 1280×720, en un
+M5:
+
+| Prueba | fps |
+|---|---|
+| El juego entero, tal cual | ~180 |
+| **Sin dibujar NADA en 3D** (sin terreno, sin decorado, sin personajes, sin cielo) | **~156** |
+
+Quitar el mundo entero **no sube los fps**. Y por el otro lado, el reparto de
+tiempo de CPU da una mediana de **2 ms por fotograma**, con los subsistemas
+—jugadora, Luna, bichos, interfaz, objetivos— aportando cada uno una décima.
+
+Las dos cosas a la vez significan que aquí no manda ni la GPU ni el juego: manda
+el compositor de macOS y el ruido de medición. Repetir la misma prueba dos veces
+seguidas da 182 y 138 fps. **Con esa dispersión no se puede atribuir nada a
+nada.**
+
+De ahí sale la regla, que ya estaba escrita pero ahora tiene número detrás: **si
+la medida no viene del teléfono, no es una medida.** Lo que sí se puede hacer en
+el Mac es lo visual —ver un color, un halo, un contorno— y eso es exactamente lo
+que se hizo en [`27-CALIDAD-VISUAL.md`](27-CALIDAD-VISUAL.md).
+
+### Medir EN EL TELÉFONO, desde el Mac
+
+Se conecta por USB y se maneja desde aquí. Un solo comando:
+
+```bash
+./tools/probar_en_movil.sh              # compila, instala, arranca, abre el puente
+./tools/probar_en_movil.sh --final      # con la compilación de release
+./tools/probar_en_movil.sh --registro   # y engancha el logcat
+```
+
+Lo que hace por dentro, y por qué importa: el juego lleva un servidor
+(`McpInteractionServer`) que escucha en el puerto 9090 y acepta órdenes. En el
+móvil escucha igual, solo que en el 9090 **del teléfono**. `adb forward` hace que
+el 9090 de esta máquina sea el del móvil, y a partir de ahí **todo lo que se sabe
+hacer contra el juego del Mac vale contra el del móvil**: ejecutar código dentro,
+sacar capturas, y lanzar los dos bancos de medición. Se mide en el aparato que
+tiene el problema.
+
+Requisitos en el teléfono, una vez: cable de datos, Ajustes → Información → siete
+toques en «Número de compilación», y Opciones de desarrollador → Depuración por
+USB. El script avisa con instrucciones si no encuentra ninguno.
+
+### Y ojo: hasta ahora se estaba probando la compilación de DEPURACIÓN
+
+El APK se exportaba con `--export-debug`. Esa compilación lleva el depurador
+dentro, las comprobaciones de GDScript activadas y el servidor MCP corriendo. Es
+**más lenta que la de release**, y en un juego donde el escenario entero se genera
+desde GDScript esa diferencia no es pequeña.
+
+Ahora hay dos presets:
+
+| Preset | APK | Para qué |
+|---|---|---|
+| `Android (depuracion)` | `export/sailor_moon_debug.apk` | medir, inspeccionar, logcat. Lleva permiso de red para el puente |
+| `Android (final)` | `export/sailor_moon.apk` | lo que se le instala a la niña. Release, firmado, sin red |
+
+**Antes de perseguir un fallo de rendimiento, comprobar cuánto de él era el
+andamio.** Es la primera medición que hay que hacer en cuanto haya teléfono.
+
 ## El aparato de medida ya existe: úsalo
 
 **No optimices por corazonada.** Este proyecto ya perdió una tanda entera
@@ -59,23 +125,69 @@ PC no se toca nada.
 alcance o lo cambia por otro más barato que hace lo mismo donde se nota. Lo único
 que se apagó del todo fue el FXAA, porque de ese no hay versión barata.
 
-## Por dónde seguir
+## Tercera pasada: por dónde seguir
 
-Sin medir primero, esto son sospechas ordenadas por lo que más probablemente
-pese — **no una lista de tareas**:
+**El orden de esta lista no es negociable: los dos primeros son mediciones, no
+arreglos.** Este proyecto ya perdió una tanda entera optimizando por corazonada
+(trampa 66), y el apartado de arriba explica por qué el Mac no puede corregir esa
+corazonada.
+
+### 0. Medir la compilación final contra la de depuración
+
+Una sola tarde, dos APK, el mismo sitio del mapa. Puede que una parte del
+problema sea andamio y no juego. Hasta saberlo, cualquier optimización se está
+midiendo contra un suelo falso.
+
+### 1. Rehacer el banco de pruebas EN EL MÓVIL
+
+`tools/medir_rendimiento.gd` y `tools/medir_cpu.gd` corren igual allí a través del
+puente. Salen dos tablas: qué cuesta pintar y qué cuesta pensar. **Sin esas dos
+tablas, todo lo de abajo son sospechas.**
+
+La pregunta que decide el resto: en la prueba de **media resolución**, ¿se
+disparan los fps?
+
+- **Sí** → el cuello son los píxeles. Toca shaders, transparencias y overdraw.
+- **No** → el cuello es la CPU. Toca GDScript, física y número de nodos.
+
+(Bajar la resolución **no es una opción de calidad** aquí: está descartada por la
+trampa 63. Es solo el termómetro.)
+
+### 2. Las sospechas, ordenadas por lo que probablemente pese
+
+Con el sobrecalentamiento como pista extra: un móvil que se calienta está
+trabajando de verdad y sostenidamente, y además **se autolimita** — de ahí que
+haya zonas donde los tirones aparecen a los minutos y no al entrar.
 
 1. **El montaje del nivel bloquea el hilo principal.** El `_ready()` genera
-   terreno, siembra 1.863 props, trocea multimallas y construye el blockout de
-   una vez. Ya hay pantalla de carga que lo tapa, pero **repartirlo entre
-   fotogramas** quitaría el tirón de verdad.
-2. **Transparencias solapadas.** Las barreras de arena son anillos de paneles
-   translúcidos: mirando a través se pintan dos veces, y el overdraw es de lo
+   terreno, siembra 1.999 props, trocea 158 multimallas y construye el blockout
+   de una vez. Ya hay pantalla de carga que lo tapa, pero **repartirlo entre
+   fotogramas** quitaría el tirón de verdad — y es también la respuesta a «por
+   qué tarda tanto en arrancar desde el menú».
+2. **El contorno de los personajes cuesta el doble de geometría.** El *inverted
+   hull* dibuja cada malla otra vez. El guardián son 25.000 triángulos que pasan
+   a 50.000, y en una arena hay varios personajes a la vez. Medir si conviene
+   quitarle el contorno a los enemigos lejanos por distancia.
+3. **Transparencias solapadas.** Las barreras de arena son anillos de paneles
+   translúcidos: mirando a través se pintan dos veces, y el *overdraw* es de lo
    más caro en móvil. Se ve muy opaco desde fuera, que es el síntoma.
-3. **Luces.** Cada farol encendido, cada corazón y cada punto de guardado lleva
+4. **Luces.** Cada farol encendido, cada corazón y cada punto de guardado lleva
    su `OmniLight3D`. En el renderizador móvil las luces por píxel se acumulan.
-4. **El guardián**: 25.000 triángulos y 19 huesos con `no_depth_test` en la
-   flecha guía y en el aviso de área.
 5. **Físicas**: nueve repechos, ~112 losas y todos los props con colisión.
+6. **1.999 props sembrados, y 541 descartados por caer encima de otra cosa.**
+   Merece una mirada aparte: sembrar y tirar es trabajo de carga, y 1.999 props
+   en 180 llamadas de dibujado es mucho reparto.
+
+### 3. Lo que ya se ganó de camino, sin tocar rendimiento
+
+La pasada de calidad de imagen ([`27-CALIDAD-VISUAL.md`](27-CALIDAD-VISUAL.md))
+apagó la niebla del `Environment` en las dos plataformas, porque hacía lo mismo
+que la perspectiva aérea del terreno. La niebla se evalúa **en cada píxel de cada
+material**; la perspectiva aérea ya se calculaba dentro de un shader que se
+ejecuta igualmente. O sea que además de verse mejor, se pinta menos.
+
+Y `docs/` salió del APK con un `.gdignore`: eran 8,7 MB de capturas de
+documentación importándose como texturas del juego.
 
 ## Lo que NO se puede tocar
 
@@ -91,8 +203,12 @@ pese — **no una lista de tareas**:
 
 | Qué | Archivo |
 |---|---|
+| **Probar en el móvil desde el Mac** | [`tools/probar_en_movil.sh`](../tools/probar_en_movil.sh) |
+| **Banco automático de render** | [`tools/medir_rendimiento.gd`](../tools/medir_rendimiento.gd) |
+| **Banco automático de CPU** | [`tools/medir_cpu.gd`](../tools/medir_cpu.gd) |
 | Recortes de móvil | [`nivel.gd`](../src/level/nivel.gd) → `_ajustar_para_el_movil()` |
-| Banco de pruebas | [`modo_desarrollador.gd`](../src/core/modo_desarrollador.gd) |
+| Banco de pruebas a mano (F8) | [`modo_desarrollador.gd`](../src/core/modo_desarrollador.gd) |
+| Calidad de imagen y color | [`27-CALIDAD-VISUAL.md`](27-CALIDAD-VISUAL.md) |
 | Terreno y su shader | `src/level/terreno_nivel.gd`, `src/level/terreno.gdshader` |
 | Siembra del decorado | [`decorador_nivel.gd`](../src/level/decorador_nivel.gd) |
 | Cielo | `src/level/cielo_anime.gdshader` |

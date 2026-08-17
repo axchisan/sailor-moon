@@ -194,6 +194,7 @@ El sistema de viñetas ya está montado y probado; falta escribir las escenas.
 | [`20-JEFE-GUARDIAN.md`](20-JEFE-GUARDIAN.md) | El jefe del Acto 1: concepto, prompt de imagen y qué hace falta |
 | [`19-ERRORES-TERRENO.md`](19-ERRORES-TERRENO.md) | ⭐ Fallos de montaje del escenario, cómo se arreglaron, y **las zonas vacías y los salientes que faltan** |
 | [`26-OPTIMIZACION.md`](26-OPTIMIZACION.md) | ⭐ **El encargo de rendimiento:** qué se hizo, cómo se mide, por dónde seguir y qué no tocar |
+| [`27-CALIDAD-VISUAL.md`](27-CALIDAD-VISUAL.md) | ⭐ **Por qué se veía pálido y de dónde salía el aura blanca.** Antes y después, con capturas |
 | [`CREDITOS.md`](CREDITOS.md) | Atribuciones de assets |
 
 ---
@@ -1004,6 +1005,59 @@ Esta sección vale más que ninguna otra. Todo esto costó tiempo de depurar.
    el otro sigue roto, y como el síntoma es idéntico parece que el arreglo no
    funcionó. Ahora los dos preguntan a `Nivel.donde_reaparecer()`. **Antes de
    volver a tocar un arreglo que “no funcionó”, buscar quién más hace lo mismo.**
+
+---
+
+110. **En MToon la luz de borde es EMISIÓN, no un reflejo.** `emission += rim *
+   (1 - _RimLightingMix)`, y en la silueta `rim` vale el color entero. Con un
+   `_RimColor` blanco y `_RimLightingMix` a 0,12, cada personaje llevaba un
+   **+0,88 de blanco puro pegado al contorno**, que no apaga ni el sol ni la
+   sombra ni la noche. Se leía como un halo o un «delineado blanco raro» por
+   delante del contorno negro, y se perseguía como si fuera el contorno lo que
+   fallaba. Un rim que se quiera de verdad va con `rim_mix` a **1.0**: así pasa
+   por la iluminación y se apaga donde no da la luz.
+111. **`_IndirectLightIntensity` no es «cuánta luz indirecta hay».** Es cuánto se
+   dobla la normal hacia arriba antes de iluminar. A 0,5 —lo que había— media
+   normal apunta al cielo, la cara de luz y la de sombra reciben casi lo mismo y
+   **el escalón del cel shading no llega a dibujarse**. `_ShadeColor` y
+   `_ShadeToony` pueden estar perfectos: no se usan. El personaje sale plano y
+   parece un problema de paleta.
+112. **Dos efectos que hacen lo mismo se suman sin avisar.** La niebla del
+   `Environment` (78→148 m) y la perspectiva aérea del terreno (65→110 m al
+   92 %) teñían el mismo tramo, del mismo color. Cada una por separado es
+   razonable; las dos encima dejaban los dos tercios de arriba de la pantalla en
+   un lavado morado sin forma. **Antes de subir un efecto atmosférico, mirar si
+   ya hay otro puesto.**
+113. **Filmic desatura, y el cel shading va de lo contrario.** `tonemap_mode = 2`
+   imita la respuesta de una película fotográfica: comprime los claros y les
+   quita croma. El azul marino de la falda salía celeste gris y el rojo del lazo,
+   rosa palo. En **lineal** los colores salen como se pintaron. Y de propina, el
+   ajuste de color horneado del móvil solo puede coincidir con el del Mac si lo
+   que pasa entre medias es lineal.
+114. **Un recorte de móvil puede empeorar el móvil.** `MOVIL_NIEBLA_DESDE = 0.55`
+   acercaba la perspectiva aérea a 47 m «para compensar» la niebla que se
+   quitaba. El efecto real: el móvil se lavaba **treinta metros antes** que el
+   Mac. Buena parte de «en el móvil la calidad parece reducida» era eso. Un
+   perfil de plataforma que cambia el ASPECTO y no solo el coste hay que mirarlo
+   con una captura de las dos, no razonarlo.
+115. **El Mac no puede medir el rendimiento de este juego, y hay número.**
+   Quitar TODO lo 3D —terreno, decorado, personajes y cielo— deja los fps donde
+   estaban (156 contra 180), y la mediana de CPU por fotograma es de 2 ms. Ni la
+   GPU ni el juego mandan: manda el compositor. Repetir la misma prueba dos veces
+   da 182 y 138. Lo que sí se juzga en el Mac es lo visual. Para lo demás está
+   `tools/probar_en_movil.sh`, que abre un `adb forward` del 9090 y deja mandarle
+   al juego del teléfono exactamente igual que al del Mac.
+116. **Se estaba midiendo la compilación de depuración.** El APK salía con
+   `--export-debug`: depurador dentro, comprobaciones de GDScript activas y el
+   servidor MCP corriendo. En un juego cuyo escenario entero se genera desde
+   GDScript, eso no es una diferencia pequeña. Ahora hay dos presets, y lo
+   primero antes de perseguir nada es ver cuánto del problema era el andamio.
+117. **`docs/` se estaba metiendo en el APK.** Las capturas de la documentación
+   viven dentro del proyecto, así que Godot las importaba como texturas y el
+   preset (`export_filter="all_resources"`) se las llevaba: 8,7 MB de imágenes
+   que no usa nadie. Un `.gdignore` en `docs/` lo corta. Es la trampa 102 otra
+   vez —al excluir algo, excluir lo que arrastra— pero al revés: aquí lo que
+   sobraba nunca se llegó a excluir.
 
 ## 7. Decisiones tomadas y por qué
 
