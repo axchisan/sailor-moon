@@ -111,9 +111,58 @@ uniform vec3 color_luz_2 : source_color = vec3(0.84, 0.79, 0.63);
 // forzar la reimportación (trampa 41 de ESTADO.md).
 uniform sampler2D ruido_tex : hint_default_white, filter_linear_mipmap, repeat_enable;
 
+// TRIPLANAR SÍ, PERO NO EN EL SUELO
+//
+// La proyección triplanar lee el patrón TRES veces —una por cada plano— y las
+// mezcla por la normal. Eso hace falta en un muro, en una roca o en un tronco,
+// que tienen caras mirando a cualquier lado.
+//
+// La superficie del terreno no. Es un mapa de alturas: su normal apunta hacia
+// arriba casi en todas partes, así que `peso.y` vale casi 1 y las otras dos
+// lecturas se pagan enteras para no aportar nada. Y es justamente la superficie
+// que ocupa media pantalla — medido en el móvil, el terreno solo se lleva el
+// 61 % del coste de pintar el fotograma.
+//
+// Con esto a `true` se lee UNA vez, proyectando sobre el plano XZ. Lo que se
+// pierde es que en las cuestas muy empinadas el patrón sale estirado; como son
+// las laderas del fondo y el patrón es una mancha posterizada, no se distingue.
+uniform bool solo_plano = false;
+
 // Cuántas celdas del patrón lleva dentro una repetición de la textura. Tiene
 // que coincidir con `DOMINIO` del generador, o las manchas cambian de tamaño.
 const float DOMINIO = 4.0;
+
+
+// Proyección triplanar con MEZCLA, no eligiendo un eje con un `if`.
+//
+// Elegir el eje dominante es más barato, pero produce parpadeos: en cuanto dos
+// componentes de la normal se parecen —una superficie a 45°, o simplemente el
+// error de precisión al girar la cámara— la condición salta de rama y el patrón
+// cambia de golpe. Se veía como un centelleo en los muros al mover la vista.
+//
+// Mezclando los tres planos con pesos, la transición es continua y el problema
+// desaparece. Una sola lectura por plano trae los tres patrones a la vez: el
+// grano y las vetas salían antes del plano dominante para ahorrar, y al venir
+// todos de la misma mezcla desaparece además la costura que tenían.
+//
+// OJO: la normal se recibe COMO ARGUMENTO, no se calcula aquí dentro. Los
+// nombres del motor —`INV_VIEW_MATRIX`, `NORMAL`, `VERTEX`— solo existen dentro
+// de `vertex()`, `fragment()` y `light()`; en una función propia no están
+// declarados. El compilador lo dice («Unknown identifier in expression»), pero
+// el mensaje se pierde entre los avisos del arranque y lo que se ve es el
+// terreno GRIS LISO: Godot cae al material por defecto cuando un shader no
+// compila, y eso parece un problema de iluminación, no de código. Es la trampa
+// 38 de ESTADO.md, en versión nueva.
+vec3 triplanar(vec3 normal_mundo, vec3 mundo, float inv) {
+	vec3 n = abs(normal_mundo);
+	vec3 peso = n * n;
+	peso *= peso;
+	peso /= max(peso.x + peso.y + peso.z, 0.0001);
+	return texture(ruido_tex, mundo.xz * inv).rgb * peso.y
+		+ texture(ruido_tex, mundo.zy * inv).rgb * peso.x
+		+ texture(ruido_tex, mundo.xy * inv).rgb * peso.z;
+}
+
 
 void fragment() {
 	// En `fragment()`, VERTEX y NORMAL vienen en espacio de VISTA, no de mundo.
@@ -124,36 +173,19 @@ void fragment() {
 	// hasta que se ejecuta, y entonces el material se queda en blanco liso sin
 	// más pista que una línea en la consola.
 	vec3 mundo = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	vec3 n = abs(normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz));
-
-	// Proyección triplanar con MEZCLA, no eligiendo un eje con un `if`.
-	//
-	// Elegir el eje dominante es más barato, pero produce parpadeos: en cuanto
-	// dos componentes de la normal se parecen —una superficie a 45°, o
-	// simplemente el error de precisión al girar la cámara— la condición salta
-	// de rama y el patrón cambia de golpe. Se veía como un centelleo en los
-	// muros al mover la vista.
-	//
-	// Mezclando los tres planos con pesos, la transición es continua y el
-	// problema desaparece. Antes eso costaba triplicar el ruido, que es de
-	// donde salía el problema de rendimiento; ahora son tres lecturas de
-	// textura y el argumento del ahorro ya no aplica.
-	vec3 peso = pow(n, vec3(4.0));
-	peso /= max(peso.x + peso.y + peso.z, 0.0001);
 
 	// El DOMINIO compensa que cada repetición de la textura lleve varias celdas
 	// del patrón dentro: así una mancha sigue midiendo `escala` metros.
 	float inv = 1.0 / max(escala * DOMINIO, 0.01);
-	vec2 uv_y = mundo.xz * inv;
-	vec2 uv_x = mundo.zy * inv;
-	vec2 uv_z = mundo.xy * inv;
 
-	// Una sola lectura por plano trae los tres patrones a la vez. El grano y
-	// las vetas salían antes del plano dominante para ahorrar; ahora vienen de
-	// la misma mezcla, así que además desaparece la costura que tenían.
-	vec3 ruidos = texture(ruido_tex, uv_y).rgb * peso.y
-		+ texture(ruido_tex, uv_x).rgb * peso.x
-		+ texture(ruido_tex, uv_z).rgb * peso.z;
+	vec3 ruidos;
+	if (solo_plano) {
+		// Una sola lectura, sobre el plano del suelo. Ver `solo_plano` arriba.
+		ruidos = texture(ruido_tex, mundo.xz * inv).rgb;
+	} else {
+		ruidos = triplanar(
+			normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz), mundo, inv);
+	}
 
 	float patron = ruidos.r;
 	if (vetas > 0.001) {

@@ -85,7 +85,10 @@ echo "Teléfono: $("$ADB" shell getprop ro.product.model | tr -d '\r') · Androi
 #    (trampa 20 de ESTADO.md), así que se reponen antes de cada exportación.
 if [ "$COMPILAR" -eq 1 ]; then
 	./tools/configurar_android.sh >/dev/null 2>&1 || true
-	echo "Exportando «$PRESET» → $APK"
+	# Las llaves NO son adorno: pegado a una comilla angular, bash se come los
+	# bytes del carácter multibyte como parte del nombre de la variable y falla
+	# con «PRESET»: unbound variable».
+	echo "Exportando «${PRESET}» → ${APK}"
 	"$GODOT" --headless --path . "$MODO" "$PRESET" "$APK"
 	ls -lh "$APK" | awk '{print "APK: " $5}'
 fi

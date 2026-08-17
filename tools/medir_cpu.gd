@@ -45,10 +45,25 @@ const APAGABLES := {
 }
 
 
+## Resolución a la que se mide. NO es una opción de calidad: es lo contrario de
+## la «lupa» de `medir_rendimiento.gd`.
+##
+## En el móvil el juego va limitado por píxeles, así que a resolución nativa
+## cada fotograma tarda lo que tarde la GPU y el tiempo de CPU queda escondido
+## detrás. Encogiendo la imagen a un cuarto, la GPU se queda sin trabajo y lo
+## que se cronometra es lo que de verdad cuesta PENSAR el fotograma.
+const RESOLUCION_DE_MEDIDA := 0.25
+
+var _escala_previa := 1.0
+
+
 func _ready() -> void:
 	name = "MedirCPU"
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	Engine.max_fps = 0
+	_escala_previa = get_viewport().scaling_3d_scale
+	get_viewport().scaling_3d_scale = RESOLUCION_DE_MEDIDA
 	_correr.call_deferred()
 
 
@@ -65,6 +80,7 @@ func _correr() -> void:
 	for etiqueta in APAGABLES:
 		todos.append_array(APAGABLES[etiqueta])
 	resultados.append(await _prueba("sin nada de eso", todos))
+	get_viewport().scaling_3d_scale = _escala_previa
 	_informe(resultados)
 	queue_free()
 
